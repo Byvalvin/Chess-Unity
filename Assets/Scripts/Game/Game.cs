@@ -31,6 +31,7 @@ public class Game : MonoBehaviour
     }
 
 
+    // Piece Movement Logic
     bool FilterPawnMove(Vector2 pos)
     
     {
@@ -149,7 +150,7 @@ public class Game : MonoBehaviour
     }
 
 
-    
+    // Player GUI
     void SelectPiece()
     {
         Vector2 mousePosition = Utility.GetMouseWorldPosition();

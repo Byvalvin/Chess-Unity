@@ -46,7 +46,6 @@ public abstract class Piece : MonoBehaviour
     protected void SetPosition()
     {
         transform.position = new Vector3(tileSize*currentPos.x, tileSize*currentPos.y, 0);
-        
     }
     
     public Vector2 Position
@@ -100,34 +99,29 @@ public abstract class Piece : MonoBehaviour
         set{pieceColliderSize=value;}
     }
 
-    public abstract bool CanMove(Vector2 to);
-    public abstract void Move(Vector2 to);
-    public abstract List<Vector2> GetValidMoves();
+    public abstract bool CanMove(Vector2 to); // checks if a piece can move to tile at to
+    public abstract List<Vector2> GetValidMoves(); // returns list of all moves Piece can make regardless of board restrictions
+    public virtual void Move(Vector2 to)
+    {
+        if (CanMove(to))
+        {
+            currentPos = to;
+            SetPosition();
+        }
+    }
 
     // GUI
-
     protected bool InBounds(Vector2 pos)=>Utility.InBounds(minPoint, maxPoint, pos);
-
 
     public virtual void HandleInput() 
     {
-        /*
-        // Example method to handle input and move the pawn
-        if (Input.GetMouseButtonDown(0)) // Check for mouse click
-        {
-            Vector2 targetPosition = GetMouseWorldPosition();
-            if (CanMove(targetPosition))
-            {
-                Move(targetPosition);
-            }
-        }
-        */
     }
 
     
 
- // Start and Update methods can be overridden by derived classes as needed
-    protected virtual void Start() {
+    // Start and Update methods can be overridden by derived classes as needed
+    protected virtual void Start() 
+    {
         spriteR = gameObject.AddComponent<SpriteRenderer>();
 
         pieceCollider = gameObject.AddComponent<BoxCollider2D>();

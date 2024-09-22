@@ -9,14 +9,6 @@ public class Bishop : Piece
     {
         return true;
     }
-    public override void Move(Vector2 to)
-    {
-        if (CanMove(to))
-        {
-            currentPos = to;
-            SetPosition();
-        }
-    }
     public override List<Vector2> GetValidMoves(){
         List<Vector2> validMoves = new List<Vector2>();
         return validMoves;

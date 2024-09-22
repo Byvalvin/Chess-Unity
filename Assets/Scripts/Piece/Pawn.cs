@@ -15,7 +15,7 @@ public class Pawn : Piece
         bool doubleForwardMove = firstMove && ((colour && currentPos.y - 2 == to.y) || (!colour && currentPos.y + 2 == to.y));
         bool diagonalCapture = forwardMove && Mathf.Abs(currentPos.x - to.x) == 1;
 
-        return (forwardMove && sameX) || doubleForwardMove || diagonalCapture;
+        return (forwardMove && sameX) || (doubleForwardMove && sameX) || diagonalCapture;
     }
     public override void Move(Vector2 to)
     {
