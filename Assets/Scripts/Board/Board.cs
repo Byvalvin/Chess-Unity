@@ -7,7 +7,7 @@ public class Board : MonoBehaviour
     // PRIVATE
     private Tile[,] tiles;
 
-    private float minX, minY, maxX, maxY;
+    private Vector2 minPoint, maxPoint;
     private const float tileSize = 5f;
     float pieceScaleFactor = 1.25f; // increase size of a piece also used to set collider of piece to reciprocal
 
@@ -23,7 +23,7 @@ public class Board : MonoBehaviour
 
         // Create and Add Tiles
         tiles = new Tile[N, N];
-        minX = 0; minY = 0; maxX = N - 1; maxY = N - 1;
+        minPoint = new Vector2(0, 0); maxPoint = new Vector2(N-1, N-1);
 
         for (int yi = 0; yi < N; yi++)
         {
@@ -88,7 +88,7 @@ public class Board : MonoBehaviour
         Tile fromTile = GetTile(from);
         Tile toTile = GetTile(to);
 
-        if (fromTile != null && toTile != null && !toTile.HasPiece())
+        if (fromTile != null && toTile != null)
         {
             Debug.Log($"Moving piece from {from} to {to}");
             toTile.piece = fromTile.piece;
@@ -150,7 +150,7 @@ public class Board : MonoBehaviour
 
     void AddPiece(string type, bool colour, int x, Player Player)
     {
-        int darkY = (int)minY, lightY = (int)maxY;
+        int darkY = (int)minPoint.y, lightY = (int)maxPoint.y;
 
         GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
         Piece piece = null;
@@ -184,8 +184,8 @@ public class Board : MonoBehaviour
         piece.Colour = colour;
         piece.Position = new Vector2(x, colour ? lightY : darkY);
         piece.TileSize = tileSize;
-        piece.Min = minX; 
-        piece.Max = maxX;
+        piece.MinPoint = minPoint; 
+        piece.MaxPoint = maxPoint;
         piece.PieceSprite = sprites[$"{type}"];
         piece.PieceColliderSize = 1 / pieceScaleFactor;
 

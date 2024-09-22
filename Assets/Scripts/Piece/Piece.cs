@@ -11,7 +11,7 @@ public abstract class Piece : MonoBehaviour
     protected Vector2 currentPos;
 
     protected float tileSize;
-    protected float min,max,minx,miny,maxx,maxy;
+    protected Vector2 minPoint, maxPoint;
     
     protected SpriteRenderer spriteR;
     protected Sprite pieceSprite;
@@ -81,19 +81,13 @@ public abstract class Piece : MonoBehaviour
         set{tileSize=value;}
     }
 
-    public float Min{
-        get{return min;}
-        set{
-            min=value;
-            minx=min*tileSize; miny=min*tileSize;
-        }
+    public Vector2 MinPoint{
+        get{return minPoint;}
+        set{minPoint=value;}
     }
-    public float Max{
-        get{return max;}
-        set{
-            max=value;
-            maxx=max*tileSize; maxy=max*tileSize;
-        }
+    public Vector2 MaxPoint{
+        get{return maxPoint;}
+        set{maxPoint=value;}
     }
 
     public Sprite PieceSprite{
@@ -112,7 +106,7 @@ public abstract class Piece : MonoBehaviour
 
     // GUI
 
-    protected bool InBounds(Vector2 pos)=> minx<=pos.x&&pos.x<=maxx && miny<=pos.y&&pos.y<=maxy;
+    protected bool InBounds(Vector2 pos)=>Utility.InBounds(minPoint, maxPoint, pos);
 
 
     public virtual void HandleInput() 

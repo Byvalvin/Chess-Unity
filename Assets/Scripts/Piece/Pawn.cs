@@ -6,39 +6,16 @@ public class Pawn : Piece
 {
     private bool firstMove = true;
 
-    public override bool CanMove(Vector2 to){
-        
-        if(!InBounds(to*tileSize))
-            return false;
-            
-        bool sameX = currentPos.x==to.x,
-            lightAndDown = colour && currentPos.y-1==to.y, //light moves down
-            darkAndUp = !colour && currentPos.y+1==to.y;   //dark moves up
+    public override bool CanMove(Vector2 to)
+    {
+        if (!InBounds(to)) return false;
 
-        // Normal move for one space
-        if ((lightAndDown || darkAndUp) && sameX)
-        {
-            return true;
-        }
-        
-        // First move double jump
-        bool DlightAndDown = colour && currentPos.y-2==to.y, //light moves down
-            DdarkAndUp = !colour && currentPos.y+2==to.y;   //dark moves up
-        if (firstMove 
-            && ((DlightAndDown || DdarkAndUp) && sameX)
-            )
-        {
-            return true;
-        }
+        bool sameX = currentPos.x == to.x;
+        bool forwardMove = (colour && currentPos.y - 1 == to.y) || (!colour && currentPos.y + 1 == to.y);
+        bool doubleForwardMove = firstMove && ((colour && currentPos.y - 2 == to.y) || (!colour && currentPos.y + 2 == to.y));
+        bool diagonalCapture = forwardMove && Mathf.Abs(currentPos.x - to.x) == 1;
 
-        // Captures diag
-        bool leftOrRightX = Mathf.Abs(currentPos.x - to.x) == 1;
-        if((lightAndDown || darkAndUp) && leftOrRightX)
-        {
-            return true;
-        }
-
-        return false;
+        return (forwardMove && sameX) || doubleForwardMove || diagonalCapture;
     }
     public override void Move(Vector2 to)
     {
@@ -52,55 +29,28 @@ public class Pawn : Piece
 
     public override List<Vector2> GetValidMoves(){
         Debug.Log("My current pos"+ currentPos);
-        List<Vector2> validMoves = new List<Vector2>();
-        
-        // one space fwd
-        Vector2 fwd = new Vector2(currentPos.x, colour?currentPos.y-1:currentPos.y+1);
-        if(CanMove(fwd))
+        List<Vector2> validMoves = new List<Vector2>
         {
-            validMoves.Add(fwd);
-        }
+            new Vector2(currentPos.x, colour ? currentPos.y - 1 : currentPos.y + 1) // One space forward
+        };
 
-        // two spaces fwd, dfwd
-        Vector2 dfwd = new Vector2(currentPos.x, colour?currentPos.y-2:currentPos.y+2);
-        if(CanMove(dfwd))
-        {
-            validMoves.Add(dfwd);
-        }
+        if (firstMove)
+            validMoves.Add(new Vector2(currentPos.x, colour ? currentPos.y - 2 : currentPos.y + 2)); // Two spaces forward
 
-        // captures diagonally
-        Vector2 diag1 = new Vector2(currentPos.x-1, colour? currentPos.y-1 : currentPos.y+1),
-                diag2 = new Vector2(currentPos.x+1, colour? currentPos.y-1 : currentPos.y+1);
+        // Diagonal captures
+        validMoves.Add(new Vector2(currentPos.x - 1, colour ? currentPos.y - 1 : currentPos.y + 1));
+        validMoves.Add(new Vector2(currentPos.x + 1, colour ? currentPos.y - 1 : currentPos.y + 1));
 
-        if(CanMove(diag1))
-        {
-            validMoves.Add(diag1);
-        }
-        if(CanMove(diag2))
-        {
-            validMoves.Add(diag2);
-        }
-
-        return validMoves;
+        return validMoves.FindAll(CanMove); // Filter valid moves
 
     }
 
 
     // GUI
     public override void HandleInput()
-{
-    // if (Input.GetMouseButtonDown(0))
-    // {
-    //     Vector2 targetPosition = GetMouseWorldPosition();
-    //     List<Vector2> validMoves = GetValidMoves();
+    {
 
-    //     // Check if the target position is in the list of valid moves
-    //     if (validMoves.Contains(targetPosition))
-    //     {
-    //         Move(targetPosition);
-    //     }
-    // }
-}
+    }
 
 
     // Start is called before the first frame update

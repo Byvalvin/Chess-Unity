@@ -11,7 +11,7 @@ Game, Board, Tile, Player, Piece, King, Queen, Rook, Bishop, Knight,
  The Board is aggregated with Tiles, 
  Tiles may or may not have Pieces, 
  The Player has Pieces and 
- aKing, Queen, Rook, Bishop and Knight inherit from 
+ King, Queen, Rook, Bishop and Knight inherit from 
  Piece(an abstract class)
 */
 public class Game : MonoBehaviour
@@ -30,66 +30,129 @@ public class Game : MonoBehaviour
         currentIndex = (currentIndex + 1) % players.Length;
     }
 
-    bool MouseUp() => Input.GetMouseButtonUp(0);
-    bool MouseDown() => Input.GetMouseButtonDown(0);
 
-    List<Vector2> FilterMoves(Piece piece)
+    bool FilterPawnMove(Vector2 pos)
+    
     {
-        List<Vector2> filteredValidMoves = new List<Vector2>(),
-                    invalidMoves = new List<Vector2>();
-        if(piece!=null){
-            filteredValidMoves = piece.GetValidMoves();
-            // cant move to a square occupied by your own piece
-            // cant move to the squares after a piece
-            switch(piece.Type){
-                case "King":
-                    break;
-                case "Queen":
-                    
-                    break;
-                case "Rook":
-                    
-                    break;
-                case "Knight":
-                    
-                    break;
-                case "Bishop":
-                    break;
-                case "Pawn":
-                    // can only move diag if there is an opposing piece there
-                    foreach (Vector2 pos in filteredValidMoves)
-                    {
-                        Debug.Log(board.GetTile(pos).piece + " Here");
-                        if(Mathf.Abs(piece.Position.x - pos.x) == 1 && 
-                            !(board.GetTile(pos).HasPiece() && board.GetTile(pos).piece.Colour!=piece.Colour))
-                        {
-                            invalidMoves.Add(pos); // Store invalid moves in a separate list
-                        }
-                    }
-                    break;
-                default:
-                    Debug.Log("Bryhh");
-                    break;
-            }
+        bool pieceAtpos = board.GetTile(pos).HasPiece(),
+                sameColourPieceAtPos = pieceAtpos && board.GetTile(pos).piece.Colour==selectedPiece.Colour,
+                isDiag = Mathf.Abs(selectedPiece.Position.x - pos.x)==1;
+
+        return (pieceAtpos&&!sameColourPieceAtPos&&isDiag) || (!pieceAtpos&&!isDiag);
+    }
+    List<Vector2> FilterPawnMoves(){
+        if(selectedPiece==null){
+            return null; // dont even bother
         }
-        // Now remove the invalid moves from the original list
-        foreach (Vector2 invalidMove in invalidMoves)
+        List<Vector2> pawnMoves = selectedPiece.GetValidMoves();
+        return pawnMoves.FindAll(FilterPawnMove);
+    }
+
+
+
+    bool FilterKnightMove(Vector2 pos)
+    {
+        return false;
+    }
+    List<Vector2> FilterKnightMoves(){
+        if(selectedPiece==null){
+            return null; // dont even bother
+        }
+        List<Vector2> knightMoves = selectedPiece.GetValidMoves();
+        return knightMoves.FindAll(FilterKnightMove);
+    }
+
+
+
+    bool FilterBishopMove(Vector2 pos)
+    {
+        return false;
+    }
+    List<Vector2> FilterBishopMoves(){
+        if(selectedPiece==null){
+            return null; // dont even bother
+        }
+        List<Vector2> bishopMoves = selectedPiece.GetValidMoves();
+        return bishopMoves.FindAll(FilterBishopMove);
+    }
+
+
+
+    bool FilterRookMove(Vector2 pos)
+    {
+        return false;
+    }
+    List<Vector2> FilterRookMoves(){
+        if(selectedPiece==null){
+            return null; // dont even bother
+        }
+        List<Vector2> rookMoves = selectedPiece.GetValidMoves();
+        return rookMoves.FindAll(FilterRookMove);
+    }
+
+
+
+    bool FilterQueenMove(Vector2 pos)
+    {
+        return false;
+    }
+    List<Vector2> FilterQueenMoves(){
+        if(selectedPiece==null){
+            return null; // dont even bother
+        }
+        List<Vector2> queenMoves = selectedPiece.GetValidMoves();
+        return queenMoves.FindAll(FilterQueenMove);
+    }
+
+
+
+    bool FilterKingMove(Vector2 pos)
+    {
+        return false;
+    }
+    List<Vector2> FilterKingMoves(){
+        if(selectedPiece==null){
+            return null; // dont even bother
+        }
+        List<Vector2> kingMoves = selectedPiece.GetValidMoves();
+        return kingMoves.FindAll(FilterKingMove);
+    }
+
+
+
+    List<Vector2> FilterMoves()
+    {
+        if(selectedPiece==null)
         {
-            filteredValidMoves.Remove(invalidMove);
+            return null; // no piece was passed
         }
-        return filteredValidMoves;
+        
+        switch(selectedPiece.Type){
+            case "King":
+                return FilterKingMoves();
+            case "Queen":
+                return FilterQueenMoves();
+            case "Rook":
+                return FilterRookMoves();
+            case "Knight":
+                return FilterKnightMoves();
+            case "Bishop":
+                return FilterBishopMoves();
+            case "Pawn":
+                return FilterPawnMoves();
+            default:
+                Debug.Log("Bryhh");
+                return null;
+        }
+        
 
     }
-    Vector2 RoundVector2(Vector2 position)=>new Vector2(Mathf.Round(position.x), Mathf.Round(position.y));
-    Vector2 GetMouseWorldPosition()
-    {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        return new Vector2(mousePos.x, mousePos.y);
-    }
+
+
     
     void SelectPiece()
     {
-        Vector2 mousePosition = GetMouseWorldPosition();
+        Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Collider2D collision = Physics2D.OverlapPoint(mousePosition);
         if(collision!=null)
         {
@@ -104,7 +167,7 @@ public class Game : MonoBehaviour
     }
     void DragPiece()
     {
-        Vector2 mousePosition = GetMouseWorldPosition();
+        Vector2 mousePosition = Utility.GetMouseWorldPosition();
         if(selectedPiece!=null)
         {
             selectedPiece.transform.position = new Vector3(mousePosition.x, mousePosition.y,0); // move piece with mouse
@@ -113,10 +176,10 @@ public class Game : MonoBehaviour
     }
     void ReleasePiece()
     {
-        Vector2 mousePosition = GetMouseWorldPosition(),
-                targetPosition = RoundVector2(mousePosition / board.TileSize);
-        Debug.Log(targetPosition);  
-        List<Vector2> validMoves = FilterMoves(selectedPiece);
+        Vector2 mousePosition = Utility.GetMouseWorldPosition(),
+                targetPosition = Utility.RoundVector2(mousePosition / board.TileSize);
+        Debug.Log("target "+targetPosition);  
+        List<Vector2> validMoves = FilterMoves();
 
         foreach(Vector2 move in validMoves){
             Debug.Log(move);
@@ -138,7 +201,7 @@ public class Game : MonoBehaviour
         if(selectedPiece!=null)
         {
             DragPiece();
-            if(MouseUp())
+            if(Utility.MouseUp())
             {
                 ReleasePiece();
             }
@@ -149,7 +212,7 @@ public class Game : MonoBehaviour
     {
         // Placeholder for player input logic
         // Example: Check for mouse clicks to select and move pieces
-        if (MouseDown()) // Left mouse button
+        if (Utility.MouseDown()) // Left mouse button
         {
             // Logic to select and move pieces
             // You can call SwitchPlayer() here as needed
