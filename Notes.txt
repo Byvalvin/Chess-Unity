@@ -1,8 +1,9 @@
 1) Line Ending for .Meta files
   - Windows: git config --global core.autocrlf true
   - macOS/Linux: git config --global core.autocrlf input
-  - Then add files and commit: git add Assets ProjectSettings
-                              git commit -m "Add Assets and ProjectSettings with correct line endings"
+  - Then add files or folders you want to add and commit;
+          git add Assets ProjectSettings
+          git commit -m "Add Assets and ProjectSettings with correct line endings"
 
 
 
