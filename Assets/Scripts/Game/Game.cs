@@ -30,6 +30,20 @@ public class Game : MonoBehaviour
         currentIndex = (currentIndex + 1) % players.Length;
     }
 
+    HashSet<Vector2Int> GetAllPlayerMoves(int playerIndex)
+    {
+        HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
+        foreach(Piece piece in players[playerIndex].Pieces)
+        {
+            foreach (Vector2Int move in piece.GetValidMoves())
+            {
+                if(!(piece.Type=="Pawn" && piece.Position.x==move.x))
+                    allMoves.Add(move);
+            }
+        }
+        return allMoves;
+    }
+
 
     // Piece Movement Logic
     bool FilterPawnMove(Vector2Int pos)
@@ -41,11 +55,11 @@ public class Game : MonoBehaviour
 
         return (pieceAtpos&&!sameColourPieceAtPos&&isDiag) || (!pieceAtpos&&!isDiag);
     }
-    List<Vector2Int> FilterPawnMoves(){
+    HashSet<Vector2Int> FilterPawnMoves(){
         if(selectedPiece==null){
             return null; // dont even bother
         }
-        List<Vector2Int> pawnMoves = selectedPiece.GetValidMoves();
+        HashSet<Vector2Int> pawnMoves = selectedPiece.GetValidMoves();
         return pawnMoves.FindAll(FilterPawnMove);
     }
 
@@ -55,11 +69,11 @@ public class Game : MonoBehaviour
     {
         return false;
     }
-    List<Vector2Int> FilterKnightMoves(){
+    HashSet<Vector2Int> FilterKnightMoves(){
         if(selectedPiece==null){
             return null; // dont even bother
         }
-        List<Vector2Int> knightMoves = selectedPiece.GetValidMoves();
+        HashSet<Vector2Int> knightMoves = selectedPiece.GetValidMoves();
         return knightMoves.FindAll(FilterKnightMove);
     }
 
@@ -79,13 +93,12 @@ public class Game : MonoBehaviour
         int m = onLine1 ? -1:1;
         int x = (int)pos.x, y=(int)pos.y, b = y - m*x;
 
-        List<Vector2Int> pointsBetween = Utility.GetIntermediatePoints(selectedPiece.Position, pos);
-        Debug.Log("InbetweenerslENGNT: "+pointsBetween.Count);
+        HashSet<Vector2Int> pointsBetween = Utility.GetIntermediatePoints(selectedPiece.Position, pos, Utility.MovementType.Diagonal);
+        //Debug.Log("InbetweenerslENGNT: "+pointsBetween.Count);
         foreach (Vector2Int apos in pointsBetween)
         {
-            Debug.Log("Inbetweeners: "+apos);
+            //Debug.Log("Inbetweeners: "+apos);
             if(board.GetTile(apos).HasPiece()){
-                Debug.Log("remved: "+apos);
                 return false;
             }
             
@@ -93,11 +106,11 @@ public class Game : MonoBehaviour
 
         return !pieceAtpos || (pieceAtpos && !sameColourPieceAtPos); // leave the move if opposing piece
     }
-    List<Vector2Int> FilterBishopMoves(){
+    HashSet<Vector2Int> FilterBishopMoves(){
         if(selectedPiece==null){
             return null; // dont even bother
         }
-        List<Vector2Int> bishopMoves = selectedPiece.GetValidMoves();
+        HashSet<Vector2Int> bishopMoves = selectedPiece.ValidMoves;
         return bishopMoves.FindAll(FilterBishopMove);
     }
 
@@ -107,11 +120,11 @@ public class Game : MonoBehaviour
     {
         return false;
     }
-    List<Vector2Int> FilterRookMoves(){
+    HashSet<Vector2Int> FilterRookMoves(){
         if(selectedPiece==null){
             return null; // dont even bother
         }
-        List<Vector2Int> rookMoves = selectedPiece.GetValidMoves();
+        HashSet<Vector2Int> rookMoves = selectedPiece.GetValidMoves();
         return rookMoves.FindAll(FilterRookMove);
     }
 
@@ -121,11 +134,11 @@ public class Game : MonoBehaviour
     {
         return false;
     }
-    List<Vector2Int> FilterQueenMoves(){
+    HashSet<Vector2Int> FilterQueenMoves(){
         if(selectedPiece==null){
             return null; // dont even bother
         }
-        List<Vector2Int> queenMoves = selectedPiece.GetValidMoves();
+        HashSet<Vector2Int> queenMoves = selectedPiece.GetValidMoves();
         return queenMoves.FindAll(FilterQueenMove);
     }
 
@@ -133,19 +146,25 @@ public class Game : MonoBehaviour
 
     bool FilterKingMove(Vector2Int pos)
     {
-        return false;
+        bool pieceAtpos = board.GetTile(pos).HasPiece(),
+            sameColourPieceAtPos = pieceAtpos && board.GetTile(pos).piece.Colour==selectedPiece.Colour;
+
+        HashSet<Vector2Int> opposingMoves = GetAllPlayerMoves((currentIndex+1)%2);
+        
+        return !opposingMoves.Contains(pos) && (!pieceAtpos || (pieceAtpos && !sameColourPieceAtPos));
     }
-    List<Vector2Int> FilterKingMoves(){
+    HashSet<Vector2Int> FilterKingMoves(){
         if(selectedPiece==null){
             return null; // dont even bother
         }
-        List<Vector2Int> kingMoves = selectedPiece.GetValidMoves();
+        HashSet<Vector2Int> kingMoves = selectedPiece.GetValidMoves();
+        
         return kingMoves.FindAll(FilterKingMove);
     }
 
 
 
-    List<Vector2Int> FilterMoves()
+    HashSet<Vector2Int> FilterMoves()
     {
         if(selectedPiece==null)
         {
@@ -184,9 +203,12 @@ public class Game : MonoBehaviour
             Piece piece = collision.GetComponent<Piece>();
             if(piece!=null)
             {
-                //Debug.Log($"Selected piece: {piece.Type}");
-                selectedPiece=piece; //Select piece
-                originalPosition = selectedPiece.Position; // Store original position
+                if(players[currentIndex].Colour==piece.Colour)// only allow selection for the player to play
+                {
+                    //Debug.Log($"Selected piece: {piece.Type}");
+                    selectedPiece=piece; //Select piece
+                    originalPosition = selectedPiece.Position; // Store original position
+                }
             }
         }
     }
@@ -199,18 +221,29 @@ public class Game : MonoBehaviour
             //Debug.Log($"Dragging to: {mousePosition}");
         }
     }
+
+    bool isCapture(Vector2Int targetPosition) => board.GetTile(targetPosition).HasPiece();
     void ReleasePiece()
     {
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Vector2Int targetPosition = Utility.RoundVector2(mousePosition / board.TileSize);
-        Debug.Log("target "+targetPosition);  
-        List<Vector2Int> validMoves = FilterMoves();
+        //Debug.Log("target "+targetPosition);  
+        HashSet<Vector2Int> validMoves = FilterMoves();
 
-        foreach(Vector2Int move in validMoves){
+        foreach(Vector2Int move in validMoves)
+        {
             Debug.Log(move);
         }
         if(validMoves.Contains(targetPosition))
         {
+            if(isCapture(targetPosition))
+            {
+                Piece captured = board.GetTile(targetPosition).piece;
+                players[currentIndex].Capture(captured);
+                players[(currentIndex+1)%2].RemovePiece(captured);
+                captured.Captured=true;
+            }
+            
             board.MovePiece(selectedPiece.Position, targetPosition);
             selectedPiece.Move(targetPosition);
             SwitchPlayer();

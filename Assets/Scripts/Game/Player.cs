@@ -6,7 +6,7 @@ public class Player : MonoBehaviour
 {
     private string playerName;
     private bool colour = true; //assume white
-    private List<Piece> pieces = new List<Piece>();
+    private List<Piece> pieces = new List<Piece>(), captured = new List<Piece>();
 
     public string PlayerName{
         get{return playerName;}
@@ -30,6 +30,11 @@ public class Player : MonoBehaviour
     public void RemovePiece(Piece piece)
     {
         pieces.Remove(piece);
+    }
+
+    public void Capture(Piece piece)
+    {
+        captured.Add(piece);
     }
 
     // Start is called before the first frame update

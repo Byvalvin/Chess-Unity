@@ -6,6 +6,15 @@ using System.Collections.Generic;
 
 public static class Utility
 {
+    // variable
+    public enum MovementType
+    {
+        Diagonal,
+        NonDiagonal,
+        All
+    }
+
+
     // Player UI variables
     public static Vector2 GetMouseWorldPosition()
     {
@@ -29,9 +38,9 @@ public static class Utility
     }
 
     //Bresenham's Line Algorithm. This algorithm efficiently finds all the points on a straight line between two points in a grid.
-    public static List<Vector2Int> GetLinePoints(Vector2Int start, Vector2Int end)
+    public static HashSet<Vector2Int> GetLinePoints(Vector2Int start, Vector2Int end)
     {
-        List<Vector2Int> points = new List<Vector2Int>();
+        HashSet<Vector2Int> points = new HashSet<Vector2Int>();
 
         int dx = Mathf.Abs(end.x - start.x);
         int dy = Mathf.Abs(end.y - start.y);
@@ -64,28 +73,135 @@ public static class Utility
 
         return points;
     }
-    public static List<Vector2Int> GetIntermediatePoints(Vector2Int start, Vector2Int end)
-    {
-        List<Vector2Int> points = new List<Vector2Int>();
 
-        // Calculate the differences
+    public static HashSet<Vector2Int> GetDiagonalIntermediatePoints(Vector2Int start, Vector2Int end)
+    {
+        HashSet<Vector2Int> points = new HashSet<Vector2Int>();
+
         int dx = end.x - start.x;
         int dy = end.y - start.y;
 
-        // Determine the number of steps needed
-        int steps = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+        if (Mathf.Abs(dx) != Mathf.Abs(dy)) return points; // Only valid for diagonal moves
+
+        int stepX = (dx > 0) ? 1 : -1;
+        int stepY = (dy > 0) ? 1 : -1;
+        int steps = Mathf.Abs(dx);
 
         for (int i = 1; i < steps; i++) // Start from 1 to steps - 1
         {
-            float t = (float)i / steps;
-            int x = (int)Mathf.Lerp(start.x, end.x, t);
-            int y = (int)Mathf.Lerp(start.y, end.y, t);
-            Vector2Int point = new Vector2Int(x, y);
-            if(!points.Contains(point))points.Add(point);
+            points.Add(new Vector2Int(start.x + i * stepX, start.y + i * stepY));
         }
 
         return points;
     }
+
+    public static HashSet<Vector2Int> GetNonDiagonalIntermediatePoints(Vector2Int start, Vector2Int end)
+    {
+        HashSet<Vector2Int> points = new HashSet<Vector2Int>();
+
+        int dx = end.x - start.x;
+        int dy = end.y - start.y;
+
+        if (dx == 0) // Vertical move
+        {
+            int stepY = (dy > 0) ? 1 : -1;
+            for (int i = 1; i < Mathf.Abs(dy); i++)
+            {
+                points.Add(new Vector2Int(start.x, start.y + i * stepY));
+            }
+        }
+        else if (dy == 0) // Horizontal move
+        {
+            int stepX = (dx > 0) ? 1 : -1;
+            for (int i = 1; i < Mathf.Abs(dx); i++)
+            {
+                points.Add(new Vector2Int(start.x + i * stepX, start.y));
+            }
+        }
+
+        return points;
+    }
+
+    public static HashSet<Vector2Int> GetAllIntermediatePoints(Vector2Int start, Vector2Int end)
+    {
+        HashSet<Vector2Int> points = new HashSet<Vector2Int>();
+
+        int dx = end.x - start.x;
+        int dy = end.y - start.y;
+
+        int steps = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+
+        for (int i = 1; i < steps; i++)
+        {
+            float t = (float)i / steps;
+            int x = (int)Mathf.Lerp(start.x, end.x, t);
+            int y = (int)Mathf.Lerp(start.y, end.y, t);
+            points.Add(new Vector2Int(x, y));
+        }
+
+        return points;
+    }
+
+
+    public static HashSet<Vector2Int> GetIntermediatePoints(Vector2Int start, Vector2Int end, MovementType type)
+    {
+        switch (type)
+        {
+            case MovementType.Diagonal:
+                return GetDiagonalIntermediatePoints(start, end);
+            case MovementType.NonDiagonal:
+                return GetNonDiagonalIntermediatePoints(start, end);
+            case MovementType.All:
+                return GetAllIntermediatePoints(start, end);
+            default:
+                return new HashSet<Vector2Int>(); // Return an empty list for unsupported types
+        }
+    }
+
+
+    public static HashSet<Vector2Int> GetSurroundingPoints(Vector2Int center)
+    {
+        HashSet<Vector2Int> surroundingPoints = new HashSet<Vector2Int>();
+
+        // Define the possible offsets for neighboring positions
+        Vector2Int[] offsets = {
+            new Vector2Int(-1, -1), new Vector2Int(0, -1), new Vector2Int(1, -1),
+            new Vector2Int(-1, 0),                           new Vector2Int(1, 0),
+            new Vector2Int(-1, 1), new Vector2Int(0, 1), new Vector2Int(1, 1)
+        };
+
+        foreach (var offset in offsets)
+        {
+            Vector2Int neighbor = center + offset;
+            surroundingPoints.Add(neighbor);
+        }
+
+        return surroundingPoints;
+    }
+
+    public static HashSet<Vector2Int> GetAllPointsInArea(Vector2Int start, Vector2Int end)
+    {
+        HashSet<Vector2Int> points = new HashSet<Vector2Int>();
+
+        // Determine the min and max for x and y coordinates
+        int minX = Mathf.Min(start.x, end.x);
+        int maxX = Mathf.Max(start.x, end.x);
+        int minY = Mathf.Min(start.y, end.y);
+        int maxY = Mathf.Max(start.y, end.y);
+
+        // Loop through the range and add points
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                points.Add(new Vector2Int(x, y));
+            }
+        }
+
+        return points;
+    }
+
+
 
 
 

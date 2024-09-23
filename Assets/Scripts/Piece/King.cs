@@ -5,11 +5,12 @@ using UnityEngine;
 public class King : Piece
 {
     public override bool CanMove(Vector2Int to){
-            return true;
+        if (!InBounds(to)) return false;
+        return true;
     }
-    public override List<Vector2Int> GetValidMoves(){
-        List<Vector2Int> validMoves = new List<Vector2Int>();
-        return validMoves;
+    public override void SetValidMoves(){
+        List<Vector2Int> moves = Utility.GetSurroundingPoints(currentPos);
+        validMoves =  moves.FindAll(CanMove);
     }
     // Start is called before the first frame update
     protected override void Start()

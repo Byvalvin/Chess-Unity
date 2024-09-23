@@ -8,9 +8,9 @@ public class Rook : Piece
     public override bool CanMove(Vector2Int to){
             return true;
     }
-    public override List<Vector2Int> GetValidMoves(){
-        List<Vector2Int> validMoves = new List<Vector2Int>();
-        return validMoves;
+    public override List<Vector2Int> SetValidMoves(){
+        List<Vector2Int> moves = new List<Vector2Int>();
+        validMoves =  moves;
     }
 
     // Start is called before the first frame update

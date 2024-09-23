@@ -206,7 +206,7 @@ public class Board : MonoBehaviour
     void Start()
     {
         Vector2Int pos1 = new Vector2Int(0,0), pos2 = new Vector2Int(7,7);
-        List<Vector2Int> pointsBetween = Utility.GetIntermediatePoints(pos1, pos2);
+        List<Vector2Int> pointsBetween = Utility.GetAllPointsInArea(pos1, pos2);
         Debug.Log("Inbetweenerslength: "+pointsBetween.Count);
         foreach (Vector2Int apos in pointsBetween)
         {

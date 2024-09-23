@@ -9,6 +9,9 @@ public abstract class Piece : MonoBehaviour
     protected bool colour;
     protected Color myColour;
     protected Vector2Int currentPos;
+    protected HashSet<Vector2Int> validMoves = new HashSet<Vector2Int>();
+    protected bool captured = false;
+    private Vector2Int purgatory = new Vector2Int(-100,-100); // captured pieces go to purgatory
 
     protected float tileSize;
     protected Vector2Int minPoint, maxPoint;
@@ -43,16 +46,28 @@ public abstract class Piece : MonoBehaviour
         }
     }
     
+    protected abstract void SetValidMoves();
     protected void SetPosition()
     {
         transform.position = new Vector3(tileSize*currentPos.x, tileSize*currentPos.y, 0);
+        
     }
     
+    public bool Captured
+    {
+        get{return captured;}
+        set
+        {
+            captured=value;
+            if(captured) Position=purgatory;
+        }
+    }
     public Vector2Int Position
     {
         get{return currentPos;}
         set{
             currentPos=value;
+            SetValidMoves();
             SetPosition();
         }
     }
@@ -68,6 +83,10 @@ public abstract class Piece : MonoBehaviour
             colour=value;
             myColour=colour? lightColour:darkColour;
         }
+    }
+    public HashSet<VectorInt2> ValidMoves
+    {
+        get{return validMoves;}
     }
     public Color MyColour
     {
@@ -100,7 +119,6 @@ public abstract class Piece : MonoBehaviour
     }
 
     public abstract bool CanMove(Vector2Int to); // checks if a piece can move to tile at to
-    public abstract List<Vector2Int> GetValidMoves(); // returns list of all moves Piece can make regardless of board restrictions
     public virtual void Move(Vector2Int to) // just used tp update state since move check done on board
     {
         currentPos = to;

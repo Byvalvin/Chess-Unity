@@ -25,22 +25,21 @@ public class Pawn : Piece
         SetPosition();
     }
 
-    public override List<Vector2Int> GetValidMoves(){
+    public override void SetValidMoves(){
         Debug.Log("My current pos"+ currentPos);
-        List<Vector2Int> validMoves = new List<Vector2Int>
+        List<Vector2Int> moves = new List<Vector2Int>
         {
             new Vector2Int(currentPos.x, colour ? currentPos.y - 1 : currentPos.y + 1) // One space forward
         };
 
         if (firstMove)
-            validMoves.Add(new Vector2Int(currentPos.x, colour ? currentPos.y - 2 : currentPos.y + 2)); // Two spaces forward
+            moves.Add(new Vector2Int(currentPos.x, colour ? currentPos.y - 2 : currentPos.y + 2)); // Two spaces forward
 
         // Diagonal captures
-        validMoves.Add(new Vector2Int(currentPos.x - 1, colour ? currentPos.y - 1 : currentPos.y + 1));
-        validMoves.Add(new Vector2Int(currentPos.x + 1, colour ? currentPos.y - 1 : currentPos.y + 1));
+        moves.Add(new Vector2Int(currentPos.x - 1, colour ? currentPos.y - 1 : currentPos.y + 1));
+        moves.Add(new Vector2Int(currentPos.x + 1, colour ? currentPos.y - 1 : currentPos.y + 1));
 
-        return validMoves.FindAll(CanMove); // Filter valid moves
-
+        validMoves = moves.FindAll(CanMove); // Filter valid moves
     }
 
 
