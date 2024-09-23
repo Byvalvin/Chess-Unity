@@ -6,40 +6,38 @@ public class Pawn : Piece
 {
     private bool firstMove = true;
 
-    public override bool CanMove(Vector2 to)
+    public override bool CanMove(Vector2Int to)
     {
         if (!InBounds(to)) return false;
 
-        bool sameX = currentPos.x == to.x;
-        bool forwardMove = (colour && currentPos.y - 1 == to.y) || (!colour && currentPos.y + 1 == to.y);
-        bool doubleForwardMove = firstMove && ((colour && currentPos.y - 2 == to.y) || (!colour && currentPos.y + 2 == to.y));
-        bool diagonalCapture = forwardMove && Mathf.Abs(currentPos.x - to.x) == 1;
+        bool sameX = currentPos.x == to.x,
+            forwardMove = (colour && currentPos.y - 1 == to.y) || (!colour && currentPos.y + 1 == to.y),
+            doubleForwardMove = firstMove && ((colour && currentPos.y - 2 == to.y) || (!colour && currentPos.y + 2 == to.y)),
+            diagonalCapture = forwardMove && Mathf.Abs(currentPos.x - to.x) == 1;
 
         return (forwardMove && sameX) || (doubleForwardMove && sameX) || diagonalCapture;
     }
-    public override void Move(Vector2 to)
+    public override void Move(Vector2Int to)
     {
-        if (CanMove(to))
-        {
-            currentPos = to;
-            firstMove = false; // Mark as moved
-            SetPosition();
-        }
+
+        currentPos = to;
+        firstMove = false; // Mark as moved
+        SetPosition();
     }
 
-    public override List<Vector2> GetValidMoves(){
+    public override List<Vector2Int> GetValidMoves(){
         Debug.Log("My current pos"+ currentPos);
-        List<Vector2> validMoves = new List<Vector2>
+        List<Vector2Int> validMoves = new List<Vector2Int>
         {
-            new Vector2(currentPos.x, colour ? currentPos.y - 1 : currentPos.y + 1) // One space forward
+            new Vector2Int(currentPos.x, colour ? currentPos.y - 1 : currentPos.y + 1) // One space forward
         };
 
         if (firstMove)
-            validMoves.Add(new Vector2(currentPos.x, colour ? currentPos.y - 2 : currentPos.y + 2)); // Two spaces forward
+            validMoves.Add(new Vector2Int(currentPos.x, colour ? currentPos.y - 2 : currentPos.y + 2)); // Two spaces forward
 
         // Diagonal captures
-        validMoves.Add(new Vector2(currentPos.x - 1, colour ? currentPos.y - 1 : currentPos.y + 1));
-        validMoves.Add(new Vector2(currentPos.x + 1, colour ? currentPos.y - 1 : currentPos.y + 1));
+        validMoves.Add(new Vector2Int(currentPos.x - 1, colour ? currentPos.y - 1 : currentPos.y + 1));
+        validMoves.Add(new Vector2Int(currentPos.x + 1, colour ? currentPos.y - 1 : currentPos.y + 1));
 
         return validMoves.FindAll(CanMove); // Filter valid moves
 

@@ -7,7 +7,7 @@ public class Board : MonoBehaviour
     // PRIVATE
     private Tile[,] tiles;
 
-    private Vector2 minPoint, maxPoint;
+    private Vector2Int minPoint, maxPoint;
     private const float tileSize = 5f;
     float pieceScaleFactor = 1.25f; // increase size of a piece also used to set collider of piece to reciprocal
 
@@ -23,7 +23,7 @@ public class Board : MonoBehaviour
 
         // Create and Add Tiles
         tiles = new Tile[N, N];
-        minPoint = new Vector2(0, 0); maxPoint = new Vector2(N-1, N-1);
+        minPoint = new Vector2Int(0, 0); maxPoint = new Vector2Int(N-1, N-1);
 
         for (int yi = 0; yi < N; yi++)
         {
@@ -32,7 +32,7 @@ public class Board : MonoBehaviour
                 GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 Tile tile = tileObject.AddComponent<Tile>();
 
-                tile.Position = new Vector2(xi, yi); // Note the order here
+                tile.Position = new Vector2Int(xi, yi); // Note the order here
                 tile.Colour = (yi + xi) % 2 == 1; // Alternate colours
                 tile.N = tileSize;
 
@@ -71,10 +71,10 @@ public class Board : MonoBehaviour
         get { return tileSize; }
     }
 
-    public Tile GetTile(Vector2 pos)
+    public Tile GetTile(Vector2Int pos)
     {
-        int xIndex = (int)pos.x;
-        int yIndex = (int)pos.y; // Invert y coordinate for the array
+        int xIndex = pos.x;
+        int yIndex = pos.y; // Invert y coordinate for the array
 
         if (0 <= xIndex && xIndex < N && 0 <= yIndex && yIndex < N)
         {
@@ -83,7 +83,7 @@ public class Board : MonoBehaviour
         return null; // Return null if out of bounds
     }
 
-    public void MovePiece(Vector2 from, Vector2 to)
+    public void MovePiece(Vector2Int from, Vector2Int to)
     {
         Tile fromTile = GetTile(from);
         Tile toTile = GetTile(to);
@@ -150,7 +150,7 @@ public class Board : MonoBehaviour
 
     void AddPiece(string type, bool colour, int x, Player Player)
     {
-        int darkY = (int)minPoint.y, lightY = (int)maxPoint.y;
+        int darkY = minPoint.y, lightY = maxPoint.y;
 
         GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
         Piece piece = null;
@@ -182,7 +182,7 @@ public class Board : MonoBehaviour
         }
 
         piece.Colour = colour;
-        piece.Position = new Vector2(x, colour ? lightY : darkY);
+        piece.Position = new Vector2Int(x, colour ? lightY : darkY);
         piece.TileSize = tileSize;
         piece.MinPoint = minPoint; 
         piece.MaxPoint = maxPoint;
@@ -205,6 +205,14 @@ public class Board : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Vector2Int pos1 = new Vector2Int(0,0), pos2 = new Vector2Int(7,7);
+        List<Vector2Int> pointsBetween = Utility.GetIntermediatePoints(pos1, pos2);
+        Debug.Log("Inbetweenerslength: "+pointsBetween.Count);
+        foreach (Vector2Int apos in pointsBetween)
+        {
+            Debug.Log("Inbetweeners: "+apos);
+            
+        }
         CenterCamera();
     }
 

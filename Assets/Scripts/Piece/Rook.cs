@@ -5,11 +5,11 @@ using UnityEngine;
 public class Rook : Piece
 {
 
-    public override bool CanMove(Vector2 to){
+    public override bool CanMove(Vector2Int to){
             return true;
     }
-    public override List<Vector2> GetValidMoves(){
-        List<Vector2> validMoves = new List<Vector2>();
+    public override List<Vector2Int> GetValidMoves(){
+        List<Vector2Int> validMoves = new List<Vector2Int>();
         return validMoves;
     }
 

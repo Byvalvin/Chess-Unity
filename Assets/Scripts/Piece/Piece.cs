@@ -8,10 +8,10 @@ public abstract class Piece : MonoBehaviour
     protected string type;
     protected bool colour;
     protected Color myColour;
-    protected Vector2 currentPos;
+    protected Vector2Int currentPos;
 
     protected float tileSize;
-    protected Vector2 minPoint, maxPoint;
+    protected Vector2Int minPoint, maxPoint;
     
     protected SpriteRenderer spriteR;
     protected Sprite pieceSprite;
@@ -48,7 +48,7 @@ public abstract class Piece : MonoBehaviour
         transform.position = new Vector3(tileSize*currentPos.x, tileSize*currentPos.y, 0);
     }
     
-    public Vector2 Position
+    public Vector2Int Position
     {
         get{return currentPos;}
         set{
@@ -80,11 +80,11 @@ public abstract class Piece : MonoBehaviour
         set{tileSize=value;}
     }
 
-    public Vector2 MinPoint{
+    public Vector2Int MinPoint{
         get{return minPoint;}
         set{minPoint=value;}
     }
-    public Vector2 MaxPoint{
+    public Vector2Int MaxPoint{
         get{return maxPoint;}
         set{maxPoint=value;}
     }
@@ -99,19 +99,17 @@ public abstract class Piece : MonoBehaviour
         set{pieceColliderSize=value;}
     }
 
-    public abstract bool CanMove(Vector2 to); // checks if a piece can move to tile at to
-    public abstract List<Vector2> GetValidMoves(); // returns list of all moves Piece can make regardless of board restrictions
-    public virtual void Move(Vector2 to)
+    public abstract bool CanMove(Vector2Int to); // checks if a piece can move to tile at to
+    public abstract List<Vector2Int> GetValidMoves(); // returns list of all moves Piece can make regardless of board restrictions
+    public virtual void Move(Vector2Int to) // just used tp update state since move check done on board
     {
-        if (CanMove(to))
-        {
-            currentPos = to;
-            SetPosition();
-        }
+        currentPos = to;
+        SetPosition();
+
     }
 
     // GUI
-    protected bool InBounds(Vector2 pos)=>Utility.InBounds(minPoint, maxPoint, pos);
+    protected bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
 
     public virtual void HandleInput() 
     {
