@@ -8,6 +8,8 @@ public class Player : MonoBehaviour
     private bool colour = true; //assume white
     private List<Piece> pieces = new List<Piece>(), captured = new List<Piece>();
 
+    private bool inCheck = false;
+
     public string PlayerName{
         get{return playerName;}
         set{playerName=value;}
@@ -19,6 +21,13 @@ public class Player : MonoBehaviour
     public List<Piece> Pieces
     {
         get => pieces;
+    }
+
+    public bool InCheck{
+        get{return inCheck;}
+        set{
+            inCheck=value;
+        }
     }
 
     public void AddPiece(Piece piece)

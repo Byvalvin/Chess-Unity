@@ -36,7 +36,8 @@ public class Game : MonoBehaviour
         {
             foreach (Vector2Int move in piece.ValidMoves)
             {
-                if (!(piece.Type == "Pawn" && piece.Position.x == move.x))
+                bool pawnFwdMove = piece.Type == "Pawn" && piece.Position.x == move.x;
+                if (!pawnFwdMove)
                     allMoves.Add(move);
             }
         }
@@ -189,6 +190,84 @@ public class Game : MonoBehaviour
         }
     }
 
+    
+    private void UpdateKingAttack(Piece king)
+    {
+        // Debug.Log("Check King "+king.Type + " " + king.Colour);
+        HashSet<Vector2Int> opposingMoves = GetAllPlayerMoves(players[king.Colour ? 1:0]);
+
+        HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
+        foreach(Vector2Int move in king.ValidMoves)
+        {
+            players[king.Colour ? 0:1].InCheck = king.Position==move;
+            if(!opposingMoves.Contains(move))
+            {
+                kingMoves.Add(move);
+            }
+        }
+        king.ValidMoves = kingMoves;
+    }
+    private void UpdateGameState()
+    {
+        // update all piece moves
+
+        // track kings for special updates
+        Piece KingWhite=null, KingBlack=null;
+
+        //Debug.Log($"Player {players[1].PlayerName} has {players[1].Pieces.Count} pieces.");
+
+        // P1 pieces
+        foreach(Piece piece in players[0].Pieces)
+        {
+            //Debug.Log("Check Piece "+piece+" "+piece.Type+"|");
+            if(piece.Type=="King")
+            {
+                KingWhite=piece;
+            }
+            piece.ResetValidMoves();
+            piece.ValidMoves = FilterMoves(piece);
+        }
+        // P2 pieces
+        foreach(Piece piece in players[1].Pieces)
+        {
+            if(piece.Type=="King")
+            {
+                KingBlack=piece;
+            }
+            piece.ResetValidMoves();
+            piece.ValidMoves = FilterMoves(piece);
+        }
+
+        // update King moves based on opponent pieces
+        UpdateKingAttack(KingWhite);
+        UpdateKingAttack(KingBlack);
+
+        /*
+        Debug.Log("Player: "+ players[0].PlayerName);
+        foreach(Piece piece in players[0].Pieces)
+        {
+            Debug.Log(piece);
+            foreach (var item in piece.ValidMoves)
+            {
+                Debug.Log(item);
+            }
+            Debug.Log("----------------------");
+        }
+        Debug.Log("|||||||||||||||||||||||||||||");
+        Debug.Log("Player: "+ players[1].PlayerName);
+        foreach(Piece piece in players[1].Pieces)
+        {
+            Debug.Log(piece);
+            foreach (var item in piece.ValidMoves)
+            {
+                Debug.Log(item);
+            }
+            Debug.Log("----------------------");
+        }
+        */
+
+
+    }
 
 
 
@@ -258,82 +337,6 @@ public class Game : MonoBehaviour
                 ReleasePiece();
             }
         }
-    }
-
-    private void UpdateKingAttack(Piece king)
-    {
-        // Debug.Log("Check King "+king.Type + " " + king.Colour);
-        HashSet<Vector2Int> opposingMoves = GetAllPlayerMoves(players[king.Colour ? 1:0]);
-
-        HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
-        foreach(Vector2Int move in king.ValidMoves)
-        {
-            if(!opposingMoves.Contains(move))
-            {
-                kingMoves.Add(move);
-            }
-        }
-        king.ValidMoves = kingMoves;
-
-    }
-    private void UpdateGameState()
-    {
-        // update all piece moves
-
-        // track kings for special updates
-        Piece KingWhite=null, KingBlack=null;
-
-        //Debug.Log($"Player {players[1].PlayerName} has {players[1].Pieces.Count} pieces.");
-
-        // P1 pieces
-        foreach(Piece piece in players[0].Pieces)
-        {
-            //Debug.Log("Check Piece "+piece+" "+piece.Type+"|");
-            if(piece.Type=="King")
-            {
-                KingWhite=piece;
-            }
-            piece.ResetValidMoves();
-            piece.ValidMoves = FilterMoves(piece);
-        }
-        // P2 pieces
-        foreach(Piece piece in players[1].Pieces)
-        {
-            if(piece.Type=="King")
-            {
-                KingBlack=piece;
-            }
-            piece.ResetValidMoves();
-            piece.ValidMoves = FilterMoves(piece);
-        }
-
-        // update King moves based on opponent pieces
-        UpdateKingAttack(KingWhite);
-        UpdateKingAttack(KingBlack);
-
-        /*
-        Debug.Log("Player: "+ players[0].PlayerName);
-        foreach(Piece piece in players[0].Pieces)
-        {
-            Debug.Log(piece);
-            foreach (var item in piece.ValidMoves)
-            {
-                Debug.Log(item);
-            }
-            Debug.Log("----------------------");
-        }
-        Debug.Log("|||||||||||||||||||||||||||||");
-        Debug.Log("Player: "+ players[1].PlayerName);
-        foreach(Piece piece in players[1].Pieces)
-        {
-            Debug.Log(piece);
-            foreach (var item in piece.ValidMoves)
-            {
-                Debug.Log(item);
-            }
-            Debug.Log("----------------------");
-        }
-        */
     }
 
     private void HandleInput()
