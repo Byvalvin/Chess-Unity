@@ -12,19 +12,16 @@ public class Queen : Piece
         HashSet<Vector2Int> moves = new HashSet<Vector2Int>();
         validMoves = moves;
     }
+
+    protected override void Awake(){
+        type = "Queen";
+    }
+
     // Start is called before the first frame update
     protected override void Start()
     {
-        type = "Queen";
         base.Start();
-
-
-
         SetPosition();
-
-        // Load sprite
-        //pieceSprite = Resources.Load<Sprite>("Pawn");
-     
         SetSprite();   
         
     }

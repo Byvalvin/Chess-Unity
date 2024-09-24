@@ -74,7 +74,8 @@ public abstract class Piece : MonoBehaviour
     }
     public string Type
     {
-        get{return type;} 
+        get{return type;}
+        protected set{type=value;} 
     }
     public bool Colour
     {
@@ -134,6 +135,8 @@ public abstract class Piece : MonoBehaviour
     {
     }
 
+    protected virtual void Awake(){
+    }
     
 
     // Start and Update methods can be overridden by derived classes as needed

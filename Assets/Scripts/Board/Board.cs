@@ -177,6 +177,8 @@ public class Board : MonoBehaviour
                 darkY++;
                 lightY--;
                 piece = PieceObject.AddComponent<Pawn>();
+                //Debug.Log($"Created {piece.Type} with colour {colour}");
+
                 break;
             default:
                 Debug.Log("Unknown piece type: " + type);
@@ -202,10 +204,12 @@ public class Board : MonoBehaviour
 
         // Give piece to player
         Player.AddPiece(piece);
+        //Debug.Log($"Added {piece.Type} to {Player.PlayerName}");
 
-        Debug.Log($"Type:{piece.Type}, Colour: {piece.Colour}");
+
+        //Debug.Log($"Type:{piece.Type}, Colour: {piece.Colour}");
         int i = Player.Pieces.Count-1;
-        Debug.Log(Player.Pieces[i].Type + " " + Player.Pieces[i].Colour);
+        //Debug.Log(Player.Pieces[i].Type + " " + Player.Pieces[i].Colour);
 
     }
 

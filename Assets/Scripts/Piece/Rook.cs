@@ -13,18 +13,15 @@ public class Rook : Piece
         validMoves =  moves;
     }
 
+    protected override void Awake(){
+        type = "Rook";
+    }
+
     // Start is called before the first frame update
     protected override void Start()
     {
         base.Start();
-
-        type = "Rook";
-
         SetPosition();
-
-        // Load sprite
-        //pieceSprite = Resources.Load<Sprite>("Pawn");
-     
         SetSprite();   
         
     }

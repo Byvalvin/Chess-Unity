@@ -14,18 +14,15 @@ public class Knight : Piece
         validMoves = moves;
     }
 
+    protected override void Awake(){
+        type = "Knight";
+    }
+
     // Start is called before the first frame update
     protected override void Start()
     {
         base.Start();
-
-        type = "Knight";
-
         SetPosition();
-
-        // Load sprite
-        //pieceSprite = Resources.Load<Sprite>("Pawn");
-     
         SetSprite();   
         
     }

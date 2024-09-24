@@ -56,10 +56,13 @@ public class Bishop : Piece
         }
     }
 
+    protected override void Awake(){
+        type = "Bishop";
+    }
+
     // Start is called before the first frame update
     protected override void Start()
     {
-        type = "Bishop";
         base.Start();
         SetPosition();
         SetSprite();   

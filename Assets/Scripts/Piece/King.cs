@@ -24,11 +24,14 @@ public class King : Piece
         }
     }
 
+    protected override void Awake(){
+        type = "King";
+    }
+
     // Start is called before the first frame update
     protected override void Start()
     {
         base.Start();
-        type = "King";
         SetPosition();
         SetSprite();   
     }

@@ -54,10 +54,13 @@ public class Pawn : Piece
         // Placeholder for input handling
     }
 
+    protected override void Awake(){
+        type = "Pawn";
+    }
+
     protected override void Start()
     {
         base.Start();
-        type = "Pawn";
         SetPosition();
         SetSprite();   
     }
