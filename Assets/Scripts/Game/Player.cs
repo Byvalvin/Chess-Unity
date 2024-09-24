@@ -19,7 +19,6 @@ public class Player : MonoBehaviour
     public List<Piece> Pieces
     {
         get => pieces;
-        set => pieces = value;
     }
 
     public void AddPiece(Piece piece)

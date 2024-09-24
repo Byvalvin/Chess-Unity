@@ -53,6 +53,8 @@ public abstract class Piece : MonoBehaviour
         
     }
     
+    public void ResetValidMoves() => SetValidMoves();
+    
     public bool Captured
     {
         get{return captured;}
@@ -68,7 +70,6 @@ public abstract class Piece : MonoBehaviour
         set{
             currentPos=value;
             SetPosition();
-            SetValidMoves();
         }
     }
     public string Type
@@ -87,6 +88,7 @@ public abstract class Piece : MonoBehaviour
     public HashSet<Vector2Int> ValidMoves
     {
         get{return validMoves;}
+        set{validMoves=value;}
     }
     public Color MyColour
     {
@@ -143,7 +145,7 @@ public abstract class Piece : MonoBehaviour
         pieceCollider.size = new Vector2(pieceColliderSize,pieceColliderSize); // need a pieceCollider
 
         SetPosition();
-        SetValidMoves();
+        //SetValidMoves();
 
      }
     protected virtual void Update() 

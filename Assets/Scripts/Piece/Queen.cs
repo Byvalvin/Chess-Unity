@@ -15,9 +15,10 @@ public class Queen : Piece
     // Start is called before the first frame update
     protected override void Start()
     {
+        type = "Queen";
         base.Start();
 
-        type = "Queen";
+
 
         SetPosition();
 

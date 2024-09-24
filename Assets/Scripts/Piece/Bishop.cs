@@ -16,8 +16,10 @@ public class Bishop : Piece
 
     protected override void SetValidMoves()
     {
+        //validMoves.Clear();
+
         HashSet<Vector2Int> moves = new HashSet<Vector2Int>();
-        Debug.Log("My current pos: " + currentPos);
+        //Debug.Log("My current pos: " + currentPos);
 
         int x = currentPos.x;
         int y = currentPos.y;
@@ -57,8 +59,8 @@ public class Bishop : Piece
     // Start is called before the first frame update
     protected override void Start()
     {
-        base.Start();
         type = "Bishop";
+        base.Start();
         SetPosition();
         SetSprite();   
     }

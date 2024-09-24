@@ -185,4 +185,33 @@ public static class Utility
 
         return points;
     }
+
+    // // Containers    
+    // public static HashSet<T> FindAll<T>(HashSet<T> set, Func<T, bool> predicate)
+    // {
+    //     HashSet<T> result = new HashSet<T>();
+    //     foreach (var item in set)
+    //     {
+    //         if (predicate(item))
+    //         {
+    //             result.Add(item);
+    //         }
+    //     }
+    //     return result;
+    // }
+
+    // public static HashSet<T> FindAllAnd<T>(HashSet<T> set, Func<T, bool> predicate, bool additionalCondition)
+    // {
+    //     HashSet<T> result = new HashSet<T>();
+    //     foreach (var item in set)
+    //     {
+    //         if (predicate(item) && additionalCondition)
+    //         {
+    //             result.Add(item);
+    //         }
+    //     }
+    //     return result;
+    // }
+
+
 }

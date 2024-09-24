@@ -26,7 +26,7 @@ public class Pawn : Piece
 
     protected override void SetValidMoves()
     {
-        Debug.Log("My current pos: " + currentPos);
+        //Debug.Log("My current pos: " + currentPos);
         HashSet<Vector2Int> moves = new HashSet<Vector2Int>
         {
             new Vector2Int( currentPos.x, currentPos.y + (colour ? -1 : 1) ) // One space forward
