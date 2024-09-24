@@ -8,8 +8,8 @@ public class Queen : Piece
     public override bool CanMove(Vector2Int to){
             return true;
     }
-    public override List<Vector2Int> Getmoves(){
-        List<Vector2Int> moves = new List<Vector2Int>();
+    protected override void SetValidMoves(){
+        HashSet<Vector2Int> moves = new HashSet<Vector2Int>();
         validMoves = moves;
     }
     // Start is called before the first frame update

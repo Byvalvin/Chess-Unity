@@ -1,89 +1,71 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Bishop : Piece
 {
-
     public override bool CanMove(Vector2Int to)
     {
         if (!InBounds(to)) return false;
 
-        /* 
-        in lines y = x, m=1 and y = -x, m=-1 
-        but need to determine b based on piece position for both lines
-        use y = mx + b;
-        */
-        int y=(int)Position.y, x=(int)Position.x;
+        // Check if the move is diagonal
+        int deltaX = Mathf.Abs(currentPos.x - to.x);
+        int deltaY = Mathf.Abs(currentPos.y - to.y);
 
-        // y = -1x + b
-        int b1 = y + x;
-        bool onLine1 = y == -1*x + b1;
-
-        // y = 1x + b
-        int b2 = y - x;
-        bool onLine2 = y == 1*x + b2;
-
-        return onLine1 || onLine2;
+        return deltaX == deltaY; // Diagonal moves only
     }
-    public override void SetValidMoves(){
-        List<Vector2Int> moves = new List<Vector2Int>();
-        Debug.Log("My current pos"+ currentPos);
 
-        int x=Position.x, y=Position.y;
+    protected override void SetValidMoves()
+    {
+        HashSet<Vector2Int> moves = new HashSet<Vector2Int>();
+        Debug.Log("My current pos: " + currentPos);
 
-        // topL
-        int tLx=x-1, tLy=y+1;
-        while(InBounds(new Vector2Int(tLx,tLy)))
+        int x = currentPos.x;
+        int y = currentPos.y;
+
+        // Directions: top-left, bottom-left, bottom-right, top-right
+        Vector2Int[] directions = {
+            new Vector2Int(-1, 1),   // top-left
+            new Vector2Int(-1, -1),  // bottom-left
+            new Vector2Int(1, -1),   // bottom-right
+            new Vector2Int(1, 1)     // top-right
+        };
+
+        foreach (var direction in directions)
         {
-            moves.Add(new Vector2Int(tLx--, tLy++));
+            int tX = x, tY = y;
+
+            while (true)
+            {
+                tX += direction.x;
+                tY += direction.y;
+
+                if (!InBounds(new Vector2Int(tX, tY))) break;
+
+                moves.Add(new Vector2Int(tX, tY));
+            }
         }
 
-        // botL
-        int bLx=x-1, bLy=y-1;
-        while(InBounds(new Vector2Int(bLx,bLy)))
+        // Filter valid moves using HashSet
+        validMoves = new HashSet<Vector2Int>();
+        foreach (var move in moves)
         {
-            moves.Add(new Vector2Int(bLx--, bLy--));
+            if (CanMove(move))
+                validMoves.Add(move);
         }
-
-        // botR
-        int bRx=x+1, bRy=y-1;
-        while(InBounds(new Vector2Int(bRx,bRy)))
-        {
-            moves.Add(new Vector2Int(bRx++, bRy--));
-        }
-
-        // topR
-        int tRx=x+1, tRy=y+1;
-        while(InBounds(new Vector2Int(tRx,tRy)))
-        {
-            moves.Add(new Vector2Int(tRx++, tRy++));
-        }
-
-
-        validMoves = moves.FindAll(CanMove);
     }
 
     // Start is called before the first frame update
     protected override void Start()
     {
         base.Start();
-
         type = "Bishop";
-
         SetPosition();
-
-        // Load sprite
-        //pieceSprite = Resources.Load<Sprite>("Pawn");
-     
         SetSprite();   
-        
     }
 
     // Update is called once per frame
     protected override void Update()
     {
         base.Update();
-        
     }
 }

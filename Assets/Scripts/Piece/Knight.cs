@@ -9,8 +9,8 @@ public class Knight : Piece
     public override bool CanMove(Vector2Int to){
             return true;
     }
-    public override void SetValidMoves(){
-        List<Vector2Int> moves = new List<Vector2Int>();
+    protected override void SetValidMoves(){
+        HashSet<Vector2Int> moves = new HashSet<Vector2Int>();
         validMoves = moves;
     }
 

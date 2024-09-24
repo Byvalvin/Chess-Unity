@@ -2,11 +2,11 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-// Utility class dont maintain a state so can call static functions globally and freely across project + static prob quicker
-
+/// <summary>
+/// Utility class providing global static methods for various calculations.
+/// </summary>
 public static class Utility
 {
-    // variable
     public enum MovementType
     {
         Diagonal,
@@ -14,19 +14,20 @@ public static class Utility
         All
     }
 
-
     // Player UI variables
     public static Vector2 GetMouseWorldPosition()
     {
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         return new Vector2(mousePos.x, mousePos.y);
     }
+    
     public static bool MouseUp() => Input.GetMouseButtonUp(0);
     public static bool MouseDown() => Input.GetMouseButtonDown(0);
 
 
+
     // Vector math
-    public static Vector2Int RoundVector2(Vector2 position)=>new Vector2Int((int)Mathf.Round(position.x), (int)Mathf.Round(position.y));
+    public static Vector2Int RoundVector2(Vector2 position) => new Vector2Int((int)Mathf.Round(position.x), (int)Mathf.Round(position.y));
 
     public static bool InBounds(Vector2 minPt, Vector2 maxPt, Vector2 givenPt)
     {
@@ -37,11 +38,10 @@ public static class Utility
                effectiveMin.y <= givenPt.y && givenPt.y <= effectiveMax.y;
     }
 
-    //Bresenham's Line Algorithm. This algorithm efficiently finds all the points on a straight line between two points in a grid.
+    // Bresenham's Line Algorithm
     public static HashSet<Vector2Int> GetLinePoints(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
-
         int dx = Mathf.Abs(end.x - start.x);
         int dy = Mathf.Abs(end.y - start.y);
         int sx = (start.x < end.x) ? 1 : -1;
@@ -50,14 +50,10 @@ public static class Utility
 
         while (true)
         {
-            Vector2Int point = new Vector2Int(start.x, start.y);
-            if(!points.Contains(point)) points.Add(point); // Add current point
-
-            if (start.x == end.x && start.y == end.y)
-                break;
+            points.Add(start);
+            if (start.x == end.x && start.y == end.y) break;
 
             int err2 = err * 2;
-
             if (err2 > -dy)
             {
                 err -= dy;
@@ -74,10 +70,24 @@ public static class Utility
         return points;
     }
 
-    public static HashSet<Vector2Int> GetDiagonalIntermediatePoints(Vector2Int start, Vector2Int end)
+    public static HashSet<Vector2Int> GetIntermediatePoints(Vector2Int start, Vector2Int end, MovementType type)
+    {
+        switch (type)
+        {
+            case MovementType.Diagonal:
+                return GetDiagonalIntermediatePoints(start, end);
+            case MovementType.NonDiagonal:
+                return GetNonDiagonalIntermediatePoints(start, end);
+            case MovementType.All:
+                return GetAllIntermediatePoints(start, end);
+            default:
+                return new HashSet<Vector2Int>(); // Return an empty set for unsupported types
+        }
+    }
+
+    private static HashSet<Vector2Int> GetDiagonalIntermediatePoints(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
-
         int dx = end.x - start.x;
         int dy = end.y - start.y;
 
@@ -87,7 +97,7 @@ public static class Utility
         int stepY = (dy > 0) ? 1 : -1;
         int steps = Mathf.Abs(dx);
 
-        for (int i = 1; i < steps; i++) // Start from 1 to steps - 1
+        for (int i = 1; i < steps; i++)
         {
             points.Add(new Vector2Int(start.x + i * stepX, start.y + i * stepY));
         }
@@ -95,10 +105,9 @@ public static class Utility
         return points;
     }
 
-    public static HashSet<Vector2Int> GetNonDiagonalIntermediatePoints(Vector2Int start, Vector2Int end)
+    private static HashSet<Vector2Int> GetNonDiagonalIntermediatePoints(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
-
         int dx = end.x - start.x;
         int dy = end.y - start.y;
 
@@ -121,7 +130,6 @@ public static class Utility
 
         return points;
     }
-
     public static HashSet<Vector2Int> GetAllIntermediatePoints(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
@@ -142,28 +150,9 @@ public static class Utility
         return points;
     }
 
-
-    public static HashSet<Vector2Int> GetIntermediatePoints(Vector2Int start, Vector2Int end, MovementType type)
-    {
-        switch (type)
-        {
-            case MovementType.Diagonal:
-                return GetDiagonalIntermediatePoints(start, end);
-            case MovementType.NonDiagonal:
-                return GetNonDiagonalIntermediatePoints(start, end);
-            case MovementType.All:
-                return GetAllIntermediatePoints(start, end);
-            default:
-                return new HashSet<Vector2Int>(); // Return an empty list for unsupported types
-        }
-    }
-
-
     public static HashSet<Vector2Int> GetSurroundingPoints(Vector2Int center)
     {
         HashSet<Vector2Int> surroundingPoints = new HashSet<Vector2Int>();
-
-        // Define the possible offsets for neighboring positions
         Vector2Int[] offsets = {
             new Vector2Int(-1, -1), new Vector2Int(0, -1), new Vector2Int(1, -1),
             new Vector2Int(-1, 0),                           new Vector2Int(1, 0),
@@ -172,8 +161,7 @@ public static class Utility
 
         foreach (var offset in offsets)
         {
-            Vector2Int neighbor = center + offset;
-            surroundingPoints.Add(neighbor);
+            surroundingPoints.Add(center + offset);
         }
 
         return surroundingPoints;
@@ -182,14 +170,11 @@ public static class Utility
     public static HashSet<Vector2Int> GetAllPointsInArea(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
-
-        // Determine the min and max for x and y coordinates
         int minX = Mathf.Min(start.x, end.x);
         int maxX = Mathf.Max(start.x, end.x);
         int minY = Mathf.Min(start.y, end.y);
         int maxY = Mathf.Max(start.y, end.y);
 
-        // Loop through the range and add points
         for (int x = minX; x <= maxX; x++)
         {
             for (int y = minY; y <= maxY; y++)
@@ -200,9 +185,4 @@ public static class Utility
 
         return points;
     }
-
-
-
-
-
 }

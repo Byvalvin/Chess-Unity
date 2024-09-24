@@ -15,6 +15,7 @@ public class Board : MonoBehaviour
     Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
     public const int N = 8; // Size of the board
+    public Player[] chessPlayers = new Player[2]; // only 2 players for a chess game
 
     public void CreateBoard(Player Player1, Player Player2)
     {
@@ -46,6 +47,9 @@ public class Board : MonoBehaviour
 
         // Create and Add Pieces
         PopulateBoard(Player1, Player2);
+
+        //set start player
+        chessPlayers[0] = Player1; chessPlayers[1] = Player2;
     }
 
     private void CenterCamera()
@@ -202,17 +206,172 @@ public class Board : MonoBehaviour
         Player.AddPiece(piece);
     }
 
+        // Piece Movement Logic
+        
+    HashSet<Vector2Int> GetAllPlayerMoves()
+    {
+        HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
+        foreach (Piece piece in player.Pieces)
+        {
+            foreach (Vector2Int move in piece.ValidMoves)
+            {
+                if (!(piece.Type == "Pawn" && piece.Position.x == move.x))
+                    allMoves.Add(move);
+            }
+        }
+        return allMoves;
+    }
+    bool FilterPawnMove(Piece piece, Vector2Int pos)
+    {
+        bool pieceAtpos = GetTile(pos).HasPiece(),
+            sameColourPieceAtPos = pieceAtpos && GetTile(pos).piece.Colour == piece.Colour,
+            isDiag = Mathf.Abs(piece.Position.x - pos.x) == 1;
+
+        return (pieceAtpos && !sameColourPieceAtPos && isDiag) || (!pieceAtpos && !isDiag);
+    }
+    HashSet<Vector2Int> FilterPawnMoves(Piece piece)
+    {
+        if (piece == null) return null; // don't even bother
+
+        HashSet<Vector2Int> pawnMoves = new HashSet<Vector2Int>();
+        foreach (var move in piece.ValidMoves)
+        {
+            if (FilterPawnMove(piece, move))
+                pawnMoves.Add(move);
+        }
+        return pawnMoves;
+    }
+
+    bool FilterKnightMove(Vector2Int pos)
+    {
+        return false; // Implement actual logic as needed
+    }
+    HashSet<Vector2Int> FilterKnightMoves(Piece piece)
+    {
+        if (piece == null) return null; // don't even bother
+
+        HashSet<Vector2Int> knightMoves = new HashSet<Vector2Int>();
+        foreach (var move in piece.ValidMoves)
+        {
+            if (FilterKnightMove(move))
+                knightMoves.Add(move);
+        }
+        return knightMoves;
+    }
+
+    bool FilterBishopMove(Piece piece, Vector2Int pos)
+    {
+        bool pieceAtpos = GetTile(pos).HasPiece(),
+            sameColourPieceAtPos = pieceAtpos && GetTile(pos).piece.Colour == piece.Colour;
+
+        HashSet<Vector2Int> pointsBetween = Utility.GetIntermediatePoints(piece.Position, pos, Utility.MovementType.Diagonal);
+
+        foreach (Vector2Int apos in pointsBetween)
+        {
+            if (GetTile(apos).HasPiece())
+            {
+                return false;
+            }
+        }
+
+        return !pieceAtpos || (pieceAtpos && !sameColourPieceAtPos);
+    }
+    HashSet<Vector2Int> FilterBishopMoves(Piece piece)
+    {
+        if (piece == null) return null; // don't even bother
+
+        HashSet<Vector2Int> bishopMoves = new HashSet<Vector2Int>();
+        foreach (var move in piece.ValidMoves)
+        {
+            if (FilterBishopMove(piece, move))
+                bishopMoves.Add(move);
+        }
+        return bishopMoves;
+    }
+
+    bool FilterRookMove(Vector2Int pos)
+    {
+        return false; // Implement actual logic as needed
+    }
+    HashSet<Vector2Int> FilterRookMoves(Piece piece)
+    {
+        if (piece == null) return null; // don't even bother
+
+        HashSet<Vector2Int> rookMoves = new HashSet<Vector2Int>();
+        foreach (var move in piece.ValidMoves)
+        {
+            if (FilterRookMove(move))
+                rookMoves.Add(move);
+        }
+        return rookMoves;
+    }
+
+    bool FilterQueenMove(Vector2Int pos)
+    {
+        return false; // Implement actual logic as needed
+    }
+    HashSet<Vector2Int> FilterQueenMoves(Piece piece)
+    {
+        if (piece == null) return null; // don't even bother
+
+        HashSet<Vector2Int> queenMoves = new HashSet<Vector2Int>();
+        foreach (var move in piece.ValidMoves)
+        {
+            if (FilterQueenMove(move))
+                queenMoves.Add(move);
+        }
+        return queenMoves;
+    }
+
+    bool FilterKingMove(Piece piece, Vector2Int pos)
+    {
+        bool pieceAtpos = GetTile(pos).HasPiece(),
+            sameColourPieceAtPos = pieceAtpos && GetTile(pos).piece.Colour == piece.Colour;
+
+        HashSet<Vector2Int> opposingMoves = GetAllPlayerMoves();
+
+        return !opposingMoves.Contains(pos) && (!pieceAtpos || (pieceAtpos && !sameColourPieceAtPos));
+    }
+    HashSet<Vector2Int> FilterKingMoves(Piece piece)
+    {
+        if (piece == null) return null; // don't even bother
+
+        HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
+        foreach (var move in piece.ValidMoves)
+        {
+            if (FilterKingMove(piece, move))
+                kingMoves.Add(move);
+        }
+        return kingMoves;
+    }
+
+    public HashSet<Vector2Int> FilterMoves(Piece piece)
+    {
+        if (piece == null) return null; // no piece was passed
+
+        switch (piece.Type)
+        {
+            case "King":
+                return FilterKingMoves(piece);
+            case "Queen":
+                return FilterQueenMoves(piece);
+            case "Rook":
+                return FilterRookMoves(piece);
+            case "Knight":
+                return FilterKnightMoves(piece);
+            case "Bishop":
+                return FilterBishopMoves(piece);
+            case "Pawn":
+                return FilterPawnMoves(piece);
+            default:
+                Debug.Log("Bryhh");
+                return null;
+        }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        Vector2Int pos1 = new Vector2Int(0,0), pos2 = new Vector2Int(7,7);
-        List<Vector2Int> pointsBetween = Utility.GetAllPointsInArea(pos1, pos2);
-        Debug.Log("Inbetweenerslength: "+pointsBetween.Count);
-        foreach (Vector2Int apos in pointsBetween)
-        {
-            Debug.Log("Inbetweeners: "+apos);
-            
-        }
         CenterCamera();
     }
 

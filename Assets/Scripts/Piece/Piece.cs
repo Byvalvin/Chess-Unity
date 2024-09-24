@@ -67,8 +67,8 @@ public abstract class Piece : MonoBehaviour
         get{return currentPos;}
         set{
             currentPos=value;
-            SetValidMoves();
             SetPosition();
+            SetValidMoves();
         }
     }
     public string Type
@@ -84,7 +84,7 @@ public abstract class Piece : MonoBehaviour
             myColour=colour? lightColour:darkColour;
         }
     }
-    public HashSet<VectorInt2> ValidMoves
+    public HashSet<Vector2Int> ValidMoves
     {
         get{return validMoves;}
     }
@@ -121,8 +121,7 @@ public abstract class Piece : MonoBehaviour
     public abstract bool CanMove(Vector2Int to); // checks if a piece can move to tile at to
     public virtual void Move(Vector2Int to) // just used tp update state since move check done on board
     {
-        currentPos = to;
-        SetPosition();
+        Position = to;
 
     }
 
@@ -142,6 +141,9 @@ public abstract class Piece : MonoBehaviour
 
         pieceCollider = gameObject.AddComponent<BoxCollider2D>();
         pieceCollider.size = new Vector2(pieceColliderSize,pieceColliderSize); // need a pieceCollider
+
+        SetPosition();
+        SetValidMoves();
 
      }
     protected virtual void Update() 
