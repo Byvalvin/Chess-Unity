@@ -48,12 +48,8 @@ public class Bishop : Piece
         }
 
         // Filter valid moves using HashSet
-        validMoves = new HashSet<Vector2Int>();
-        foreach (var move in moves)
-        {
-            if (CanMove(move))
-                validMoves.Add(move);
-        }
+        validMoves = FindAll(moves);
+
     }
 
     protected override void Awake(){

@@ -13,15 +13,8 @@ public class King : Piece
     protected override void SetValidMoves()
     {
         HashSet<Vector2Int> moves = Utility.GetSurroundingPoints(currentPos);
-        validMoves = new HashSet<Vector2Int>();
+        validMoves = FindAll(moves);
 
-        foreach (var move in moves)
-        {
-            if (CanMove(move))
-            {
-                validMoves.Add(move);
-            }
-        }
     }
 
     protected override void Awake(){

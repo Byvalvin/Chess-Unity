@@ -24,6 +24,7 @@ public class Pawn : Piece
         firstMove = false; // Mark as moved
     }
 
+
     protected override void SetValidMoves()
     {
         //Debug.Log("My current pos: " + currentPos);
@@ -40,12 +41,7 @@ public class Pawn : Piece
         moves.Add(new Vector2Int( currentPos.x + 1, currentPos.y + (colour ? -1 : 1)) );
 
         // Filter valid moves using HashSet
-        validMoves = new HashSet<Vector2Int>();
-        foreach (var move in moves)
-        {
-            if (CanMove(move))
-                validMoves.Add(move);
-        }
+        validMoves = FindAll(moves);
     }
 
     // GUI

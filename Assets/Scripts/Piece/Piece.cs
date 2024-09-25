@@ -9,7 +9,7 @@ public abstract class Piece : MonoBehaviour
     protected bool colour;
     protected Color myColour;
     protected Vector2Int currentPos;
-    protected HashSet<Vector2Int> validMoves = new HashSet<Vector2Int>();
+    protected HashSet<Vector2Int> validMoves = new HashSet<Vector2Int>(), possibleMoves = new HashSet<Vector2Int>();
     protected bool captured = false;
     public static Vector2Int purgatory = new Vector2Int(-100,-100); // captured pieces go to purgatory
 
@@ -52,8 +52,10 @@ public abstract class Piece : MonoBehaviour
         transform.position = new Vector3(tileSize*currentPos.x, tileSize*currentPos.y, 0);
         
     }
+    protected HashSet<Vector2Int> FindAll(HashSet<Vector2Int> moveSet) => Utility.FindAll<Vector2Int>(moveSet, CanMove);
     
     public void ResetValidMoves() => SetValidMoves();
+
     
     public bool Captured
     {
@@ -135,6 +137,8 @@ public abstract class Piece : MonoBehaviour
     {
     }
 
+
+    // setup and game loop
     protected virtual void Awake(){
         
     }

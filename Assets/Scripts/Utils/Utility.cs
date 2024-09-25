@@ -1,6 +1,8 @@
 // Scripts/Utils/Utility.cs
 using UnityEngine;
 using System.Collections.Generic;
+using System;
+
 
 /// <summary>
 /// Utility class providing global static methods for various calculations.
@@ -156,9 +158,9 @@ public static class Utility
     {
         HashSet<Vector2Int> surroundingPoints = new HashSet<Vector2Int>();
         Vector2Int[] offsets = {
-            new Vector2Int(-1, -1), new Vector2Int(0, -1), new Vector2Int(1, -1),
-            new Vector2Int(-1, 0),                           new Vector2Int(1, 0),
-            new Vector2Int(-1, 1), new Vector2Int(0, 1), new Vector2Int(1, 1)
+            new Vector2Int(-1, 1), new Vector2Int(0, -1), new Vector2Int(1, 1),
+            new Vector2Int(-1, 0),                        new Vector2Int(1, 0),
+            new Vector2Int(-1, -1), new Vector2Int(0, 1), new Vector2Int(1, -1)
         };
 
         foreach (var offset in offsets)
@@ -188,19 +190,19 @@ public static class Utility
         return points;
     }
 
-    // // Containers    
-    // public static HashSet<T> FindAll<T>(HashSet<T> set, Func<T, bool> predicate)
-    // {
-    //     HashSet<T> result = new HashSet<T>();
-    //     foreach (var item in set)
-    //     {
-    //         if (predicate(item))
-    //         {
-    //             result.Add(item);
-    //         }
-    //     }
-    //     return result;
-    // }
+    // Containers    
+    public static HashSet<T> FindAll<T>(HashSet<T> set, Func<T, bool> predicate)
+    {
+        HashSet<T> result = new HashSet<T>();
+        foreach (var item in set)
+        {
+            if (predicate(item))
+            {
+                result.Add(item);
+            }
+        }
+        return result;
+    }
 
     // public static HashSet<T> FindAllAnd<T>(HashSet<T> set, Func<T, bool> predicate, bool additionalCondition)
     // {
@@ -214,6 +216,5 @@ public static class Utility
     //     }
     //     return result;
     // }
-
 
 }

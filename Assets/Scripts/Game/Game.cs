@@ -50,12 +50,13 @@ public class Game : MonoBehaviour
         return allMoves;
     }
 
+    // 
     HashSet<Vector2Int> GetAllPlayerAttackMoves(Player player)
     {
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
         foreach (Piece piece in player.Pieces)
         {
-            bool isPawn = piece.Type=="Pawn";
+            bool isPawn = piece.Type=="Pawn", isKing = piece.Type=="King", isKnight = piece.Type=="Knight";
             if(isPawn)
             {
                 // add the squares attacked by the Pawn, Pawn fwd moves not included here
@@ -63,6 +64,7 @@ public class Game : MonoBehaviour
             }
             else
             {
+                
                 foreach (Vector2Int move in piece.ValidMoves)
                     allMoves.Add(move);
                 
@@ -82,6 +84,20 @@ public class Game : MonoBehaviour
 
         return attackedTiles;
     }
+    HashSet<Vector2Int> KingAttackedTiles(Piece piece)
+    {
+        HashSet<Vector2Int> attackedTiles, allAttackedTiles = Utility.GetSurroundingPoints(piece.Position);
+
+        attackedTiles = Utility.FindAll<Vector2Int>(allAttackedTiles,board.InBounds);
+
+        return attackedTiles;
+    }
+    HashSet<Vector2Int> KnightAttackedTiles(Piece piece)
+    {
+        HashSet<Vector2Int> attackedTiles = new HashSet<Vector2Int>();
+        return attackedTiles;
+    }
+    
     void Opposition()
     {
         // Find common elements
@@ -209,7 +225,34 @@ public class Game : MonoBehaviour
         bool pieceAtpos = board.GetTile(pos).HasPiece(),
             sameColourPieceAtPos = pieceAtpos && board.GetTile(pos).piece.Colour == piece.Colour;
 
-        return (!pieceAtpos || (pieceAtpos && !sameColourPieceAtPos));
+        bool pieceAtposDefended = false; // King cant capture a defended piece
+        if(pieceAtpos)
+        {
+            foreach (Piece opposingPiece in players[1-currentIndex].Pieces)
+            {
+                switch(opposingPiece.Type)
+                {
+                    case "King":
+                        pieceAtposDefended = KingAttackedTiles(opposingPiece).Contains(pos);
+                        break;
+                    case "Knight":
+                        pieceAtposDefended = KnightAttackedTiles(opposingPiece).Contains(pos);
+                        break;
+                    case "Pawn":
+                        pieceAtposDefended = PawnAttackedTiles(opposingPiece).Contains(pos);
+                        break;
+                    default: // Queen, Rook, Bishop
+                        pieceAtposDefended = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos).Count != 0; // if the set isnt empty, there is a path to the piece to be defended by opposingPiece
+                        break;
+                    
+                }
+                if(pieceAtposDefended)
+                    break;
+                
+            }
+        }
+
+        return (!pieceAtpos || (pieceAtpos && !sameColourPieceAtPos && !pieceAtposDefended));
     }
     HashSet<Vector2Int> FilterKingMoves(Piece piece)
     {
@@ -249,7 +292,10 @@ public class Game : MonoBehaviour
         }
     }
 
-    
+    private Piece GetAttacker(Piece piece)
+    {
+        return players[piece.Colour ? 1 : 0].Pieces.Find(p => p.ValidMoves.Contains(piece.Position));
+    }
     private void UpdateKingAttack(Piece king)
     {
         // Debug.Log("Check King "+king.Type + " " + king.Colour);
@@ -281,7 +327,7 @@ public class Game : MonoBehaviour
             {
                 attackingPiecesCount++;
                 // Find the attacking piece
-                Piece attacker = players[player.Colour ? 1 : 0].Pieces.Find(p => p.ValidMoves.Contains(king.Position));
+                Piece attacker = GetAttacker(king);
                 if (attacker != null) 
                     player.KingAttacker = attacker; // Set the attacker
                 
@@ -344,9 +390,6 @@ public class Game : MonoBehaviour
             Debug.Log("----------------------");
         }
         */
-        
-        
-
 
     }
 
@@ -434,14 +477,7 @@ public class Game : MonoBehaviour
                 }
                 else
                 {
-                    if(validMoves.Count==0){
-                        // game over this player lost
-                    }
-                    else
-                    {
-                        selectedPiece.Position = originalPosition; // Reset to original position
-                    }
-                    
+                    selectedPiece.Position = originalPosition; // Reset to original position 
                 }
             }
             //Single Check
@@ -451,22 +487,14 @@ public class Game : MonoBehaviour
                     canCapture=players[currentIndex].KingAttacker.Position==targetPosition, // cap attacker
                     canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].Pieces[0].Position)
                         .Contains(targetPosition); // can block
-                
-                
-                
-                if( (canEvade || canCapture || canBlock) && validMoves.Contains(targetPosition) )
+
+                if( validMoves.Contains(targetPosition) && (canEvade || canCapture || canBlock))
                 {
                     ExecuteMove(targetPosition);
                 }
                 else
                 {
-                    if(validMoves.Count==0){
-                        // game over this player lost
-                    }
-                    else
-                    {
-                        selectedPiece.Position = originalPosition; // Reset to original position
-                    }
+                    selectedPiece.Position = originalPosition; // Reset to original position
                 }
             }
             else{
@@ -480,7 +508,7 @@ public class Game : MonoBehaviour
             bool pinnedPiece = false; // assume selectePiece not pinned
             bool pinnedPieceCanCaptureAttacker = false;
 
-            Piece attacker = players[1-currentIndex].Pieces.Find(p => p.ValidMoves.Contains(selectedPiece.Position)); // selected piece is attacked
+            Piece attacker = GetAttacker(selectedPiece); // selected piece is attacked
             if(attacker!=null){
                 HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(players[currentIndex].Pieces[0].Position, attacker.Position);
                 pinnedPiece = tilesBetweenKingAndAttacker.Contains(selectedPiece.Position);
