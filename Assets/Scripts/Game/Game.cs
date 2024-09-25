@@ -400,6 +400,8 @@ public class Game : MonoBehaviour
         Debug.Log($"{players[1-currentIndex].PlayerName} in check after move attempt: {players[1-currentIndex].InCheck}");
         //Debug.Log(players[currentIndex].PlayerName + "in check "+players[currentIndex].IsInCheck() + " " + players[currentIndex].InCheck + " " + players[currentIndex].DoubleCheck);
 
+
+
         if(players[currentIndex].IsInCheck()) //GetAllPlayerAttackMoves(players[1-currentIndex]).Contains(players[currentIndex].Pieces[0].Position)
         {
             Debug.Log("I was executed");
@@ -446,13 +448,26 @@ public class Game : MonoBehaviour
         }
         else
         {
-            if (validMoves.Contains(targetPosition))
+            // cant move a pinned piece
+            Piece attacker = players[1-currentIndex].Pieces.Find(p => p.ValidMoves.Contains(selectedPiece.Position));
+            bool pinnedPiece = attacker!=null && Utility.GetIntermediateLinePoints(players[currentIndex].Pieces[0].Position, attacker.Position).Contains(selectedPiece.Position);
+            if(pinnedPiece)
             {
-                ExecuteMove(targetPosition);
+                //Debug.Log("pin");
+                selectedPiece.Position = originalPosition; // Reset to original position 
             }
-            else{
-                selectedPiece.Position = originalPosition; // Reset to original position
-            } 
+            else
+            {
+                if (validMoves.Contains(targetPosition))
+                {
+                    ExecuteMove(targetPosition);
+                }
+                else{
+                    selectedPiece.Position = originalPosition; // Reset to original position
+                } 
+            }
+
+            
         }
         selectedPiece = null; // Deselect piece
     }
