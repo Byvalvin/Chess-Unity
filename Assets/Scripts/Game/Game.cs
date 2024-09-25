@@ -381,6 +381,14 @@ public class Game : MonoBehaviour
         UpdateGameState();
         //Debug.Log($"After UpdateGameState: {players[1 - currentIndex].PlayerName} InCheck: {players[1 - currentIndex].InCheck}, DoubleCheck: {players[1 - currentIndex].DoubleCheck}");
 
+        // can do game over Logic here actually
+        // if DoubleChecked opponent
+        // check if they can move
+        // else if SingleChecked opponent
+        // check if they can move
+
+        // if cant move just end game here
+
         SwitchPlayer();
     }
 
