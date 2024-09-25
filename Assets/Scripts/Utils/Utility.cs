@@ -87,7 +87,7 @@ public static class Utility
         }
     }
 
-    private static HashSet<Vector2Int> GetIntermediateDiagonalLinePoints(Vector2Int start, Vector2Int end)
+    private static HashSet<Vector2Int> GetIntermediateDiagonalLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
         int dx = end.x - start.x;
@@ -103,11 +103,15 @@ public static class Utility
         {
             points.Add(new Vector2Int(start.x + i * stepX, start.y + i * stepY));
         }
+        if(includeEnds){
+            points.Add(start);
+            points.Add(end);
+        }
 
         return points;
     }
 
-    private static HashSet<Vector2Int> GetIntermediateNonDiagonalLinePoints(Vector2Int start, Vector2Int end)
+    private static HashSet<Vector2Int> GetIntermediateNonDiagonalLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
         int dx = end.x - start.x;
@@ -120,6 +124,11 @@ public static class Utility
             {
                 points.Add(new Vector2Int(start.x, start.y + i * stepY));
             }
+            if(includeEnds){
+                points.Add(start);
+                points.Add(end);
+            }
+
         }
         else if (dy == 0) // Horizontal move
         {
@@ -128,13 +137,17 @@ public static class Utility
             {
                 points.Add(new Vector2Int(start.x + i * stepX, start.y));
             }
+            if(includeEnds){
+                points.Add(start);
+                points.Add(end);
+            }
         }
 
         return points;
     }
 
     // strictly diag, horz and vert
-    public static HashSet<Vector2Int> GetIntermediateLinePoints(Vector2Int start, Vector2Int end)
+    public static HashSet<Vector2Int> GetIntermediateLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
         
@@ -143,11 +156,11 @@ public static class Utility
 
         if (Mathf.Abs(dx) == Mathf.Abs(dy)) // Diagonal move
         {
-            points = GetIntermediateDiagonalLinePoints(start, end);
+            points = GetIntermediateDiagonalLinePoints(start, end, includeEnds);
         }
         else if (dx == 0 || dy == 0) // Vertical or horizontal move
         {
-            points = GetIntermediateNonDiagonalLinePoints(start, end);
+            points = GetIntermediateNonDiagonalLinePoints(start, end, includeEnds);
         }
 
         return points;

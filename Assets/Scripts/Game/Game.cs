@@ -57,6 +57,7 @@ public class Game : MonoBehaviour
         foreach (Piece piece in player.Pieces)
         {
             bool isPawn = piece.Type=="Pawn", isKing = piece.Type=="King", isKnight = piece.Type=="Knight";
+            //Debug.Log(piece.Type+" "+piece.Colour);
             if(isPawn)
             {
                 // add the squares attacked by the Pawn, Pawn fwd moves not included here
@@ -64,11 +65,16 @@ public class Game : MonoBehaviour
             }
             else
             {
-                
                 foreach (Vector2Int move in piece.ValidMoves)
                     allMoves.Add(move);
                 
             }
+            /*
+            foreach (var item in allMoves)
+            {
+                Debug.Log(item + " in all moves");
+            }
+            */
 
         }
         return allMoves;
@@ -226,9 +232,9 @@ public class Game : MonoBehaviour
             sameColourPieceAtPos = pieceAtpos && board.GetTile(pos).piece.Colour == piece.Colour;
 
         bool pieceAtposDefended = false; // King cant capture a defended piece
-        if(pieceAtpos)
+        if(pieceAtpos && !sameColourPieceAtPos) // check if that piece is defended
         {
-            foreach (Piece opposingPiece in players[1-currentIndex].Pieces)
+            foreach (Piece opposingPiece in players[piece.Colour?1:0].Pieces)
             {
                 switch(opposingPiece.Type)
                 {
@@ -242,12 +248,23 @@ public class Game : MonoBehaviour
                         pieceAtposDefended = PawnAttackedTiles(opposingPiece).Contains(pos);
                         break;
                     default: // Queen, Rook, Bishop
-                        pieceAtposDefended = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos).Count != 0; // if the set isnt empty, there is a path to the piece to be defended by opposingPiece
+                        HashSet<Vector2Int> pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos, includeEnds:true);
+                        pieceAtposDefended = pointsBetweenAndEnds.Contains(pos);
+                        if(pointsBetweenAndEnds.Count > 2) // there will always be two because of the ends
+                            foreach (Vector2Int point in pointsBetweenAndEnds)
+                            {
+                            pieceAtposDefended = pieceAtposDefended && !board.GetTile(pos).HasPiece(); // if a single piece on path, path is blocked and piece cant be defended
+                            }
                         break;
                     
                 }
-                if(pieceAtposDefended)
+                /*
+                if(pieceAtposDefended){
+                    Debug.Log(pos + " " + pieceAtposDefended + " " + piece.Type);
                     break;
+                }
+                */
+
                 
             }
         }
@@ -265,6 +282,13 @@ public class Game : MonoBehaviour
             if (FilterKingMove(piece, move))
                 kingMoves.Add(move);
         }
+        
+        Debug.Log("KingMoves "+piece.Colour);
+        foreach (var item in kingMoves)
+        {
+            Debug.Log(item) ; 
+        }
+        
         return kingMoves;
     }
 
@@ -460,7 +484,7 @@ public class Game : MonoBehaviour
             Debug.Log(move);
         }
         */
-        Debug.Log($"{players[1-currentIndex].PlayerName} in check after move attempt: {players[1-currentIndex].InCheck}");
+        //Debug.Log($"{players[1-currentIndex].PlayerName} in check after move attempt: {players[1-currentIndex].InCheck}");
         //Debug.Log(players[currentIndex].PlayerName + "in check "+players[currentIndex].IsInCheck() + " " + players[currentIndex].InCheck + " " + players[currentIndex].DoubleCheck);
 
 
