@@ -45,7 +45,7 @@ public class Board : MonoBehaviour
 
         // Create and Add Pieces
         PopulateBoard(Player1, Player2);
-        Debug.Log($"Player {Player1.PlayerName} has {Player1.Pieces.Count} pieces.");
+        //Debug.Log($"Player {Player1.PlayerName} has {Player1.Pieces.Count} pieces.");
 
 
     }
@@ -100,7 +100,8 @@ public class Board : MonoBehaviour
 
     private void PopulateBoard(Player Player1, Player Player2)
     {
-        string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
+        //string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
+        string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" };
         foreach (string pieceType in pieceTypes)
         {
             AddPieces(pieceType, Player1, Player2);
@@ -214,6 +215,7 @@ public class Board : MonoBehaviour
     }
 
     // Piece Movement Logic
+    public bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
         
   
     // Start is called before the first frame update

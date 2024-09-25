@@ -11,7 +11,7 @@ public abstract class Piece : MonoBehaviour
     protected Vector2Int currentPos;
     protected HashSet<Vector2Int> validMoves = new HashSet<Vector2Int>();
     protected bool captured = false;
-    private Vector2Int purgatory = new Vector2Int(-100,-100); // captured pieces go to purgatory
+    public static Vector2Int purgatory = new Vector2Int(-100,-100); // captured pieces go to purgatory
 
     protected float tileSize;
     protected Vector2Int minPoint, maxPoint;

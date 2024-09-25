@@ -29,19 +29,65 @@ public class Game : MonoBehaviour
     }
 
     // Piece Movement Logic
-      HashSet<Vector2Int> GetAllPlayerMoves(Player player)
+    HashSet<Vector2Int> GetAllPlayerMoves(Player player)
+    {
+        HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
+        foreach (Piece piece in player.Pieces)
+            foreach (Vector2Int move in piece.ValidMoves)
+                allMoves.Add(move);
+
+        return allMoves;
+    }
+
+    HashSet<Vector2Int> GetAllPlayerAttackMoves(Player player)
     {
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
         foreach (Piece piece in player.Pieces)
         {
-            foreach (Vector2Int move in piece.ValidMoves)
+            bool isPawn = piece.Type=="Pawn";
+            if(isPawn)
             {
-                bool pawnFwdMove = piece.Type == "Pawn" && piece.Position.x == move.x;
-                if (!pawnFwdMove)
-                    allMoves.Add(move);
+                // add the squares attacked by the Pawn, Pawn fwd moves not included here
+                allMoves.UnionWith(PawnAttackedTiles(piece));
             }
+            else
+            {
+                foreach (Vector2Int move in piece.ValidMoves)
+                    allMoves.Add(move);
+                
+            }
+
         }
         return allMoves;
+    }
+    HashSet<Vector2Int> PawnAttackedTiles(Piece piece)
+    {
+        HashSet<Vector2Int> attackedTiles = new HashSet<Vector2Int>();
+        Vector2Int left = piece.Colour?  new Vector2Int(1,-1) : new Vector2Int(-1,1),
+                right = piece.Colour? new Vector2Int(-1,-1) : new Vector2Int(1,1);
+        
+        if(board.InBounds(piece.Position+left)) attackedTiles.Add(piece.Position+left);
+        if(board.InBounds(piece.Position+right)) attackedTiles.Add(piece.Position+right);
+
+        return attackedTiles;
+    }
+    void Opposition()
+    {
+        // Find common elements
+        HashSet<Vector2Int> KingWhiteMoves = players[0].Pieces[0].ValidMoves,
+                    KingBlackMoves = players[1].Pieces[0].ValidMoves;
+        HashSet<Vector2Int> common = new HashSet<Vector2Int>(KingWhiteMoves);
+        common.IntersectWith(KingBlackMoves);
+
+        // Remove common elements from both sets
+        foreach (var move in common)
+        {
+            KingWhiteMoves.Remove(move);
+            KingBlackMoves.Remove(move);
+        }
+        players[0].Pieces[0].ValidMoves = KingWhiteMoves;
+        players[1].Pieces[0].ValidMoves = KingBlackMoves;
+
     }
     bool FilterPawnMove(Piece piece, Vector2Int pos)
     {
@@ -90,8 +136,9 @@ public class Game : MonoBehaviour
 
         foreach (Vector2Int apos in pointsBetween)
         {
-            bool isAttackingKingTile = board.GetTile(apos).piece.Type=="King" && !board.GetTile(apos).piece.Colour==piece.Colour;
-            if (board.GetTile(apos).HasPiece() && !isAttackingKingTile)
+            bool pieceAtApos = board.GetTile(apos).HasPiece();
+            bool isAttackingKingTile = pieceAtApos && board.GetTile(apos).piece.Type=="King" && !board.GetTile(apos).piece.Colour==piece.Colour;
+            if (pieceAtApos && !isAttackingKingTile)
             {
                 return false;
             }
@@ -158,6 +205,7 @@ public class Game : MonoBehaviour
         if (piece == null) return null; // don't even bother
 
         HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
+
         foreach (var move in piece.ValidMoves)
         {
             if (FilterKingMove(piece, move))
@@ -194,7 +242,7 @@ public class Game : MonoBehaviour
     private void UpdateKingAttack(Piece king)
     {
         // Debug.Log("Check King "+king.Type + " " + king.Colour);
-        HashSet<Vector2Int> opposingMoves = GetAllPlayerMoves(players[king.Colour ? 1:0]);
+        HashSet<Vector2Int> opposingMoves = GetAllPlayerAttackMoves(players[king.Colour ? 1:0]);
 
         HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
         foreach(Vector2Int move in king.ValidMoves)
@@ -207,40 +255,61 @@ public class Game : MonoBehaviour
         }
         king.ValidMoves = kingMoves;
     }
+
+    private void UpdateCheckStatus(Player player)
+    {
+        Piece king = player.Pieces[0];
+        if (king == null) return;
+
+        HashSet<Vector2Int> opposingMoves = GetAllPlayerAttackMoves(players[player.Colour ? 1 : 0]);
+
+        // Check how many opposing pieces can attack the king
+        int attackingPiecesCount = 0;
+        foreach (var move in opposingMoves)
+        {
+            if (move == king.Position)
+            {
+                attackingPiecesCount++;
+                // Find the attacking piece
+                Piece attacker = players[player.Colour ? 1 : 0].Pieces.Find(p => p.ValidMoves.Contains(king.Position));
+                if (attacker != null) 
+                    player.KingAttacker = attacker; // Set the attacker
+                
+            }
+            if(attackingPiecesCount >= 2)
+                break;
+        }
+
+        // Update player's check status
+        player.InCheck = player.InCheck || attackingPiecesCount == 1;
+        player.DoubleCheck = player.DoubleCheck || attackingPiecesCount > 1;
+
+        Debug.Log(player.PlayerName+"is in check? "+player.IsInCheck());
+    }
+
+
     private void UpdateGameState()
     {
         // update all piece moves
-
-        // track kings for special updates
-        Piece KingWhite=null, KingBlack=null;
-
-        //Debug.Log($"Player {players[1].PlayerName} has {players[1].Pieces.Count} pieces.");
-
-        // P1 pieces
-        foreach(Piece piece in players[0].Pieces)
+        // Reset and filter valid moves for each piece
+        foreach (Player player in players)
         {
-            //Debug.Log("Check Piece "+piece+" "+piece.Type+"|");
-            if(piece.Type=="King")
+            foreach (Piece piece in player.Pieces)
             {
-                KingWhite=piece;
+                piece.ResetValidMoves();
+                piece.ValidMoves = FilterMoves(piece);
             }
-            piece.ResetValidMoves();
-            piece.ValidMoves = FilterMoves(piece);
-        }
-        // P2 pieces
-        foreach(Piece piece in players[1].Pieces)
-        {
-            if(piece.Type=="King")
-            {
-                KingBlack=piece;
-            }
-            piece.ResetValidMoves();
-            piece.ValidMoves = FilterMoves(piece);
         }
 
-        // update King moves based on opponent pieces
-        UpdateKingAttack(KingWhite);
-        UpdateKingAttack(KingBlack);
+        Opposition(); // create the opposition if its there i.e remove the moves that both Kings can equally make
+
+        //check in check
+        foreach (Player player in players)
+        {
+            UpdateCheckStatus(player); // update check status for the player who isnt playing now
+            UpdateKingAttack(player.Pieces[0]); // update King moves based on opponent pieces
+        }
+        
 
         /*
         Debug.Log("Player: "+ players[0].PlayerName);
@@ -265,6 +334,7 @@ public class Game : MonoBehaviour
             Debug.Log("----------------------");
         }
         */
+        
 
 
     }
@@ -295,6 +365,22 @@ public class Game : MonoBehaviour
         }
     }
 
+    void ExecuteMove(Vector2Int targetPosition)
+    {
+        if (isCapture(targetPosition))
+        {
+            Piece captured = board.GetTile(targetPosition).piece;
+            players[currentIndex].Capture(captured);
+            players[(currentIndex + 1) % 2].RemovePiece(captured);
+            captured.Captured = true;
+        }
+
+        board.MovePiece(selectedPiece.Position, targetPosition);
+        selectedPiece.Move(targetPosition);
+        UpdateGameState();
+        SwitchPlayer();
+    }
+
     bool isCapture(Vector2Int targetPosition) => board.GetTile(targetPosition).HasPiece();
     void ReleasePiece()
     {
@@ -302,24 +388,17 @@ public class Game : MonoBehaviour
         Vector2Int targetPosition = Utility.RoundVector2(mousePosition / board.TileSize);
         HashSet<Vector2Int> validMoves = FilterMoves(selectedPiece);
 
+        /*
         foreach (Vector2Int move in validMoves)
         {
             Debug.Log(move);
         }
+        */
+
+        Debug.Log(players[currentIndex].PlayerName + "in check "+players[currentIndex].IsInCheck() + " " + players[currentIndex].InCheck + " " + players[currentIndex].DoubleCheck);
         if (validMoves.Contains(targetPosition))
         {
-            if (isCapture(targetPosition))
-            {
-                Piece captured = board.GetTile(targetPosition).piece;
-                players[currentIndex].Capture(captured);
-                players[(currentIndex + 1) % 2].RemovePiece(captured);
-                captured.Captured = true;
-            }
-
-            board.MovePiece(selectedPiece.Position, targetPosition);
-            selectedPiece.Move(targetPosition);
-            UpdateGameState();
-            SwitchPlayer();
+            ExecuteMove(targetPosition);
         }
         else
         {

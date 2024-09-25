@@ -8,7 +8,9 @@ public class Player : MonoBehaviour
     private bool colour = true; //assume white
     private List<Piece> pieces = new List<Piece>(), captured = new List<Piece>();
 
-    private bool inCheck = false;
+    private bool inCheck = false, doubleCheck = false;
+
+    public Piece KingAttacker = null; // the opposing piece attacking player's king 
 
     public string PlayerName{
         get{return playerName;}
@@ -28,6 +30,15 @@ public class Player : MonoBehaviour
         set{
             inCheck=value;
         }
+    }
+    public bool DoubleCheck{
+        get{return doubleCheck;}
+        set{
+            doubleCheck=value;
+        }
+    }
+    public bool IsInCheck(){
+        return doubleCheck || InCheck;
     }
 
     public void AddPiece(Piece piece)
