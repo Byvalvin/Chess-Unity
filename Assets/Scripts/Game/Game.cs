@@ -20,8 +20,9 @@ public class Game : MonoBehaviour
     private int currentIndex = 0;
 
     private Piece selectedPiece = null;
-
     Vector2Int originalPosition;
+
+    private bool checkmate = false;
 
     public void SwitchPlayer()
     {
@@ -31,12 +32,44 @@ public class Game : MonoBehaviour
     // Game ends
     bool IsGameEnd()
     {
+        // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
+        foreach (Player player in players)
+        {
+            Piece PlayerKing = player.Pieces[0];
+            if(player.IsInCheck()){
+
+                if(player.DoubleCheck)
+                {
+                    if(PlayerKing.ValidMoves.Count==0){
+                        Debug.Log($"GAME OVER:{player.PlayerName} IS DOUBLE CHECKMATED");
+                        return true;
+                    }
+                }
+                else if(player.InCheck)
+                {
+                    bool evade = PlayerKing.ValidMoves.Count != 0,
+                        capture = GetAllPlayerAttackMoves(player).Contains(player.KingAttacker.Position);
+                    
+                    HashSet<Vector2Int> blockingMoves = GetAllPlayerMoves(player);
+                    blockingMoves.IntersectWith(Utility.GetIntermediateLinePoints(PlayerKing.Position, player.KingAttacker.Position, includeEnds:true));
+                    bool block = blockingMoves.Count != 0;
+                    
+                    if(!(evade || capture || block)){
+                        Debug.Log($"GAME OVER:{player.PlayerName} IS CHECKMATED");
+                        return true;
+                    }
+                    
+
+                }
+            }
+        }
+
         return false;
     }
 
     void End()
     {
-
+        checkmate=true;
     }
 
     // Piece Movement Logic
@@ -50,13 +83,13 @@ public class Game : MonoBehaviour
         return allMoves;
     }
 
-    // 
+    // JUST FOR POSITIONS THE OPPOSING PLAYER PIECES ARE ATTACKING, not necessarily defended positions(same as defended positons only for pawns)
     HashSet<Vector2Int> GetAllPlayerAttackMoves(Player player)
     {
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
         foreach (Piece piece in player.Pieces)
         {
-            bool isPawn = piece.Type=="Pawn", isKing = piece.Type=="King", isKnight = piece.Type=="Knight";
+            bool isPawn = piece.Type=="Pawn";
             //Debug.Log(piece.Type+" "+piece.Colour);
             if(isPawn)
             {
@@ -66,8 +99,7 @@ public class Game : MonoBehaviour
             else
             {
                 foreach (Vector2Int move in piece.ValidMoves)
-                    allMoves.Add(move);
-                
+                    allMoves.Add(move);     
             }
             /*
             foreach (var item in allMoves)
@@ -577,6 +609,8 @@ public class Game : MonoBehaviour
 
     private void HandleInput()
     {
+        if(checkmate) return; // dont handl user input
+
         if (Utility.MouseDown()) // Left mouse button
         {
             SelectPiece();
