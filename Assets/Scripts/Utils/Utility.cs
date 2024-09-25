@@ -11,7 +11,7 @@ public static class Utility
     {
         Diagonal,
         NonDiagonal,
-        All
+        Any
     }
 
     // Player UI variables
@@ -38,7 +38,7 @@ public static class Utility
                effectiveMin.y <= givenPt.y && givenPt.y <= effectiveMax.y;
     }
 
-    // Bresenham's Line Algorithm
+    // Bresenham's Line Algorithm: diag, horz and vert and every angle between
     public static HashSet<Vector2Int> GetLinePoints(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
@@ -75,17 +75,17 @@ public static class Utility
         switch (type)
         {
             case MovementType.Diagonal:
-                return GetDiagonalIntermediatePoints(start, end);
+                return GetIntermediateDiagonalLinePoints(start, end);
             case MovementType.NonDiagonal:
-                return GetNonDiagonalIntermediatePoints(start, end);
-            case MovementType.All:
-                return GetAllIntermediatePoints(start, end);
+                return GetIntermediateNonDiagonalLinePoints(start, end);
+            case MovementType.Any:
+                return GetIntermediateLinePoints(start, end);
             default:
                 return new HashSet<Vector2Int>(); // Return an empty set for unsupported types
         }
     }
 
-    private static HashSet<Vector2Int> GetDiagonalIntermediatePoints(Vector2Int start, Vector2Int end)
+    private static HashSet<Vector2Int> GetIntermediateDiagonalLinePoints(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
         int dx = end.x - start.x;
@@ -105,7 +105,7 @@ public static class Utility
         return points;
     }
 
-    private static HashSet<Vector2Int> GetNonDiagonalIntermediatePoints(Vector2Int start, Vector2Int end)
+    private static HashSet<Vector2Int> GetIntermediateNonDiagonalLinePoints(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
         int dx = end.x - start.x;
@@ -130,25 +130,27 @@ public static class Utility
 
         return points;
     }
-    public static HashSet<Vector2Int> GetAllIntermediatePoints(Vector2Int start, Vector2Int end)
+
+    // strictly diag, horz and vert
+    public static HashSet<Vector2Int> GetIntermediateLinePoints(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
-
+        
         int dx = end.x - start.x;
         int dy = end.y - start.y;
 
-        int steps = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
-
-        for (int i = 1; i < steps; i++)
+        if (Mathf.Abs(dx) == Mathf.Abs(dy)) // Diagonal move
         {
-            float t = (float)i / steps;
-            int x = (int)Mathf.Lerp(start.x, end.x, t);
-            int y = (int)Mathf.Lerp(start.y, end.y, t);
-            points.Add(new Vector2Int(x, y));
+            points = GetIntermediateDiagonalLinePoints(start, end);
+        }
+        else if (dx == 0 || dy == 0) // Vertical or horizontal move
+        {
+            points = GetIntermediateNonDiagonalLinePoints(start, end);
         }
 
         return points;
     }
+
 
     public static HashSet<Vector2Int> GetSurroundingPoints(Vector2Int center)
     {

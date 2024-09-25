@@ -396,13 +396,54 @@ public class Game : MonoBehaviour
         */
 
         Debug.Log(players[currentIndex].PlayerName + "in check "+players[currentIndex].IsInCheck() + " " + players[currentIndex].InCheck + " " + players[currentIndex].DoubleCheck);
-        if (validMoves.Contains(targetPosition))
+
+        if(players[currentIndex].IsInCheck())
         {
-            ExecuteMove(targetPosition);
+            //Double Check
+            if(players[currentIndex].DoubleCheck)
+            {
+                // move king
+                if(selectedPiece.Type=="King" && validMoves.Contains(targetPosition) )
+                {
+                    ExecuteMove(targetPosition);
+                }
+                else
+                {
+                   selectedPiece.Position = originalPosition; // Reset to original position 
+                }
+            }
+            //Single Check
+            else if(players[currentIndex].InCheck)
+            {
+                bool canEvade=selectedPiece.Type=="King"
+                     && validMoves.Contains(targetPosition), // move king
+                    canCapture=players[currentIndex].KingAttacker.Position==targetPosition
+                     && validMoves.Contains(targetPosition), // cap attacker
+                    canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].Pieces[0].Position).Contains(targetPosition)
+                     && validMoves.Contains(targetPosition); // can block
+                
+                
+                
+                if( canEvade || canCapture || canBlock )
+                {
+                    ExecuteMove(targetPosition);
+                }
+                else
+                {
+                    selectedPiece.Position = originalPosition; // Reset to original position 
+                }
+            }
+
         }
         else
         {
-            selectedPiece.Position = originalPosition; // Reset to original position
+            if (validMoves.Contains(targetPosition))
+            {
+                ExecuteMove(targetPosition);
+            }
+            else{
+                selectedPiece.Position = originalPosition; // Reset to original position
+            } 
         }
         selectedPiece = null; // Deselect piece
     }
