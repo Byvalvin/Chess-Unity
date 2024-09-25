@@ -281,10 +281,12 @@ public class Game : MonoBehaviour
         }
 
         // Update player's check status
-        player.InCheck = player.InCheck || attackingPiecesCount == 1;
-        player.DoubleCheck = player.DoubleCheck || attackingPiecesCount > 1;
+        player.InCheck = attackingPiecesCount == 1;
+        player.DoubleCheck = attackingPiecesCount > 1;
 
-        Debug.Log(player.PlayerName+"is in check? "+player.IsInCheck());
+        Debug.Log($"Updating check status for {player.PlayerName}. InCheck: {player.InCheck}, DoubleCheck: {player.DoubleCheck}");
+
+        //Debug.Log(player.PlayerName+"is in check? "+player.IsInCheck());
     }
 
 
@@ -335,6 +337,7 @@ public class Game : MonoBehaviour
         }
         */
         
+        
 
 
     }
@@ -378,6 +381,7 @@ public class Game : MonoBehaviour
         board.MovePiece(selectedPiece.Position, targetPosition);
         selectedPiece.Move(targetPosition);
         UpdateGameState();
+        Debug.Log($"After move: {players[currentIndex].PlayerName} InCheck: {players[currentIndex].InCheck}, DoubleCheck: {players[currentIndex].DoubleCheck}");
         SwitchPlayer();
     }
 
@@ -394,11 +398,12 @@ public class Game : MonoBehaviour
             Debug.Log(move);
         }
         */
-
-        Debug.Log(players[currentIndex].PlayerName + "in check "+players[currentIndex].IsInCheck() + " " + players[currentIndex].InCheck + " " + players[currentIndex].DoubleCheck);
+        Debug.Log($"{players[currentIndex].PlayerName} in check after move attempt: {players[currentIndex].InCheck}");
+        //Debug.Log(players[currentIndex].PlayerName + "in check "+players[currentIndex].IsInCheck() + " " + players[currentIndex].InCheck + " " + players[currentIndex].DoubleCheck);
 
         if(players[currentIndex].IsInCheck())
         {
+            Debug.Log("I was executed");
             //Double Check
             if(players[currentIndex].DoubleCheck)
             {
