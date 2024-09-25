@@ -404,11 +404,9 @@ public class Game : MonoBehaviour
 
         if(players[currentIndex].IsInCheck()) //GetAllPlayerAttackMoves(players[1-currentIndex]).Contains(players[currentIndex].Pieces[0].Position)
         {
-            Debug.Log("I was executed");
             //Double Check
             if(players[currentIndex].DoubleCheck)
             {
-                Debug.Log("I was executed11");
                 // move king
                 if(selectedPiece.Type=="King" && validMoves.Contains(targetPosition) )
                 {
@@ -429,7 +427,6 @@ public class Game : MonoBehaviour
             //Single Check
             else if(players[currentIndex].InCheck)
             {
-                Debug.Log("I was executed22");
                 bool canEvade=selectedPiece.Type=="King", // move king
                     canCapture=players[currentIndex].KingAttacker.Position==targetPosition, // cap attacker
                     canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].Pieces[0].Position)
