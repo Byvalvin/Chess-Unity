@@ -416,29 +416,40 @@ public class Game : MonoBehaviour
                 }
                 else
                 {
-                   selectedPiece.Position = originalPosition; // Reset to original position 
+                    if(validMoves.Count==0){
+                        // game over this player lost
+                    }
+                    else
+                    {
+                        selectedPiece.Position = originalPosition; // Reset to original position
+                    }
+                    
                 }
             }
             //Single Check
             else if(players[currentIndex].InCheck)
             {
                 Debug.Log("I was executed22");
-                bool canEvade=selectedPiece.Type=="King"
-                     && validMoves.Contains(targetPosition), // move king
-                    canCapture=players[currentIndex].KingAttacker.Position==targetPosition
-                     && validMoves.Contains(targetPosition), // cap attacker
-                    canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].Pieces[0].Position).Contains(targetPosition)
-                     && validMoves.Contains(targetPosition); // can block
+                bool canEvade=selectedPiece.Type=="King", // move king
+                    canCapture=players[currentIndex].KingAttacker.Position==targetPosition, // cap attacker
+                    canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].Pieces[0].Position)
+                        .Contains(targetPosition); // can block
                 
                 
                 
-                if( canEvade || canCapture || canBlock )
+                if( (canEvade || canCapture || canBlock) && validMoves.Contains(targetPosition) )
                 {
                     ExecuteMove(targetPosition);
                 }
                 else
                 {
-                    selectedPiece.Position = originalPosition; // Reset to original position 
+                    if(validMoves.Count==0){
+                        // game over this player lost
+                    }
+                    else
+                    {
+                        selectedPiece.Position = originalPosition; // Reset to original position
+                    }
                 }
             }
             else{
