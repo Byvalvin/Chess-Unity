@@ -28,6 +28,17 @@ public class Game : MonoBehaviour
         currentIndex = (currentIndex + 1) % players.Length;
     }
 
+    // Game ends
+    bool IsGameEnd()
+    {
+        return false;
+    }
+
+    void End()
+    {
+
+    }
+
     // Piece Movement Logic
     HashSet<Vector2Int> GetAllPlayerMoves(Player player)
     {
@@ -381,15 +392,16 @@ public class Game : MonoBehaviour
         UpdateGameState();
         //Debug.Log($"After UpdateGameState: {players[1 - currentIndex].PlayerName} InCheck: {players[1 - currentIndex].InCheck}, DoubleCheck: {players[1 - currentIndex].DoubleCheck}");
 
+        SwitchPlayer();
+        
         // can do game over Logic here actually
         // if DoubleChecked opponent
         // check if they can move
         // else if SingleChecked opponent
         // check if they can move
-
         // if cant move just end game here
-
-        SwitchPlayer();
+        if(IsGameEnd())
+            End();
     }
 
     bool isCapture(Vector2Int targetPosition) => board.GetTile(targetPosition).HasPiece();
