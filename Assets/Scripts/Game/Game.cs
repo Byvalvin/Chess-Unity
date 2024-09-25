@@ -281,12 +281,16 @@ public class Game : MonoBehaviour
                         break;
                     default: // Queen, Rook, Bishop
                         HashSet<Vector2Int> pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos, includeEnds:true);
-                        pieceAtposDefended = pointsBetweenAndEnds.Contains(pos);
-                        if(pointsBetweenAndEnds.Count > 2) // there will always be two because of the ends
+                        pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
+                        if(pointsBetweenAndEnds.Count > 2) // if there is a defender then only do this check if there are tiles between the defender and defended
+                        {
                             foreach (Vector2Int point in pointsBetweenAndEnds)
                             {
-                            pieceAtposDefended = pieceAtposDefended && !board.GetTile(pos).HasPiece(); // if a single piece on path, path is blocked and piece cant be defended
+                                pieceAtposDefended = pieceAtposDefended && !board.GetTile(point).HasPiece(); // if a single piece on path, path is blocked and piece cant be defended
+                                if(!pieceAtposDefended)
+                                    break; // there is another piece blocking the defense
                             }
+                        }
                         break;
                     
                 }
@@ -315,10 +319,13 @@ public class Game : MonoBehaviour
                 kingMoves.Add(move);
         }
         
-        Debug.Log("KingMoves "+piece.Colour);
-        foreach (var item in kingMoves)
+        if(currentIndex==1)
         {
-            Debug.Log(item) ; 
+            Debug.Log("KingMoves "+piece.Colour);
+            foreach (var item in kingMoves)
+            {
+                Debug.Log(item) ; 
+            }
         }
         
         return kingMoves;
