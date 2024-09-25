@@ -61,7 +61,6 @@ public class Pawn : Piece
     protected override void Start()
     {
         base.Start();
-        SetPosition();
         SetSprite();   
     }
 

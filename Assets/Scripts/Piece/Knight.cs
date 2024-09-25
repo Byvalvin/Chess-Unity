@@ -22,7 +22,6 @@ public class Knight : Piece
     protected override void Start()
     {
         base.Start();
-        SetPosition();
         SetSprite();   
         
     }

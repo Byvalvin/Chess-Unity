@@ -32,7 +32,6 @@ public class King : Piece
     protected override void Start()
     {
         base.Start();
-        SetPosition();
         SetSprite();   
     }
 

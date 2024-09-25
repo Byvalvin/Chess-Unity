@@ -136,6 +136,7 @@ public abstract class Piece : MonoBehaviour
     }
 
     protected virtual void Awake(){
+        
     }
     
 

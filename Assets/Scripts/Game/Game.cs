@@ -449,9 +449,21 @@ public class Game : MonoBehaviour
         else
         {
             // cant move a pinned piece
-            Piece attacker = players[1-currentIndex].Pieces.Find(p => p.ValidMoves.Contains(selectedPiece.Position));
-            bool pinnedPiece = attacker!=null && Utility.GetIntermediateLinePoints(players[currentIndex].Pieces[0].Position, attacker.Position).Contains(selectedPiece.Position);
-            if(pinnedPiece)
+            bool pinnedPiece = false; // assume selectePiece not pinned
+            bool pinnedPieceCanCaptureAttacker = false;
+
+            Piece attacker = players[1-currentIndex].Pieces.Find(p => p.ValidMoves.Contains(selectedPiece.Position)); // selected piece is attacked
+            if(attacker!=null){
+                HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(players[currentIndex].Pieces[0].Position, attacker.Position);
+                pinnedPiece = tilesBetweenKingAndAttacker.Contains(selectedPiece.Position);
+
+                // because a pinned piece can still attack
+                HashSet<Vector2Int> allowedPinnedPieceMoves = tilesBetweenKingAndAttacker;
+                allowedPinnedPieceMoves.Add(attacker.Position);
+                pinnedPieceCanCaptureAttacker = allowedPinnedPieceMoves.Contains(targetPosition);
+            }
+
+            if(pinnedPiece && !pinnedPieceCanCaptureAttacker)
             {
                 //Debug.Log("pin");
                 selectedPiece.Position = originalPosition; // Reset to original position 

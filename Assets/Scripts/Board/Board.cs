@@ -17,8 +17,6 @@ public class Board : MonoBehaviour
     public const int N = 8; // Size of the board
     public void CreateBoard(Player Player1, Player Player2)
     {
-        // create Sprite dict
-        LoadSprites();
 
         // Create and Add Tiles
         tiles = new Tile[N, N];
@@ -216,7 +214,12 @@ public class Board : MonoBehaviour
 
     // Piece Movement Logic
     public bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
-        
+    
+    void Awake()
+    {
+        // create Sprite dict
+        LoadSprites();
+    }
   
     // Start is called before the first frame update
     void Start()
