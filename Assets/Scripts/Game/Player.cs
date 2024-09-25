@@ -8,7 +8,7 @@ public class Player : MonoBehaviour
     private bool colour = true; //assume white
     private List<Piece> pieces = new List<Piece>(), captured = new List<Piece>();
 
-    private bool inCheck = false, doubleCheck = false;
+    private bool inCheck = true, doubleCheck = true;
 
     public Piece KingAttacker = null; // the opposing piece attacking player's king 
 

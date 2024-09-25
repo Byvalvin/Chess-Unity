@@ -247,7 +247,6 @@ public class Game : MonoBehaviour
         HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
         foreach(Vector2Int move in king.ValidMoves)
         {
-            players[king.Colour ? 0:1].InCheck = king.Position==move;
             if(!opposingMoves.Contains(move))
             {
                 kingMoves.Add(move);
@@ -284,15 +283,12 @@ public class Game : MonoBehaviour
         player.InCheck = attackingPiecesCount == 1;
         player.DoubleCheck = attackingPiecesCount > 1;
 
-        Debug.Log($"Updating check status for {player.PlayerName}. InCheck: {player.InCheck}, DoubleCheck: {player.DoubleCheck}");
-
-        //Debug.Log(player.PlayerName+"is in check? "+player.IsInCheck());
+        //Debug.Log($"Updating check status for {player.PlayerName}. InCheck: {player.InCheck}, DoubleCheck: {player.DoubleCheck}");
     }
 
 
     private void UpdateGameState()
     {
-        // update all piece moves
         // Reset and filter valid moves for each piece
         foreach (Player player in players)
         {
@@ -303,15 +299,16 @@ public class Game : MonoBehaviour
             }
         }
 
-        Opposition(); // create the opposition if its there i.e remove the moves that both Kings can equally make
+        Opposition(); // Update the opposition
 
-        //check in check
+        // Check if players are in check
         foreach (Player player in players)
         {
-            UpdateCheckStatus(player); // update check status for the player who isnt playing now
-            UpdateKingAttack(player.Pieces[0]); // update King moves based on opponent pieces
+            //Debug.Log($"Before UpdateCheckStatus: {player.PlayerName} InCheck: {player.InCheck}, DoubleCheck: {player.DoubleCheck}");
+            UpdateCheckStatus(player);
+            //Debug.Log($"After UpdateCheckStatus: {player.PlayerName} InCheck: {player.InCheck}, DoubleCheck: {player.DoubleCheck}");
+            UpdateKingAttack(player.Pieces[0]); // Update King's moves based on opponent pieces
         }
-        
 
         /*
         Debug.Log("Player: "+ players[0].PlayerName);
@@ -380,8 +377,10 @@ public class Game : MonoBehaviour
 
         board.MovePiece(selectedPiece.Position, targetPosition);
         selectedPiece.Move(targetPosition);
+        //Debug.Log($"Before UpdateGameState: {players[1 - currentIndex].PlayerName} InCheck: {players[1 - currentIndex].InCheck}, DoubleCheck: {players[1 - currentIndex].DoubleCheck}");
         UpdateGameState();
-        Debug.Log($"After move: {players[currentIndex].PlayerName} InCheck: {players[currentIndex].InCheck}, DoubleCheck: {players[currentIndex].DoubleCheck}");
+        //Debug.Log($"After UpdateGameState: {players[1 - currentIndex].PlayerName} InCheck: {players[1 - currentIndex].InCheck}, DoubleCheck: {players[1 - currentIndex].DoubleCheck}");
+
         SwitchPlayer();
     }
 
@@ -398,15 +397,16 @@ public class Game : MonoBehaviour
             Debug.Log(move);
         }
         */
-        Debug.Log($"{players[currentIndex].PlayerName} in check after move attempt: {players[currentIndex].InCheck}");
+        Debug.Log($"{players[1-currentIndex].PlayerName} in check after move attempt: {players[1-currentIndex].InCheck}");
         //Debug.Log(players[currentIndex].PlayerName + "in check "+players[currentIndex].IsInCheck() + " " + players[currentIndex].InCheck + " " + players[currentIndex].DoubleCheck);
 
-        if(players[currentIndex].IsInCheck())
+        if(players[currentIndex].IsInCheck()) //GetAllPlayerAttackMoves(players[1-currentIndex]).Contains(players[currentIndex].Pieces[0].Position)
         {
             Debug.Log("I was executed");
             //Double Check
             if(players[currentIndex].DoubleCheck)
             {
+                Debug.Log("I was executed11");
                 // move king
                 if(selectedPiece.Type=="King" && validMoves.Contains(targetPosition) )
                 {
@@ -420,6 +420,7 @@ public class Game : MonoBehaviour
             //Single Check
             else if(players[currentIndex].InCheck)
             {
+                Debug.Log("I was executed22");
                 bool canEvade=selectedPiece.Type=="King"
                      && validMoves.Contains(targetPosition), // move king
                     canCapture=players[currentIndex].KingAttacker.Position==targetPosition
@@ -438,6 +439,9 @@ public class Game : MonoBehaviour
                     selectedPiece.Position = originalPosition; // Reset to original position 
                 }
             }
+            else{
+                selectedPiece.Position = originalPosition; // Reset to original position
+            } 
 
         }
         else
@@ -476,8 +480,7 @@ public class Game : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
         P1.PlayerName = "P1"; P2.PlayerName = "P2";
@@ -488,6 +491,12 @@ public class Game : MonoBehaviour
 
         board = gameObject.AddComponent<Board>();
         board.CreateBoard(P1, P2);
+        
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
         UpdateGameState();
     }
 
