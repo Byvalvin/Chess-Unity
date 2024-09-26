@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Pawn : Piece
 {
+    private bool canBeCapturedEnPassant = false;
 
     public override bool CanMove(Vector2Int to)
     {
@@ -17,6 +18,19 @@ public class Pawn : Piece
         return (forwardMove && sameX) || (doubleForwardMove && sameX) || diagonalCapture;
     }
 
+    public override void Move(Vector2Int to) // just used tp update state since move check done on board, make sure to call this base.Move() in sub classes if it is being overidden
+    {
+        
+        int forwardStep = colour ? -1 : 1;
+        bool doubleForwardMove = FirstMove && currentPos.y + 2 * forwardStep == to.y;
+        if (doubleForwardMove)
+        {
+            canBeCapturedEnPassant = true; // Set en passant available
+        }
+
+        base.Move(to);
+    }
+    
     protected override void SetValidMoves()
     {
         //Debug.Log("My current pos: " + currentPos);
@@ -26,7 +40,10 @@ public class Pawn : Piece
         };
 
         if (FirstMove)
+        {
             moves.Add(new Vector2Int( currentPos.x, currentPos.y + (colour ? -2 : 2) )); // Two spaces forward
+            canBeCapturedEnPassant = true; //potential en passant
+        }
 
         // Diagonal captures
         moves.Add(new Vector2Int( currentPos.x - 1, currentPos.y + (colour ? -1 : 1)) );
@@ -34,6 +51,11 @@ public class Pawn : Piece
 
         // Filter valid moves using HashSet
         validMoves = FindAll(moves);
+    }
+
+    public void ResetEnPassant()
+    {
+        canBeCapturedEnPassant = false; // Reset after each move
     }
 
     // GUI

@@ -216,9 +216,6 @@ public class Board : MonoBehaviour
 
         }
     }
-    public void EnPassant(Piece pawnPassing, Piece pawnAttacking)
-    {
-    }
     
     void Awake()
     {

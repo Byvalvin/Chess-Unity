@@ -19,7 +19,7 @@ public class Game : MonoBehaviour
     private Player[] players = new Player[2]; // only 2 players for a chess game
     private int currentIndex = 0;
 
-    private Piece selectedPiece = null;
+    private Piece selectedPiece = null, lastMovedPiece = null; // To track the last moved piece;
     Vector2Int originalPosition;
 
     private bool checkmate = false;
@@ -396,6 +396,12 @@ public class Game : MonoBehaviour
             {
                 piece.ResetValidMoves();
                 piece.ValidMoves = FilterMoves(piece);
+
+                // Reset en passant status after each move
+                if (piece is Pawn pawn)
+                {
+                    pawn.ResetEnPassant();
+                }
             }
         }
 
@@ -447,8 +453,24 @@ public class Game : MonoBehaviour
             captured.Captured = true;
         }
 
+        // Handle en passant
+        if (lastMovedPiece is Pawn && lastMovedPiece.Position.x == targetPosition.x)
+        {
+            Vector2Int enPassantTarget = lastMovedPiece.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
+            if (targetPosition == enPassantTarget)
+            {
+                //Debug.Log("Execute EnPassant");
+                // Remove the pawn that is captured en passant
+                Piece captured = board.GetTile(lastMovedPiece.Position).piece;
+                players[currentIndex].Capture(captured);
+                players[(currentIndex + 1) % 2].RemovePiece(captured);
+                captured.Captured = true;
+            }
+        }
+
         board.MovePiece(selectedPiece.Position, targetPosition);
         selectedPiece.Move(targetPosition);
+        lastMovedPiece = selectedPiece; // Store the last moved piece
         UpdateGameState();
 
         SwitchPlayer();
@@ -469,6 +491,10 @@ public class Game : MonoBehaviour
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Vector2Int targetPosition = Utility.RoundVector2(mousePosition / board.TileSize);
         HashSet<Vector2Int> validMoves = FilterMoves(selectedPiece);
+        bool isAnEnPassantMove = lastMovedPiece!=null 
+                && selectedPiece.Type=="Pawn" && lastMovedPiece.Type=="Pawn" 
+                && targetPosition==lastMovedPiece.Position+new Vector2Int(0, currentIndex==0 ? -1:1) 
+                && lastMovedPiece.Position.y==selectedPiece.Position.y;
 
         if(players[currentIndex].IsInCheck())
         {
@@ -489,11 +515,11 @@ public class Game : MonoBehaviour
             else if(players[currentIndex].InCheck)
             {
                 bool canEvade=selectedPiece.Type=="King", // move king
-                    canCapture=players[currentIndex].KingAttacker.Position==targetPosition, // cap attacker
+                    canCapture=players[currentIndex].KingAttacker.Position==targetPosition || isAnEnPassantMove, // cap attacker
                     canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].GetKing().Position)
                         .Contains(targetPosition); // can block
 
-                if( validMoves.Contains(targetPosition) && (canEvade || canCapture || canBlock))
+                if( (validMoves.Contains(targetPosition) || isAnEnPassantMove) && (canEvade || canCapture || canBlock))
                 {
                     ExecuteMove(targetPosition);
                 }
@@ -530,8 +556,9 @@ public class Game : MonoBehaviour
             }
             else
             {
-                if (validMoves.Contains(targetPosition))
+                if (validMoves.Contains(targetPosition) || isAnEnPassantMove)
                 {
+                    //Debug.Log(isAnEnPassantMove+" IN PASSING");
                     ExecuteMove(targetPosition);
                 }
                 else{
