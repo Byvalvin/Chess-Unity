@@ -259,35 +259,39 @@ public class Game : MonoBehaviour
         {
             foreach (Piece opposingPiece in players[piece.Colour?1:0].Pieces)
             {
-                switch(opposingPiece.Type)
+                
+                if(opposingPiece.Position != pos) //make sure piece isnt "defending" itself lol
                 {
-                    case "King":
-                        pieceAtposDefended = KingAttackedTiles(opposingPiece).Contains(pos);
-                        break;
-                    case "Knight":
-                        pieceAtposDefended = KnightAttackedTiles(opposingPiece).Contains(pos);
-                        break;
-                    case "Pawn":
-                        pieceAtposDefended = PawnAttackedTiles(opposingPiece).Contains(pos);
-                        break;
-                    default: // Queen, Rook, Bishop
-                        HashSet<Vector2Int> pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos, includeEnds:true);
-                        pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
-                        if(pointsBetweenAndEnds.Count > 2) // if there is a defender then only do this check if there are tiles between the defender and defended
-                        {
-                            pointsBetweenAndEnds.Remove(opposingPiece.Position); pointsBetweenAndEnds.Remove(pos);
-                            foreach (Vector2Int point in pointsBetweenAndEnds)
+                    switch(opposingPiece.Type)
+                    {
+                        case "King":
+                            pieceAtposDefended = KingAttackedTiles(opposingPiece).Contains(pos);
+                            break;
+                        case "Knight":
+                            pieceAtposDefended = KnightAttackedTiles(opposingPiece).Contains(pos);
+                            break;
+                        case "Pawn":
+                            pieceAtposDefended = PawnAttackedTiles(opposingPiece).Contains(pos);
+                            break;
+                        default: // Queen, Rook, Bishop
+                            HashSet<Vector2Int> pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos, includeEnds:true);
+                            pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
+                            if(pointsBetweenAndEnds.Count > 2) // if there is a defender then only do this check if there are tiles between the defender and defended
                             {
-                                pieceAtposDefended = pieceAtposDefended && !board.GetTile(point).HasPiece(); // if a single piece on path, path is blocked and piece cant be defended
-                                if(!pieceAtposDefended)
-                                    break; // there is another piece blocking the defense, onto next candidate
+                                pointsBetweenAndEnds.Remove(opposingPiece.Position); pointsBetweenAndEnds.Remove(pos);
+                                foreach (Vector2Int point in pointsBetweenAndEnds)
+                                {
+                                    pieceAtposDefended = pieceAtposDefended && !board.GetTile(point).HasPiece(); // if a single piece on path, path is blocked and piece cant be defended
+                                    if(!pieceAtposDefended)
+                                        break; // there is another piece blocking the defense, onto next candidate
+                                }
                             }
-                        }
+                            break;
+                        
+                    }
+                    if(pieceAtposDefended){ // piece is defended by one other piece already so can stop
                         break;
-                    
-                }
-                if(pieceAtposDefended){ // piece is defended by one other piece already so can stop
-                    break;
+                    }
                 }
                 
             }

@@ -14,6 +14,7 @@ public class Rook : Piece
     }
 
     protected override void Awake(){
+        base.Awake();
         type = "Rook";
     }
 

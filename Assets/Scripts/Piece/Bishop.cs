@@ -53,6 +53,7 @@ public class Bishop : Piece
     }
 
     protected override void Awake(){
+        base.Awake();
         type = "Bishop";
     }
 

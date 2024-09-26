@@ -51,6 +51,7 @@ public class Pawn : Piece
     }
 
     protected override void Awake(){
+        base.Awake();
         type = "Pawn";
     }
 

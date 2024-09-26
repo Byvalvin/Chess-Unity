@@ -23,34 +23,34 @@ public abstract class Piece : MonoBehaviour
 
 
     // GUI
-    static int colourIndex = 3;
-static Color[] LightColors = {
-    new Color(1f, 0.95f, 0.8f, 1f), // Cream
-    new Color(0.9f, 0.9f, 0.9f, 1f), // Very Light Gray
-    new Color(1f, 0.94f, 0.8f, 1f), // Soft Beige
-    new Color(1f, 1f, 0.8f, 1f), // Soft Yellow
-    new Color(0.9f, 0.8f, 1f, 1f), // Light Purple
-    new Color(0.8f, 1f, 1f, 1f), // Soft Cyan
-    new Color(1f, 0.8f, 0.7f, 1f), // Soft Peach
-    new Color(0.8f, 1f, 0.8f, 1f)  // Soft Green
-}
-,   DarkColors = {
-    new Color(0.3f, 0.3f, 0.3f, 1f), // Charcoal
-    new Color(0.2f, 0.2f, 0.2f, 1f), // Dark Gray
-    new Color(0.4f, 0.26f, 0.2f, 1f), // Soft Brown
-    new Color(0.2f, 0.2f, 0.2f, 1f), // Dark Charcoal
-    new Color(0.1f, 0.3f, 0.5f, 1f), // Very Dark Blue
-    new Color(0.1f, 0.3f, 0.1f, 1f), // Dark Green
-    new Color(0.4f, 0.2f, 0.1f, 1f), // Rich Brown
-    new Color(0.4f, 0.4f, 0.5f, 1f)  // Dark Slate Gray
-};
-
     /*
-    Color lightColour = new Color(1f, 0.95f, 0.8f, 1f), // Cream
-     darkColour = new Color(0.3f, 0.3f, 0.3f, 1f); // Charcoal
+        Color lightColour = new Color(1f, 0.95f, 0.8f, 1f), // Cream
+        darkColour = new Color(0.3f, 0.3f, 0.3f, 1f); // Charcoal
     */
-    Color lightColour=LightColors[colourIndex],
-            darkColour=DarkColors[colourIndex];
+    static Color[] LightColors = {
+        new Color(1f, 0.95f, 0.8f, 1f), // Cream
+        new Color(0.9f, 0.9f, 0.9f, 1f), // Very Light Gray
+        new Color(1f, 0.94f, 0.8f, 1f), // Soft Beige
+        new Color(1f, 1f, 0.8f, 1f), // Soft Yellow
+        new Color(0.9f, 0.8f, 1f, 1f), // Light Purple
+        new Color(0.8f, 1f, 1f, 1f), // Soft Cyan
+        new Color(1f, 0.8f, 0.7f, 1f), // Soft Peach
+        new Color(0.8f, 1f, 0.8f, 1f)  // Soft Green
+    }
+    ,   DarkColors = {
+        new Color(0.3f, 0.3f, 0.3f, 1f), // Charcoal
+        new Color(0.2f, 0.2f, 0.2f, 1f), // Dark Gray
+        new Color(0.4f, 0.26f, 0.2f, 1f), // Soft Brown
+        new Color(0.2f, 0.2f, 0.2f, 1f), // Dark Charcoal
+        new Color(0.1f, 0.3f, 0.5f, 1f), // Very Dark Blue
+        new Color(0.1f, 0.3f, 0.1f, 1f), // Dark Green
+        new Color(0.4f, 0.2f, 0.1f, 1f), // Rich Brown
+        new Color(0.4f, 0.4f, 0.5f, 1f)  // Dark Slate Gray
+    };
+    
+    static int colourIndex = -1; // will generate same index for all pieces once
+    Color lightColour, darkColour;
+
 
 
     protected void SetSprite()
@@ -154,11 +154,16 @@ static Color[] LightColors = {
 
     // setup and game loop
     protected virtual void Awake(){
+        if(colourIndex==-1) // generate once
+            colourIndex = Random.Range(0, LightColors.Length);   
     }
 
     // Start and Update methods can be overridden by derived classes as needed
     protected virtual void Start() 
     {
+        lightColour=LightColors[colourIndex];
+        darkColour=DarkColors[colourIndex];
+
         spriteR = gameObject.AddComponent<SpriteRenderer>();
 
         pieceCollider = gameObject.AddComponent<BoxCollider2D>();

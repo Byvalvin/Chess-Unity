@@ -14,6 +14,7 @@ public class Queen : Piece
     }
 
     protected override void Awake(){
+        base.Awake();
         type = "Queen";
     }
 
