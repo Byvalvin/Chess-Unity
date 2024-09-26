@@ -23,19 +23,17 @@ public abstract class Piece : MonoBehaviour
 
 
     // GUI
-    Color lightColour = new Color(1f, 0.95f, 0.8f, 1f), // Cream
-     darkColour = new Color(0.3f, 0.3f, 0.3f, 1f); // Charcoal
-    
+    static int colourIndex = 0;
+    static Color[] LightColors = {new Color(1f, 0.95f, 0.8f, 1f), new Color(0.9f, 0.9f, 0.9f, 1f), new Color(1f, 0.94f, 0.8f, 1f)}, // Cream, Very Light Gray, Soft Beige
+            DarkColors = {new Color(0.3f, 0.3f, 0.3f, 1f), new Color(0.2f, 0.2f, 0.2f, 1f), new Color(0.4f, 0.26f, 0.2f, 1f)}; // Charcoal, Dark Gray, Soft Brown
+
     /*
-    Color lightColour = new Color(0.9f, 0.9f, 0.9f, 1f), // Very Light Gray
-    darkColour = new Color(0.2f, 0.2f, 0.2f, 1f); // Dark Gray;
-
     Color lightColour = new Color(1f, 0.95f, 0.8f, 1f), // Cream
      darkColour = new Color(0.3f, 0.3f, 0.3f, 1f); // Charcoal
-
-    Color lightColour = new Color(1f, 0.94f, 0.8f, 1f); // Soft Beige
-     darkColour = new Color(0.4f, 0.26f, 0.2f, 1f); // Soft Brown
     */
+    Color lightColour=LightColors[colourIndex],
+            darkColour=DarkColors[colourIndex];
+
 
     protected void SetSprite()
     {
@@ -53,10 +51,9 @@ public abstract class Piece : MonoBehaviour
         
     }
     protected HashSet<Vector2Int> FindAll(HashSet<Vector2Int> moveSet) => Utility.FindAll<Vector2Int>(moveSet, CanMove);
-    
+
     public void ResetValidMoves() => SetValidMoves();
 
-    
     public bool Captured
     {
         get{return captured;}
@@ -127,7 +124,6 @@ public abstract class Piece : MonoBehaviour
     public virtual void Move(Vector2Int to) // just used tp update state since move check done on board
     {
         Position = to;
-
     }
 
     // GUI
@@ -140,9 +136,7 @@ public abstract class Piece : MonoBehaviour
 
     // setup and game loop
     protected virtual void Awake(){
-        
     }
-    
 
     // Start and Update methods can be overridden by derived classes as needed
     protected virtual void Start() 

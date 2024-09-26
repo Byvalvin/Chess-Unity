@@ -17,7 +17,6 @@ public class Board : MonoBehaviour
     public const int N = 8; // Size of the board
     public void CreateBoard(Player Player1, Player Player2)
     {
-
         // Create and Add Tiles
         tiles = new Tile[N, N];
         minPoint = new Vector2Int(0, 0); maxPoint = new Vector2Int(N-1, N-1);
@@ -43,9 +42,6 @@ public class Board : MonoBehaviour
 
         // Create and Add Pieces
         PopulateBoard(Player1, Player2);
-        //Debug.Log($"Player {Player1.PlayerName} has {Player1.Pieces.Count} pieces.");
-
-
     }
 
     private void CenterCamera()
@@ -99,7 +95,7 @@ public class Board : MonoBehaviour
     private void PopulateBoard(Player Player1, Player Player2)
     {
         //string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
-        string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" };
+        string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" }; // orderd so the King is indeed the first piece in the Player's Pieces List
         foreach (string pieceType in pieceTypes)
         {
             AddPieces(pieceType, Player1, Player2);
@@ -173,11 +169,8 @@ public class Board : MonoBehaviour
                 piece = PieceObject.AddComponent<Bishop>();
                 break;
             case "Pawn":
-                darkY++;
-                lightY--;
+                darkY++; lightY--;
                 piece = PieceObject.AddComponent<Pawn>();
-                //Debug.Log($"Created {piece.Type} with colour {colour}");
-
                 break;
             default:
                 Debug.Log("Unknown piece type: " + type);
@@ -203,13 +196,6 @@ public class Board : MonoBehaviour
 
         // Give piece to player
         Player.AddPiece(piece);
-        //Debug.Log($"Added {piece.Type} to {Player.PlayerName}");
-
-
-        //Debug.Log($"Type:{piece.Type}, Colour: {piece.Colour}");
-        int i = Player.Pieces.Count-1;
-        //Debug.Log(Player.Pieces[i].Type + " " + Player.Pieces[i].Colour);
-
     }
 
     // Piece Movement Logic

@@ -17,20 +17,36 @@ public static class Utility
     }
 
     // Player UI variables
+    /*
+    get where the user's mouse is currently
+    */
     public static Vector2 GetMouseWorldPosition()
     {
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         return new Vector2(mousePos.x, mousePos.y);
     }
     
+    /*
+    get if the user released the left-click button down
+    */
     public static bool MouseUp() => Input.GetMouseButtonUp(0);
+    /*
+    get if the user pressed the left-click button down
+    */
     public static bool MouseDown() => Input.GetMouseButtonDown(0);
 
 
 
     // Vector math
+
+    /*
+    get if the closest integer location given float location
+    */
     public static Vector2Int RoundVector2(Vector2 position) => new Vector2Int((int)Mathf.Round(position.x), (int)Mathf.Round(position.y));
 
+    /*
+    get if a given point is in the bounds given by the min and max points
+    */
     public static bool InBounds(Vector2 minPt, Vector2 maxPt, Vector2 givenPt)
     {
         Vector2 effectiveMin = new Vector2(Mathf.Min(minPt.x, maxPt.x), Mathf.Min(minPt.y, maxPt.y));
@@ -72,6 +88,9 @@ public static class Utility
         return points;
     }
 
+    /*
+    get the positions between the start and end positions, excluding the start and end positions. Must specify the MovementType
+    */
     public static HashSet<Vector2Int> GetIntermediatePoints(Vector2Int start, Vector2Int end, MovementType type)
     {
         switch (type)
@@ -87,6 +106,10 @@ public static class Utility
         }
     }
 
+    /*
+    get the positions in the diagonal between the start and end positions if there are any. Optionally specify to include the start and end positions
+    Can be used to check if a point is on a diagonal path
+    */
     private static HashSet<Vector2Int> GetIntermediateDiagonalLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
@@ -111,6 +134,10 @@ public static class Utility
         return points;
     }
 
+    /*
+    get the positions in the non-diagonal(horizontal or vertical) between the start and end positions if there are any. Optionally specify to include the start and end positions
+    Can be used to check if a point is on a non-diagonal path
+    */
     private static HashSet<Vector2Int> GetIntermediateNonDiagonalLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
@@ -146,7 +173,10 @@ public static class Utility
         return points;
     }
 
-    // strictly diag, horz and vert
+    /*
+    get the positions in the diagonal or non-diagonal between the start and end positions if there are any. Optionally specify to include the start and end positions
+    Can be used to check if a point is on a diagonal or non diagonal path
+    */
     public static HashSet<Vector2Int> GetIntermediateLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
@@ -167,6 +197,9 @@ public static class Utility
     }
 
 
+    /*
+    get the positions touching a given position
+    */
     public static HashSet<Vector2Int> GetSurroundingPoints(Vector2Int center)
     {
         HashSet<Vector2Int> surroundingPoints = new HashSet<Vector2Int>();
@@ -184,6 +217,9 @@ public static class Utility
         return surroundingPoints;
     }
 
+    /*
+    get the positions in the area formed by the start and end points, including the start and end points
+    */
     public static HashSet<Vector2Int> GetAllPointsInArea(Vector2Int start, Vector2Int end)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
@@ -204,6 +240,10 @@ public static class Utility
     }
 
     // Containers    
+
+    /*
+    similar to List<T>.FindAll, given a set of value of type T, returns the values that satisfy the predicate in a set
+    */
     public static HashSet<T> FindAll<T>(HashSet<T> set, Func<T, bool> predicate)
     {
         HashSet<T> result = new HashSet<T>();

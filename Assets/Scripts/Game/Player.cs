@@ -13,48 +13,37 @@ public class Player : MonoBehaviour
     public Piece KingAttacker = null; // the opposing piece attacking player's king 
 
     public string PlayerName{
-        get{return playerName;}
-        set{playerName=value;}
+        get=>playerName;
+        set=>playerName=value;
     }
     public bool Colour{
-        get{return colour;}
-        set{colour=value;}
+        get=>colour;
+        set=>colour=value;
     }
     public List<Piece> Pieces
     {
-        get => pieces;
+        get=>pieces;
     }
 
     public bool InCheck{
-        get{return inCheck;}
-        set{
-            inCheck=value;
-        }
+        get=>inCheck;
+        set=>inCheck=value;
     }
     public bool DoubleCheck{
         get{return doubleCheck;}
-        set{
-            doubleCheck=value;
-        }
+        set=>doubleCheck=value;
+
     }
+
+    public Piece GetKing() => Pieces[0];
     public bool IsInCheck(){
         return doubleCheck || InCheck;
     }
 
-    public void AddPiece(Piece piece)
-    {
-        pieces.Add(piece);
-    }
+    public void AddPiece(Piece piece) => pieces.Add(piece);
+    public void RemovePiece(Piece piece) => pieces.Remove(piece);
 
-    public void RemovePiece(Piece piece)
-    {
-        pieces.Remove(piece);
-    }
-
-    public void Capture(Piece piece)
-    {
-        captured.Add(piece);
-    }
+    public void Capture(Piece piece) => captured.Add(piece);
 
     // Start is called before the first frame update
     void Start()

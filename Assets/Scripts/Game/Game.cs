@@ -35,7 +35,7 @@ public class Game : MonoBehaviour
         // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
         foreach (Player player in players)
         {
-            Piece PlayerKing = player.Pieces[0];
+            Piece PlayerKing = player.GetKing();
             if(player.IsInCheck()){
 
                 if(player.DoubleCheck)
@@ -90,7 +90,6 @@ public class Game : MonoBehaviour
         foreach (Piece piece in player.Pieces)
         {
             bool isPawn = piece.Type=="Pawn";
-            //Debug.Log(piece.Type+" "+piece.Colour);
             if(isPawn)
             {
                 // add the squares attacked by the Pawn, Pawn fwd moves not included here
@@ -101,12 +100,6 @@ public class Game : MonoBehaviour
                 foreach (Vector2Int move in piece.ValidMoves)
                     allMoves.Add(move);     
             }
-            /*
-            foreach (var item in allMoves)
-            {
-                Debug.Log(item + " in all moves");
-            }
-            */
 
         }
         return allMoves;
@@ -125,17 +118,7 @@ public class Game : MonoBehaviour
     HashSet<Vector2Int> KingAttackedTiles(Piece piece)
     {
         HashSet<Vector2Int> attackedTiles, allAttackedTiles = Utility.GetSurroundingPoints(piece.Position);
-
         attackedTiles = Utility.FindAll<Vector2Int>(allAttackedTiles,board.InBounds);
-        /*
-        Debug.Log("---");
-        foreach (var item in attackedTiles)
-        {
-            Debug.Log("King defends "+item);
-        }
-                Debug.Log("---");
-                */
-
         return attackedTiles;
     }
     HashSet<Vector2Int> KnightAttackedTiles(Piece piece)
@@ -147,8 +130,8 @@ public class Game : MonoBehaviour
     void Opposition()
     {
         // Find common elements
-        HashSet<Vector2Int> KingWhiteMoves = players[0].Pieces[0].ValidMoves,
-                    KingBlackMoves = players[1].Pieces[0].ValidMoves;
+        HashSet<Vector2Int> KingWhiteMoves = players[0].GetKing().ValidMoves,
+                    KingBlackMoves = players[1].GetKing().ValidMoves;
         HashSet<Vector2Int> common = new HashSet<Vector2Int>(KingWhiteMoves);
         common.IntersectWith(KingBlackMoves);
 
@@ -158,8 +141,8 @@ public class Game : MonoBehaviour
             KingWhiteMoves.Remove(move);
             KingBlackMoves.Remove(move);
         }
-        players[0].Pieces[0].ValidMoves = KingWhiteMoves;
-        players[1].Pieces[0].ValidMoves = KingBlackMoves;
+        players[0].GetKing().ValidMoves = KingWhiteMoves;
+        players[1].GetKing().ValidMoves = KingBlackMoves;
 
     }
     bool FilterPawnMove(Piece piece, Vector2Int pos)
@@ -303,13 +286,9 @@ public class Game : MonoBehaviour
                         break;
                     
                 }
-                
                 if(pieceAtposDefended){ // piece is defended by one other piece already so can stop
-                   // Debug.Log(pos + " " + pieceAtposDefended + " " + piece.Type);
                     break;
                 }
-                
-
                 
             }
         }
@@ -327,18 +306,6 @@ public class Game : MonoBehaviour
             if (FilterKingMove(piece, move))
                 kingMoves.Add(move);
         }
-        
-        /*
-        if(currentIndex==1)
-        {
-            Debug.Log("KingMoves "+piece.Colour);
-            foreach (var item in kingMoves)
-            {
-                Debug.Log(item) ; 
-            }
-        }
-        */
-        
         return kingMoves;
     }
 
@@ -372,7 +339,6 @@ public class Game : MonoBehaviour
     }
     private void UpdateKingAttack(Piece king)
     {
-        // Debug.Log("Check King "+king.Type + " " + king.Colour);
         HashSet<Vector2Int> opposingMoves = GetAllPlayerAttackMoves(players[king.Colour ? 1:0]);
 
         HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
@@ -388,7 +354,7 @@ public class Game : MonoBehaviour
 
     private void UpdateCheckStatus(Player player)
     {
-        Piece king = player.Pieces[0];
+        Piece king = player.GetKing();
         if (king == null) return;
 
         HashSet<Vector2Int> opposingMoves = GetAllPlayerAttackMoves(players[player.Colour ? 1 : 0]);
@@ -435,35 +401,10 @@ public class Game : MonoBehaviour
         // Check if players are in check
         foreach (Player player in players)
         {
-            //Debug.Log($"Before UpdateCheckStatus: {player.PlayerName} InCheck: {player.InCheck}, DoubleCheck: {player.DoubleCheck}");
             UpdateCheckStatus(player);
             //Debug.Log($"After UpdateCheckStatus: {player.PlayerName} InCheck: {player.InCheck}, DoubleCheck: {player.DoubleCheck}");
-            UpdateKingAttack(player.Pieces[0]); // Update King's moves based on opponent pieces
+            UpdateKingAttack(player.GetKing()); // Update King's moves based on opponent pieces
         }
-
-        /*
-        Debug.Log("Player: "+ players[0].PlayerName);
-        foreach(Piece piece in players[0].Pieces)
-        {
-            Debug.Log(piece);
-            foreach (var item in piece.ValidMoves)
-            {
-                Debug.Log(item);
-            }
-            Debug.Log("----------------------");
-        }
-        Debug.Log("|||||||||||||||||||||||||||||");
-        Debug.Log("Player: "+ players[1].PlayerName);
-        foreach(Piece piece in players[1].Pieces)
-        {
-            Debug.Log(piece);
-            foreach (var item in piece.ValidMoves)
-            {
-                Debug.Log(item);
-            }
-            Debug.Log("----------------------");
-        }
-        */
 
     }
 
@@ -505,9 +446,7 @@ public class Game : MonoBehaviour
 
         board.MovePiece(selectedPiece.Position, targetPosition);
         selectedPiece.Move(targetPosition);
-        //Debug.Log($"Before UpdateGameState: {players[1 - currentIndex].PlayerName} InCheck: {players[1 - currentIndex].InCheck}, DoubleCheck: {players[1 - currentIndex].DoubleCheck}");
         UpdateGameState();
-        //Debug.Log($"After UpdateGameState: {players[1 - currentIndex].PlayerName} InCheck: {players[1 - currentIndex].InCheck}, DoubleCheck: {players[1 - currentIndex].DoubleCheck}");
 
         SwitchPlayer();
         
@@ -528,18 +467,7 @@ public class Game : MonoBehaviour
         Vector2Int targetPosition = Utility.RoundVector2(mousePosition / board.TileSize);
         HashSet<Vector2Int> validMoves = FilterMoves(selectedPiece);
 
-        /*
-        foreach (Vector2Int move in validMoves)
-        {
-            Debug.Log(move);
-        }
-        */
-        //Debug.Log($"{players[1-currentIndex].PlayerName} in check after move attempt: {players[1-currentIndex].InCheck}");
-        //Debug.Log(players[currentIndex].PlayerName + "in check "+players[currentIndex].IsInCheck() + " " + players[currentIndex].InCheck + " " + players[currentIndex].DoubleCheck);
-
-
-
-        if(players[currentIndex].IsInCheck()) //GetAllPlayerAttackMoves(players[1-currentIndex]).Contains(players[currentIndex].Pieces[0].Position)
+        if(players[currentIndex].IsInCheck())
         {
             //Double Check
             if(players[currentIndex].DoubleCheck)
@@ -559,7 +487,7 @@ public class Game : MonoBehaviour
             {
                 bool canEvade=selectedPiece.Type=="King", // move king
                     canCapture=players[currentIndex].KingAttacker.Position==targetPosition, // cap attacker
-                    canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].Pieces[0].Position)
+                    canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].GetKing().Position)
                         .Contains(targetPosition); // can block
 
                 if( validMoves.Contains(targetPosition) && (canEvade || canCapture || canBlock))
@@ -584,7 +512,7 @@ public class Game : MonoBehaviour
 
             Piece attacker = GetAttacker(selectedPiece); // selected piece is attacked
             if(attacker!=null){
-                HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(players[currentIndex].Pieces[0].Position, attacker.Position);
+                HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(players[currentIndex].GetKing().Position, attacker.Position);
                 pinnedPiece = tilesBetweenKingAndAttacker.Contains(selectedPiece.Position);
 
                 // because a pinned piece can still attack
@@ -595,7 +523,6 @@ public class Game : MonoBehaviour
 
             if(pinnedPiece && !pinnedPieceCanCaptureAttacker)
             {
-                //Debug.Log("pin");
                 selectedPiece.Position = originalPosition; // Reset to original position 
             }
             else
