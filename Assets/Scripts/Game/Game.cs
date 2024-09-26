@@ -288,11 +288,10 @@ public class Game : MonoBehaviour
                             }
                             break;
                         
-                    }
-                    if(pieceAtposDefended){ // piece is defended by one other piece already so can stop
-                        break;
-                    }
+                    }         
                 }
+                if(pieceAtposDefended) // piece is defended by one other piece already so can stop
+                    break;
                 
             }
         }

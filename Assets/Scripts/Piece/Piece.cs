@@ -5,6 +5,7 @@ using UnityEngine;
 public abstract class Piece : MonoBehaviour
 
 {
+    // core variables
     protected string type;
     protected bool colour;
     protected Color myColour;
@@ -15,14 +16,15 @@ public abstract class Piece : MonoBehaviour
 
     protected float tileSize;
     protected Vector2Int minPoint, maxPoint;
+    private bool firstMove = true;
     
+
+
+    // GUI and display variable
     protected SpriteRenderer spriteR;
     protected Sprite pieceSprite;
     protected BoxCollider2D pieceCollider;
     protected float pieceColliderSize=1;
-
-
-    // GUI
     /*
         Color lightColour = new Color(1f, 0.95f, 0.8f, 1f), // Cream
         darkColour = new Color(0.3f, 0.3f, 0.3f, 1f); // Charcoal
@@ -51,14 +53,13 @@ public abstract class Piece : MonoBehaviour
     static int colourIndex = -1; // will generate same index for all pieces once
     Color lightColour, darkColour;
 
-
-
+    // setup and update functions
     protected void SetSprite()
     {
         if(pieceSprite!=null)
         {
             spriteR.sprite = pieceSprite;
-            spriteR.color = colour? lightColour : darkColour;
+            spriteR.color = myColour;
         }
     }
     
@@ -80,6 +81,11 @@ public abstract class Piece : MonoBehaviour
             captured=value;
             if(captured) Position=purgatory;
         }
+    }
+
+    // Getters and Setters
+    public bool FirstMove{
+        get=>firstMove;
     }
     public Vector2Int Position
     {
@@ -138,10 +144,12 @@ public abstract class Piece : MonoBehaviour
         set{pieceColliderSize=value;}
     }
 
+    // abstract functions sub classes must implement
     public abstract bool CanMove(Vector2Int to); // checks if a piece can move to tile at to
-    public virtual void Move(Vector2Int to) // just used tp update state since move check done on board
+    public virtual void Move(Vector2Int to) // just used tp update state since move check done on board, make sure to call this base.Move() in sub classes if it is being overidden
     {
         Position = to;
+        firstMove = false; // Mark as moved
     }
 
     // GUI
@@ -151,19 +159,17 @@ public abstract class Piece : MonoBehaviour
     {
     }
 
-
-    // setup and game loop
+    // Unity setup and game loop
     protected virtual void Awake(){
         if(colourIndex==-1) // generate once
-            colourIndex = Random.Range(0, LightColors.Length);   
+            colourIndex = Random.Range(0, LightColors.Length);  
+        lightColour=LightColors[colourIndex];
+        darkColour=DarkColors[colourIndex]; 
     }
 
     // Start and Update methods can be overridden by derived classes as needed
     protected virtual void Start() 
     {
-        lightColour=LightColors[colourIndex];
-        darkColour=DarkColors[colourIndex];
-
         spriteR = gameObject.AddComponent<SpriteRenderer>();
 
         pieceCollider = gameObject.AddComponent<BoxCollider2D>();

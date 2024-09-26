@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class Pawn : Piece
 {
-    private bool firstMove = true;
 
     public override bool CanMove(Vector2Int to)
     {
@@ -12,18 +11,11 @@ public class Pawn : Piece
         int forwardStep = colour ? -1 : 1;
         bool sameX = currentPos.x == to.x;
         bool forwardMove = currentPos.y + forwardStep == to.y;
-        bool doubleForwardMove = firstMove && currentPos.y + 2 * forwardStep == to.y;
+        bool doubleForwardMove = FirstMove && currentPos.y + 2 * forwardStep == to.y;
         bool diagonalCapture = forwardMove && Mathf.Abs(currentPos.x - to.x) == 1;
 
         return (forwardMove && sameX) || (doubleForwardMove && sameX) || diagonalCapture;
     }
-
-    public override void Move(Vector2Int to)
-    {
-        Position = to;
-        firstMove = false; // Mark as moved
-    }
-
 
     protected override void SetValidMoves()
     {
@@ -33,7 +25,7 @@ public class Pawn : Piece
             new Vector2Int( currentPos.x, currentPos.y + (colour ? -1 : 1) ) // One space forward
         };
 
-        if (firstMove)
+        if (FirstMove)
             moves.Add(new Vector2Int( currentPos.x, currentPos.y + (colour ? -2 : 2) )); // Two spaces forward
 
         // Diagonal captures

@@ -206,6 +206,19 @@ public class Board : MonoBehaviour
 
     // Piece Movement Logic
     public bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
+
+    public void Castle(Piece king, Piece rook)
+    {
+        bool correctTypes = king.Type!="King" && rook.Type!="Rook", sameTeam = king.Colour==rook.Colour, firstMoves = king.FirstMove==rook.FirstMove==true;
+        if(correctTypes && sameTeam && firstMoves)
+        {
+            // castling logic base on side
+
+        }
+    }
+    public void EnPassant(Piece pawnPassing, Piece pawnAttacking)
+    {
+    }
     
     void Awake()
     {
