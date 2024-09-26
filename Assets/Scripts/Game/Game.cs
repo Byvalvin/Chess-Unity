@@ -127,6 +127,14 @@ public class Game : MonoBehaviour
         HashSet<Vector2Int> attackedTiles, allAttackedTiles = Utility.GetSurroundingPoints(piece.Position);
 
         attackedTiles = Utility.FindAll<Vector2Int>(allAttackedTiles,board.InBounds);
+        /*
+        Debug.Log("---");
+        foreach (var item in attackedTiles)
+        {
+            Debug.Log("King defends "+item);
+        }
+                Debug.Log("---");
+                */
 
         return attackedTiles;
     }
@@ -284,22 +292,23 @@ public class Game : MonoBehaviour
                         pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
                         if(pointsBetweenAndEnds.Count > 2) // if there is a defender then only do this check if there are tiles between the defender and defended
                         {
+                            pointsBetweenAndEnds.Remove(opposingPiece.Position); pointsBetweenAndEnds.Remove(pos);
                             foreach (Vector2Int point in pointsBetweenAndEnds)
                             {
                                 pieceAtposDefended = pieceAtposDefended && !board.GetTile(point).HasPiece(); // if a single piece on path, path is blocked and piece cant be defended
                                 if(!pieceAtposDefended)
-                                    break; // there is another piece blocking the defense
+                                    break; // there is another piece blocking the defense, onto next candidate
                             }
                         }
                         break;
                     
                 }
-                /*
-                if(pieceAtposDefended){
-                    Debug.Log(pos + " " + pieceAtposDefended + " " + piece.Type);
+                
+                if(pieceAtposDefended){ // piece is defended by one other piece already so can stop
+                   // Debug.Log(pos + " " + pieceAtposDefended + " " + piece.Type);
                     break;
                 }
-                */
+                
 
                 
             }
@@ -319,6 +328,7 @@ public class Game : MonoBehaviour
                 kingMoves.Add(move);
         }
         
+        /*
         if(currentIndex==1)
         {
             Debug.Log("KingMoves "+piece.Colour);
@@ -327,6 +337,7 @@ public class Game : MonoBehaviour
                 Debug.Log(item) ; 
             }
         }
+        */
         
         return kingMoves;
     }
