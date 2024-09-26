@@ -9,9 +9,15 @@ public class Board : MonoBehaviour
 
     private Vector2Int minPoint, maxPoint;
     private const float tileSize = 5f;
-    float pieceScaleFactor = 1.25f; // increase size of a piece also used to set collider of piece to reciprocal
-
+ 
     // Load all sprites from the Pieces.png
+    static int sheetN = 1; // the piece sheet we use
+    static Dictionary<int, float> pieceScaleMap = new Dictionary<int, float>
+    {
+        { 0, 1.25f },
+        { 1, 1.25f },
+    };
+    float pieceScaleFactor = pieceScaleMap[sheetN]; // increase size of a piece also used to set collider of piece to reciprocal
     Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
     public const int N = 8; // Size of the board
@@ -54,7 +60,7 @@ public class Board : MonoBehaviour
     private void LoadSprites()
     {
         // Load all sprites from the Pieces.png
-        Sprite[] allSprites = Resources.LoadAll<Sprite>("Sprites/Pieces"); // Adjust path if needed
+        Sprite[] allSprites = Resources.LoadAll<Sprite>($"Sprites/Pieces{sheetN}"); // Adjust path if needed
         
         foreach (var sprite in allSprites)
         {

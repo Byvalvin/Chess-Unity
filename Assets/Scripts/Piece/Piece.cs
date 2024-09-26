@@ -23,9 +23,27 @@ public abstract class Piece : MonoBehaviour
 
 
     // GUI
-    static int colourIndex = 0;
-    static Color[] LightColors = {new Color(1f, 0.95f, 0.8f, 1f), new Color(0.9f, 0.9f, 0.9f, 1f), new Color(1f, 0.94f, 0.8f, 1f)}, // Cream, Very Light Gray, Soft Beige
-            DarkColors = {new Color(0.3f, 0.3f, 0.3f, 1f), new Color(0.2f, 0.2f, 0.2f, 1f), new Color(0.4f, 0.26f, 0.2f, 1f)}; // Charcoal, Dark Gray, Soft Brown
+    static int colourIndex = 3;
+static Color[] LightColors = {
+    new Color(1f, 0.95f, 0.8f, 1f), // Cream
+    new Color(0.9f, 0.9f, 0.9f, 1f), // Very Light Gray
+    new Color(1f, 0.94f, 0.8f, 1f), // Soft Beige
+    new Color(1f, 1f, 0.8f, 1f), // Soft Yellow
+    new Color(0.9f, 0.8f, 1f, 1f), // Light Purple
+    new Color(0.8f, 1f, 1f, 1f), // Soft Cyan
+    new Color(1f, 0.8f, 0.7f, 1f), // Soft Peach
+    new Color(0.8f, 1f, 0.8f, 1f)  // Soft Green
+}
+,   DarkColors = {
+    new Color(0.3f, 0.3f, 0.3f, 1f), // Charcoal
+    new Color(0.2f, 0.2f, 0.2f, 1f), // Dark Gray
+    new Color(0.4f, 0.26f, 0.2f, 1f), // Soft Brown
+    new Color(0.2f, 0.2f, 0.2f, 1f), // Dark Charcoal
+    new Color(0.1f, 0.3f, 0.5f, 1f), // Very Dark Blue
+    new Color(0.1f, 0.3f, 0.1f, 1f), // Dark Green
+    new Color(0.4f, 0.2f, 0.1f, 1f), // Rich Brown
+    new Color(0.4f, 0.4f, 0.5f, 1f)  // Dark Slate Gray
+};
 
     /*
     Color lightColour = new Color(1f, 0.95f, 0.8f, 1f), // Cream
