@@ -1,0 +1,11 @@
+/*
+There are 11 classes: 
+Game, Board, Tile, Player, Piece, King, Queen, Rook, Bishop, Knight,
+Pawn. The Game is composed with Board, 
+The Game is aggregated with Players, 
+The Board is aggregated with Tiles, 
+Tiles may or may not have Pieces, 
+The Player has Pieces and 
+King, Queen, Rook, Bishop and Knight inherit from 
+Piece(an abstract class)
+*/
