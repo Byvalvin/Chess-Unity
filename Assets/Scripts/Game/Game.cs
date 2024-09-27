@@ -486,10 +486,28 @@ public class Game : MonoBehaviour
     }
 
     bool isCapture(Vector2Int targetPosition) => board.GetTile(targetPosition).HasPiece();
+
+    Vector2Int GetPlayerMove()
+    {
+        Vector2Int targetPosition; // where the player wants a piece to move to
+        if(players[currentIndex] is Bot)
+        {
+            Vector2Int[] fromto =  players[currentIndex].GetMove();
+            selectedPiece = board.GetTile(fromto[0]).piece;
+            targetPosition = fromto[1];
+        }
+        else
+        {
+            targetPosition = players[currentIndex].GetMove()[1]; // non-bot players will use GUI so no need for from position
+            
+        }
+
+        return targetPosition;
+    }
     void ReleasePiece()
     {
-        Vector2 mousePosition = Utility.GetMouseWorldPosition();
-        Vector2Int targetPosition = Utility.RoundVector2(mousePosition / board.TileSize);
+
+        Vector2Int targetPosition = GetPlayerMove();
         HashSet<Vector2Int> validMoves = FilterMoves(selectedPiece);
         bool isAnEnPassantMove = lastMovedPiece!=null 
                 && selectedPiece.Type=="Pawn" && lastMovedPiece.Type=="Pawn" 
@@ -598,7 +616,8 @@ public class Game : MonoBehaviour
 
     void Awake()
     {
-        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
+        // Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
+        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Bot>();
         P1.PlayerName = "P1"; P2.PlayerName = "P2";
         P1.Colour = true; P2.Colour = false;
 

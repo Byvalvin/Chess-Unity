@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class Bot : Player
 {
-    public Vector2Int GetMove()
+    public override Vector2Int[] GetMove()
     {
-
+        Vector2Int moveFrom = new Vector2Int(3,1), moveTo = new Vector2Int(3,3);
+        return new Vector2Int[]{moveFrom, moveTo};
     }
     private void Evaluate()
     {

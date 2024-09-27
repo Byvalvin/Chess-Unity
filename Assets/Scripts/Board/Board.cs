@@ -46,6 +46,9 @@ public class Board : MonoBehaviour
             }
         }
 
+        // need tileSize for bot moves
+        Player1.TileSize = tileSize; Player2.TileSize = tileSize;
+        
         // Create and Add Pieces
         PopulateBoard(Player1, Player2);
     }
