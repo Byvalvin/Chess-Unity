@@ -48,6 +48,61 @@ public class Game : MonoBehaviour{
     }
 
     // Piece Movement Logic
+    public HashSet<Vector2Int> GetMovesAllowed(Piece piece){ // using the game constraints to get moves allowed
+        HashSet<Vector2Int> pieceMoves = FilterMoves(piece), gameValidMoves=new HashSet<Vector2Int>();
+
+        // add enPassantMove for checking
+        bool isAnEnPassantMove = lastMovedPiece!=null 
+                && piece.Type=="Pawn" && lastMovedPiece.Type=="Pawn" 
+                && Mathf.Abs(lastMovedPiece.Position.x-piece.Position.x)==1
+                && lastMovedPiece.Position.y==piece.Position.y
+                && (lastMovedPiece as Pawn).CanBeCapturedEnPassant;
+        if(isAnEnPassantMove){
+            Vector2Int enPassantMove = lastMovedPiece.Position+new Vector2Int(0, currentIndex==0 ? -1:1);
+            pieceMoves.Add(enPassantMove);
+        }
+
+        bool isKing = piece is King;
+        if(pieceMoves.Count!=0)
+            Debug.Log(piece.Type + " " + piece.Colour + " I have moves");
+        else
+            Debug.Log(piece.Type + " " + piece.Colour + " I dont have mvoes");
+        foreach (Vector2Int move in pieceMoves)
+        {
+            // condition 1
+            bool mustMoveKing = players[currentIndex].DoubleCheck && isKing;
+
+            // condition 2
+            Piece kingAttacker = players[currentIndex].KingAttacker;
+            bool canEvade=isKing, // move king
+                canCapture=kingAttacker!=null && (kingAttacker.Position==move || isAnEnPassantMove), // cap attacker
+                canBlock=kingAttacker!=null && (Utility // can block
+                    .GetIntermediateLinePoints(kingAttacker.Position, players[currentIndex].GetKing().Position)
+                    .Contains(move)); 
+            bool mustAvoidCheck = players[currentIndex].InCheck && (canEvade || canCapture || canBlock);
+
+
+            // condition 3: cant move a pinned piece
+            bool pinnedPiece = false, pinnedPieceCanCaptureAttacker = false;
+
+            Piece attacker = GetAttacker(piece); // selected piece is attacked
+            if(attacker!=null){
+                HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(players[currentIndex].GetKing().Position, attacker.Position);
+                pinnedPiece = tilesBetweenKingAndAttacker.Contains(piece.Position);
+                HashSet<Vector2Int> allowedPinnedPieceMoves = tilesBetweenKingAndAttacker; // because a pinned piece can still attack
+                allowedPinnedPieceMoves.Add(attacker.Position);
+                pinnedPieceCanCaptureAttacker = allowedPinnedPieceMoves.Contains(move);
+            }
+            bool avoidPinTactic = !pinnedPiece || pinnedPieceCanCaptureAttacker;
+
+            Debug.Log(mustMoveKing + " " + mustAvoidCheck + " " + avoidPinTactic + " " + isAnEnPassantMove + " ");
+            if(mustMoveKing || mustAvoidCheck || (!players[currentIndex].IsInCheck() && avoidPinTactic) || isAnEnPassantMove)
+                gameValidMoves.Add(move);
+            
+        }
+
+        return gameValidMoves;
+    }
     HashSet<Vector2Int> GetAllPlayerMoves(Player player){
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
         foreach (Piece piece in player.Pieces)
@@ -105,10 +160,20 @@ public class Game : MonoBehaviour{
         players[1].GetKing().ValidMoves = KingBlackMoves;
     }
     bool FilterPawnMove(Piece piece, Vector2Int pos){
+
         bool pieceAtpos = board.GetTile(pos).HasPiece(),
             sameColourPieceAtPos = pieceAtpos && board.GetTile(pos).piece.Colour == piece.Colour,
-            isDiag = Mathf.Abs(piece.Position.x - pos.x) == 1;
-        return (pieceAtpos && !sameColourPieceAtPos && isDiag) || (!pieceAtpos && !isDiag);
+            isDiag = Mathf.Abs(piece.Position.x - pos.x)==1,
+            isDoubleMove = Mathf.Abs(piece.Position.y - pos.y)==2; // also pawns cant jump pieces
+        HashSet<Vector2Int> tilesBetween = Utility.GetIntermediateLinePoints(piece.Position, pos);
+
+        bool pieceBetween = false;
+        foreach (Vector2Int tilePos in tilesBetween){
+            pieceBetween = board.GetTile(tilePos).HasPiece();
+            if(pieceBetween)
+                break;
+        }
+        return (pieceAtpos && !sameColourPieceAtPos && isDiag) || (!pieceAtpos && !isDiag && (!isDoubleMove || isDoubleMove && !pieceBetween));
     }
     HashSet<Vector2Int> FilterPawnMoves(Piece piece){
         if (piece == null) return null; // don't even bother
@@ -366,66 +431,18 @@ public class Game : MonoBehaviour{
             selectedPiece = pieceToMove;
             if (selectedPiece != null && selectedPiece.Colour == players[currentIndex].Colour) {
                 ExecuteMove(targetPosition);
-                //UpdateGameState(); // Update game state after the bot's move
             }
         }
         selectedPiece = null; // Deselect the piece after moving
     }
     void ReleasePiece(){
         Vector2Int targetPosition = GetPlayerMove();
-        HashSet<Vector2Int> validMoves = FilterMoves(selectedPiece);
-        bool isAnEnPassantMove = lastMovedPiece!=null 
-                && selectedPiece.Type=="Pawn" && lastMovedPiece.Type=="Pawn" 
-                && targetPosition==lastMovedPiece.Position+new Vector2Int(0, currentIndex==0 ? -1:1) 
-                && lastMovedPiece.Position.y==selectedPiece.Position.y;
-        if(players[currentIndex].IsInCheck()){
-            //Double Check
-            if(players[currentIndex].DoubleCheck) {
-                // move king
-                if(selectedPiece.Type=="King" && validMoves.Contains(targetPosition) )
-                    ExecuteMove(targetPosition);
-                else
-                    selectedPiece.Position = originalPosition; // Reset to original position 
-            }
-            //Single Check
-            else if(players[currentIndex].InCheck){
-                bool canEvade=selectedPiece.Type=="King", // move king
-                    canCapture=players[currentIndex].KingAttacker.Position==targetPosition || isAnEnPassantMove, // cap attacker
-                    canBlock=Utility.GetIntermediateLinePoints(players[currentIndex].KingAttacker.Position,players[currentIndex].GetKing().Position)
-                        .Contains(targetPosition); // can block
-
-                if( (validMoves.Contains(targetPosition) || isAnEnPassantMove) && (canEvade || canCapture || canBlock))
-                    ExecuteMove(targetPosition);
-                else
-                    selectedPiece.Position = originalPosition; // Reset to original position
-            }
-            else
-                selectedPiece.Position = originalPosition; // Reset to original position
-        }
-        else {
-            // cant move a pinned piece
-            bool pinnedPiece = false; // assume selectePiece not pinned
-            bool pinnedPieceCanCaptureAttacker = false;
-
-            Piece attacker = GetAttacker(selectedPiece); // selected piece is attacked
-            if(attacker!=null){
-                HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(players[currentIndex].GetKing().Position, attacker.Position);
-                pinnedPiece = tilesBetweenKingAndAttacker.Contains(selectedPiece.Position);
-
-                // because a pinned piece can still attack
-                HashSet<Vector2Int> allowedPinnedPieceMoves = tilesBetweenKingAndAttacker;
-                allowedPinnedPieceMoves.Add(attacker.Position);
-                pinnedPieceCanCaptureAttacker = allowedPinnedPieceMoves.Contains(targetPosition);
-            }
-            if(pinnedPiece && !pinnedPieceCanCaptureAttacker)
-                selectedPiece.Position = originalPosition; // Reset to original position 
-            else{
-                if (validMoves.Contains(targetPosition) || isAnEnPassantMove)
-                    ExecuteMove(targetPosition); //Debug.Log(isAnEnPassantMove+" IN PASSING");
-                else
-                    selectedPiece.Position = originalPosition; // Reset to original position
-            }
-        }
+        HashSet<Vector2Int> gameValidMoves = GetMovesAllowed(selectedPiece);
+        if(gameValidMoves.Contains(targetPosition))
+            ExecuteMove(targetPosition);
+        else
+            selectedPiece.Position = originalPosition; // Reset to original
+        
         selectedPiece = null; // Deselect piece
     }
     void HandleDragAndDrop(){
@@ -452,9 +469,14 @@ public class Game : MonoBehaviour{
 
     void Awake(){
         // Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
-        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Bot>();
+        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Randi>();
         P1.PlayerName = "P1"; P2.PlayerName = "P2";
         P1.Colour = true; P2.Colour = false;
+
+        if(P1 is Bot)
+            (P1 as Bot).CurrentGame = this;
+        if(P2 is Bot)
+            (P2 as Bot).CurrentGame = this;
 
         players[0] = P1; players[1] = P2;
 

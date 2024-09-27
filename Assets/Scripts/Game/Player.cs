@@ -51,6 +51,11 @@ public class Player : MonoBehaviour
 
     public void Capture(Piece piece) => captured.Add(piece);
 
+    // for only bot inheirtence
+    public virtual Game CurrentGame{
+        get; set;
+    }
+
     // GUI
     public virtual Vector2Int[] GetMove()
     {

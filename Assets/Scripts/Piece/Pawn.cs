@@ -5,7 +5,7 @@ public class Pawn : Piece
 {
     private bool canBeCapturedEnPassant = false;
 
-    bool CanBeCapturedEnPassant => canBeCapturedEnPassant;
+    public bool CanBeCapturedEnPassant => canBeCapturedEnPassant;
    
 
     public override bool CanMove(Vector2Int to)
