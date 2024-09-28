@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System; // for random
 
+/*
+Randi: Makes random moves, adding an element of unpredictability.
+*/
 
 public class Randi : Bot
 {

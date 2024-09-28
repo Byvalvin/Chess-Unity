@@ -420,41 +420,27 @@ public class Game : MonoBehaviour{
     }
     bool isCapture(Vector2Int targetPosition) => board.GetTile(targetPosition).HasPiece();
 
-    Vector2Int GetPlayerMove(){
-        Vector2Int targetPosition; // where the player wants a piece to move to
-        if(players[currentIndex] is Bot){
-            Vector2Int[] fromto =  players[currentIndex].GetMove();
-            selectedPiece = board.GetTile(fromto[0]).piece;
-            targetPosition = fromto[1];
-        }
-        else
-            targetPosition = players[currentIndex].GetMove()[1]; // non-bot players will use GUI so no need for from position
-        return targetPosition;
-    }
-
     void BotMove() {
         Vector2Int[] fromTo = players[currentIndex].GetMove();
-        if (fromTo.Length == 2) {
-            Vector2Int fromPosition = fromTo[0];
-            Vector2Int targetPosition = fromTo[1];
+        Vector2Int fromPosition = fromTo[0];
+        Vector2Int targetPosition = fromTo[1];
 
-            // Ensure the piece being moved is valid
-            Piece pieceToMove = board.GetTile(fromPosition).piece;
-            selectedPiece = pieceToMove;
-            if (selectedPiece != null && selectedPiece.Colour == players[currentIndex].Colour) {
-                ExecuteMove(targetPosition);
-            }
+        // Ensure the piece being moved is valid
+        Piece pieceToMove = board.GetTile(fromPosition).piece;
+        selectedPiece = pieceToMove;
+        if (selectedPiece != null && selectedPiece.Colour == players[currentIndex].Colour) {
+            ExecuteMove(targetPosition);
+        
         }
         selectedPiece = null; // Deselect the piece after moving
     }
     void ReleasePiece(){
-        Vector2Int targetPosition = GetPlayerMove();
+        Vector2Int targetPosition = players[currentIndex].GetMove()[1]; // non-bot players will use GUI so no need for from position
         HashSet<Vector2Int> gameValidMoves = GetMovesAllowed(selectedPiece);
         if(gameValidMoves.Contains(targetPosition))
             ExecuteMove(targetPosition);
         else
             selectedPiece.Position = originalPosition; // Reset to original
-        
         selectedPiece = null; // Deselect piece
     }
     void HandleDragAndDrop(){
@@ -480,8 +466,8 @@ public class Game : MonoBehaviour{
     }
 
     void Awake(){
-        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
-        //Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Randi>();
+        //Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
+        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Randi>();
         P1.PlayerName = "P1"; P2.PlayerName = "P2";
         P1.Colour = true; P2.Colour = false;
 
