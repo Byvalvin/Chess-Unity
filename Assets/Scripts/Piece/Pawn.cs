@@ -4,6 +4,7 @@ using UnityEngine;
 public class Pawn : Piece
 {
     private bool canBeCapturedEnPassant = false;
+    private int enPassantCounter = 0;
 
     public bool CanBeCapturedEnPassant => canBeCapturedEnPassant;
    
@@ -29,6 +30,7 @@ public class Pawn : Piece
         if (doubleForwardMove)
         {
             canBeCapturedEnPassant = true; // Set en passant available
+            enPassantCounter++;
         }
 
         base.Move(to);
@@ -58,7 +60,10 @@ public class Pawn : Piece
 
     public void ResetEnPassant()
     {
-        canBeCapturedEnPassant = false; // Reset after each move
+        if(enPassantCounter>=2)
+            canBeCapturedEnPassant = false; // Reset after one move cycle = 2 moves between both players
+        else
+            enPassantCounter++;
     }
 
     // GUI

@@ -110,7 +110,7 @@ public static class Utility
     get the positions in the diagonal between the start and end positions if there are any. Optionally specify to include the start and end positions
     Can be used to check if a point is on a diagonal path
     */
-    private static HashSet<Vector2Int> GetIntermediateDiagonalLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
+    public static HashSet<Vector2Int> GetIntermediateDiagonalLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
         int dx = end.x - start.x;
@@ -138,7 +138,7 @@ public static class Utility
     get the positions in the non-diagonal(horizontal or vertical) between the start and end positions if there are any. Optionally specify to include the start and end positions
     Can be used to check if a point is on a non-diagonal path
     */
-    private static HashSet<Vector2Int> GetIntermediateNonDiagonalLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
+    public static HashSet<Vector2Int> GetIntermediateNonDiagonalLinePoints(Vector2Int start, Vector2Int end, bool includeEnds=false)
     {
         HashSet<Vector2Int> points = new HashSet<Vector2Int>();
         int dx = end.x - start.x;

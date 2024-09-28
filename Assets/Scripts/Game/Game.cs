@@ -63,12 +63,7 @@ public class Game : MonoBehaviour{
         }
 
         bool isKing = piece is King;
-        if(pieceMoves.Count!=0)
-            Debug.Log(piece.Type + " " + piece.Colour + " I have moves");
-        else
-            Debug.Log(piece.Type + " " + piece.Colour + " I dont have mvoes");
-        foreach (Vector2Int move in pieceMoves)
-        {
+        foreach (Vector2Int move in pieceMoves){
             // condition 1
             bool mustMoveKing = players[currentIndex].DoubleCheck && isKing;
 
@@ -84,7 +79,6 @@ public class Game : MonoBehaviour{
 
             // condition 3: cant move a pinned piece
             bool pinnedPiece = false, pinnedPieceCanCaptureAttacker = false;
-
             Piece attacker = GetAttacker(piece); // selected piece is attacked
             if(attacker!=null){
                 HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(players[currentIndex].GetKing().Position, attacker.Position);
@@ -95,7 +89,7 @@ public class Game : MonoBehaviour{
             }
             bool avoidPinTactic = !pinnedPiece || pinnedPieceCanCaptureAttacker;
 
-            Debug.Log(mustMoveKing + " " + mustAvoidCheck + " " + avoidPinTactic + " " + isAnEnPassantMove + " ");
+            //Debug.Log(mustMoveKing + " " + mustAvoidCheck + " " + avoidPinTactic + " " + isAnEnPassantMove + " ");
             if(mustMoveKing || mustAvoidCheck || (!players[currentIndex].IsInCheck() && avoidPinTactic) || isAnEnPassantMove)
                 gameValidMoves.Add(move);
             
@@ -256,7 +250,22 @@ public class Game : MonoBehaviour{
                             pieceAtposDefended = PawnAttackedTiles(opposingPiece).Contains(pos);
                             break;
                         default: // Queen, Rook, Bishop
-                            HashSet<Vector2Int> pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos, includeEnds:true);
+                            HashSet<Vector2Int> pointsBetweenAndEnds;
+                            switch(opposingPiece.Type){
+                                case "Bishop":
+                                    pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(opposingPiece.Position, pos, includeEnds:true);
+                                    break;
+                                case "Rook":
+                                    pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(opposingPiece.Position, pos, includeEnds:true);
+                                    break;
+                                case "Queen":
+                                    pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos, includeEnds:true);
+                                    break;
+                                default:
+                                    pointsBetweenAndEnds = new HashSet<Vector2Int>();
+                                    break;
+                            }
+                            
                             pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
                             if(pointsBetweenAndEnds.Count > 2){ // if there is a defender then only do this check if there are tiles between the defender and defended
                                 pointsBetweenAndEnds.Remove(opposingPiece.Position); pointsBetweenAndEnds.Remove(pos);
@@ -348,8 +357,11 @@ public class Game : MonoBehaviour{
                 piece.ValidMoves = FilterMoves(piece);
 
                 // Reset en passant status after each move
+                /*
                 if (piece is Pawn pawn)
                     pawn.ResetEnPassant();
+                    */
+                    
             }
         }
         Opposition(); // Update the opposition
@@ -468,8 +480,8 @@ public class Game : MonoBehaviour{
     }
 
     void Awake(){
-        // Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
-        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Randi>();
+        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
+        //Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Randi>();
         P1.PlayerName = "P1"; P2.PlayerName = "P2";
         P1.Colour = true; P2.Colour = false;
 
