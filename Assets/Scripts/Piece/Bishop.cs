@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class Bishop : Piece
 {
+        
+    public Bishop(Bishop original) : base(original) { // Copy constructor
+        // No unique properties to copy, since all are inherited from Piece.
+    }
     public override bool CanMove(Vector2Int to)
     {
         if (!InBounds(to)) return false;

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Queen : Piece
 {
+    public Queen(Queen original) : base(original){}
 
     public override bool CanMove(Vector2Int to){
             return true;

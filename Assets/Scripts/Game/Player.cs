@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Player : MonoBehaviour
 {
     private string playerName;
     private bool colour = true; //assume white
+    private int turnIndex = 0; //assume white turn
     private float tileSize;
     private List<Piece> pieces = new List<Piece>(), captured = new List<Piece>();
 
@@ -13,14 +15,42 @@ public class Player : MonoBehaviour
 
     public Piece KingAttacker = null; // the opposing piece attacking player's king 
 
+
+    public Player(Player original){ // Copy constructor
+        this.playerName = original.playerName;
+        this.colour = original.colour;
+        this.turnIndex = original.turnIndex;
+        this.tileSize = original.tileSize;
+        this.inCheck = original.inCheck;
+        this.doubleCheck = original.doubleCheck;
+
+        // Deep copy of pieces and captured lists
+        this.pieces = new List<Piece>();
+        foreach (var piece in original.pieces)
+            this.pieces.Add(piece != null ? (Piece)Activator.CreateInstance(piece.GetType(), piece) : null); // Use the copy constructor
+
+        this.captured = new List<Piece>();
+        foreach (var piece in original.captured)
+        {
+            this.captured.Add(piece != null ? (Piece)Activator.CreateInstance(piece.GetType(), piece) : null); // Use the copy constructor
+        }
+
+        // If KingAttacker exists, clone it
+        this.KingAttacker = original.KingAttacker != null ? (Piece)Activator.CreateInstance(original.KingAttacker.GetType(), original.KingAttacker) : null; // Clone if present
+    }
+
     public string PlayerName{
         get=>playerName;
         set=>playerName=value;
     }
     public bool Colour{
         get=>colour;
-        set=>colour=value;
+        set{
+            colour=value;
+            turnIndex=colour?0:1;
+        }
     }
+    protected int TurnIndex => turnIndex;
     public float TileSize
     {
         get=>tileSize;

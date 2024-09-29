@@ -4,7 +4,21 @@ using UnityEngine;
 
 public abstract class Bot : Player
 {
+    protected static Dictionary<string, int> pieceValue = new Dictionary<string, int>
+    {
+        { "Pawn", 1 },
+        { "Knight", 3 },
+        { "Bishop", 3 },
+        { "Rook", 5 },
+        { "Queen", 9 },
+        { "King", int.MaxValue } // King is invaluable
+    };
     private Game currentGame;
+
+       
+    public Bot(Bot original) : base(original){  // Copy constructor
+        this.currentGame = original.currentGame; // Reference or copy as needed (assumed reference here)
+    }
 
     public override Game CurrentGame{
         get=>currentGame;
@@ -30,7 +44,7 @@ public abstract class Bot : Player
     {
         Vector2Int bestFrom = default;
         Vector2Int bestTo = default;
-        int bestScore = int.MaxValue;
+        int bestScore = 0;
 
         foreach (var kvp in moveMap)
         {
@@ -38,7 +52,7 @@ public abstract class Bot : Player
             foreach (var to in kvp.Value)
             {
                 int score = EvaluateMove(from, to);
-                if (score < bestScore)
+                if (score > bestScore)
                 {
                     bestScore = score;
                     bestFrom = from;

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Board : MonoBehaviour
 {
@@ -21,6 +22,30 @@ public class Board : MonoBehaviour
     Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
     public const int N = 8; // Size of the board
+
+    public Board(Board original) // copy constructor
+    {
+        // Copying the board dimensions
+        this.tiles = new Tile[N, N];
+        this.minPoint = original.minPoint;
+        this.maxPoint = original.maxPoint;
+
+        // Copying each tile and its properties using the Tile copy constructor
+        for (int yi = 0; yi < N; yi++)
+        {
+            for (int xi = 0; xi < N; xi++)
+            {
+                Tile originalTile = original.tiles[yi, xi];
+                Tile newTile = new Tile(originalTile); // Use the Tile copy constructor
+                this.tiles[yi, xi] = newTile;
+            }
+        }
+
+        //this.tileSize = original.tileSize;
+        this.pieceScaleFactor = original.pieceScaleFactor;
+        this.sprites = new Dictionary<string, Sprite>(original.sprites); // Shallow copy of sprites
+    }
+
     public void CreateBoard(Player Player1, Player Player2)
     {
         // Create and Add Tiles

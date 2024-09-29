@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Rook : Piece
 {
+    public Rook(Rook original) : base(original){}
+
     public override bool CanMove(Vector2Int to){
             return true;
     }

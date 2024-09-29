@@ -10,7 +10,10 @@ Wall: Emphasizes solid defenses, making it difficult for opponents to penetrate 
 */
 public class Defender : Bot
 {
-    
+    public Defender(Defender original) : base(original) {// Copy constructor
+        // Additional initialization for Defender can be done here if needed
+    }
+
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         return 0; // Placeholder logic; Focus on defensive scoring; prefer moves that protect pieces

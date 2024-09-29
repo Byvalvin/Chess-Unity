@@ -53,6 +53,33 @@ public abstract class Piece : MonoBehaviour
     static int colourIndex = -1; // will generate same index for all pieces once
     Color lightColour, darkColour;
 
+    public Piece(Piece original) { // Copy Constructor
+        this.type = original.type;
+        this.colour = original.colour;
+        this.myColour = original.myColour;
+        this.currentPos = original.currentPos;
+        this.validMoves = new HashSet<Vector2Int>(original.validMoves);
+        this.possibleMoves = new HashSet<Vector2Int>(original.possibleMoves);
+        this.captured = original.captured;
+        this.tileSize = original.tileSize;
+        this.minPoint = original.minPoint;
+        this.maxPoint = original.maxPoint;
+        this.firstMove = original.firstMove;
+
+        // Assign colors based on the original piece
+        this.lightColour = original.lightColour;
+        this.darkColour = original.darkColour;
+
+        // Sprite and collider references should be handled carefully (consider if you want to clone or share them)
+        this.pieceSprite = original.pieceSprite; // Assuming sharing is acceptable
+        this.pieceColliderSize = original.pieceColliderSize;
+
+        // Initialize the SpriteRenderer and BoxCollider2D, or copy references if needed
+        this.spriteR = original.spriteR; // If you want to share the same renderer
+        this.pieceCollider = original.pieceCollider; // If you want to share the same collider
+    }
+
+
     // setup and update functions
     protected void SetSprite()
     {

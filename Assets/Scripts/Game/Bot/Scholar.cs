@@ -9,6 +9,9 @@ Finesse: Prefers delicate maneuvers, prioritizing precision and subtlety over br
 */
 public class Scholar : Bot
 {
+    public Scholar(Scholar original) : base(original) {// Copy constructor
+        // Additional initialization for Scholar can be done here if needed
+    }
     
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {

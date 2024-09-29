@@ -12,6 +12,9 @@ Aggressive, prioritizing captures.
 */
 public class Berserker : Bot
 {
+    public Berserker(Berserker original) : base(original) {// Copy constructor
+        // Additional initialization for Berserker can be done here if needed
+    }
     
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {

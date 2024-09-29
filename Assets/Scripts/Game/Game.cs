@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using Newtonsoft.Json; // for saving and loading games
 
 public class Game : MonoBehaviour{
     private Board board;
@@ -10,11 +12,33 @@ public class Game : MonoBehaviour{
     Vector2Int originalPosition;
     private bool checkmate = false;
 
+    public Game(Game other) { // copy constructor
+        // Copy basic fields
+        this.currentIndex = other.currentIndex;
+        this.checkmate = other.checkmate;
+
+        // Deep copy the players array
+        this.players = new Player[other.players.Length];
+        for (int i = 0; i < other.players.Length; i++) {
+            this.players[i] = new Player(other.players[i]); // Assuming Player has a copy constructor
+        }
+
+        // Deep copy the board (assuming Board has a suitable copy constructor)
+        this.board = new Board(other.board);
+
+        // Copy selected and last moved pieces, if needed
+        this.selectedPiece = other.selectedPiece; // Assuming Piece has a way to clone or copy
+        this.lastMovedPiece = other.lastMovedPiece;
+        this.originalPosition = other.originalPosition;
+
+        // Handle other fields as necessary
+    }
+    public Player[] Players=>players;
+
     public void SwitchPlayer()=>currentIndex = (currentIndex + 1) % players.Length;
 
     // Game ends
-    bool IsGameEnd()
-    {
+    bool IsGameEnd(){
         foreach (Player player in players){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
             Piece PlayerKing = player.GetKing();
             if(player.IsInCheck()){
@@ -42,9 +66,22 @@ public class Game : MonoBehaviour{
         return false;
     }
 
-    void End()
-    {
-        checkmate=true;
+    void End(){checkmate=true;}
+
+    // for Bots
+    public void MakeBotMove(Vector2Int from, Vector2Int to) {
+        // Ensure the piece being moved is valid
+        Piece pieceToMove = board.GetTile(from).piece;
+        selectedPiece = pieceToMove;
+        if (selectedPiece != null && selectedPiece.Colour == players[currentIndex].Colour) {
+            ExecuteMove(to);
+        
+        }
+        selectedPiece = null; // Deselect the piece after moving
+    }
+
+    public Tile GetTile(Vector2Int pos){
+        return board.GetTile(pos);
     }
 
     // Piece Movement Logic
@@ -91,8 +128,7 @@ public class Game : MonoBehaviour{
 
             //Debug.Log(mustMoveKing + " " + mustAvoidCheck + " " + avoidPinTactic + " " + isAnEnPassantMove + " ");
             if(mustMoveKing || mustAvoidCheck || (!players[currentIndex].IsInCheck() && avoidPinTactic) || isAnEnPassantMove)
-                gameValidMoves.Add(move);
-            
+                gameValidMoves.Add(move);    
         }
 
         return gameValidMoves;
@@ -425,13 +461,7 @@ public class Game : MonoBehaviour{
         Vector2Int targetPosition = fromTo[1];
 
         // Ensure the piece being moved is valid
-        Piece pieceToMove = board.GetTile(fromPosition).piece;
-        selectedPiece = pieceToMove;
-        if (selectedPiece != null && selectedPiece.Colour == players[currentIndex].Colour) {
-            ExecuteMove(targetPosition);
-        
-        }
-        selectedPiece = null; // Deselect the piece after moving
+        MakeBotMove(fromPosition, targetPosition);
     }
     void ReleasePiece(){
         Vector2Int targetPosition = players[currentIndex].GetMove()[1]; // non-bot players will use GUI so no need for from position
@@ -464,22 +494,38 @@ public class Game : MonoBehaviour{
             HandleDragAndDrop();
     }
 
-    void Awake(){
-        //Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Player>();
-        Player P1 = gameObject.AddComponent<Player>(), P2 = gameObject.AddComponent<Randi>();
-        P1.PlayerName = "P1"; P2.PlayerName = "P2";
-        P1.Colour = true; P2.Colour = false;
+void Awake() {
+    Debug.Log("Awake called");
 
-        if(P1 is Bot)
-            (P1 as Bot).CurrentGame = this;
-        if(P2 is Bot)
-            (P2 as Bot).CurrentGame = this;
+    Player P1 = gameObject.AddComponent<Player>();
+    Player P2 = gameObject.AddComponent<Aggressor>();
 
-        players[0] = P1; players[1] = P2;
+    Debug.Log($"P1: {P1}, P2: {P2}");
 
-        board = gameObject.AddComponent<Board>();
-        board.CreateBoard(P1, P2);
-    }
+    P1.PlayerName = "P1";
+    P2.PlayerName = "P2";
+    P1.Colour = true;
+    P2.Colour = false;
+
+ 
+
+    if (P1 is Bot)
+        (P1 as Bot).CurrentGame = this;
+    if (P2 is Bot)
+        (P2 as Bot).CurrentGame = this;
+    Debug.Log("Players initialized "+P1.Colour+P2.CurrentGame);
+    Debug.Log("Current game set for players");
+    Debug.Log(players);
+    players = new Player[2];
+
+    players[0] = P1;
+    players[1] = P2;
+
+    board = gameObject.AddComponent<Board>();
+    board.CreateBoard(P1, P2);
+
+    Debug.Log("Board created");
+}
 
     // Start is called before the first frame update
     void Start(){
