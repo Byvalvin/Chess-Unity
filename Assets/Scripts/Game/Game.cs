@@ -194,9 +194,10 @@ public class Game : MonoBehaviour{
         HashSet<Vector2Int> pointsBetween = Utility.GetIntermediatePoints(piece.Position, pos, Utility.MovementType.Diagonal);
         foreach (Vector2Int apos in pointsBetween)
         {
-            bool pieceAtApos = board.GetTile(apos).HasPiece();
-            bool isAttackingKingTile = pieceAtApos && board.GetTile(apos).piece.Type=="King" && !board.GetTile(apos).piece.Colour==piece.Colour;
-            if (pieceAtApos && !isAttackingKingTile)
+            bool pieceAtApos = board.GetTile(apos).HasPiece(),
+                sameColourPieceAtAPos = pieceAtApos && board.GetTile(apos).piece.Colour==piece.Colour;
+            bool isAttackingKingTile = pieceAtApos && board.GetTile(apos).piece.Type=="King" && !sameColourPieceAtAPos;
+            if (pieceAtApos && (!isAttackingKingTile || sameColourPieceAtAPos))
                 return false;
         }
         return !pieceAtpos || (pieceAtpos && !sameColourPieceAtPos);
@@ -357,10 +358,8 @@ public class Game : MonoBehaviour{
                 piece.ValidMoves = FilterMoves(piece);
 
                 // Reset en passant status after each move
-                /*
                 if (piece is Pawn pawn)
                     pawn.ResetEnPassant();
-                    */
                     
             }
         }

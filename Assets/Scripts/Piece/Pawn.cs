@@ -30,7 +30,7 @@ public class Pawn : Piece
         if (doubleForwardMove)
         {
             canBeCapturedEnPassant = true; // Set en passant available
-            enPassantCounter++;
+            //enPassantCounter++;
         }
 
         base.Move(to);
@@ -47,7 +47,7 @@ public class Pawn : Piece
         if (FirstMove)
         {
             moves.Add(new Vector2Int( currentPos.x, currentPos.y + (colour ? -2 : 2) )); // Two spaces forward
-            canBeCapturedEnPassant = true; //potential en passant
+            //canBeCapturedEnPassant = true; //potential en passant
         }
 
         // Diagonal captures
@@ -60,11 +60,14 @@ public class Pawn : Piece
 
     public void ResetEnPassant()
     {
-        if(enPassantCounter>=2)
-            canBeCapturedEnPassant = false; // Reset after one move cycle = 2 moves between both players
-        else
-            enPassantCounter++;
+        if(canBeCapturedEnPassant){
+            if(enPassantCounter>=2)
+                canBeCapturedEnPassant = false; // Reset after one move cycle = 2 moves between both players
+            else
+                enPassantCounter++;
+        }
     }
+
 
     // GUI
     public override void HandleInput()

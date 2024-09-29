@@ -4,6 +4,7 @@ using UnityEngine;
 
 /*
 Focuses on long-term advantages, calculating the best overall moves based on potential outcomes.
+Hoarder: Focuses on gathering and controlling resources, ensuring key pieces are well-protected.
 */
 public class Strategist : Bot
 {
