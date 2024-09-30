@@ -11,9 +11,6 @@ Assassin: Targets weak or exposed pieces, eliminating threats quickly.
 
 public class Shadow : Bot
 {
-    public Shadow(Shadow original) : base(original) {// Copy constructor
-        // Additional initialization for Shadow can be done here if needed
-    }
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         // Implement ambush logic

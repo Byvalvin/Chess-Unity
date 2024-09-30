@@ -8,9 +8,7 @@ Creates synergies between pieces.
 */
 public class Alchemist : Bot
 {
-    public Alchemist(Alchemist original) : base(original) {// Copy constructor
-        // Additional initialization for Alchemist can be done here if needed
-    }
+
     
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {

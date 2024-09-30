@@ -15,11 +15,6 @@ public abstract class Bot : Player
     };
     private Game currentGame;
 
-       
-    public Bot(Bot original) : base(original){  // Copy constructor
-        this.currentGame = original.currentGame; // Reference or copy as needed (assumed reference here)
-    }
-
     public override Game CurrentGame{
         get=>currentGame;
         set=>currentGame=value;

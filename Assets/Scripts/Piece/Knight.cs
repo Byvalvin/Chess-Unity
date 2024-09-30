@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class Knight : Piece
 {
-    public Knight(Knight original) : base(original){}
-
     public override bool CanMove(Vector2Int to){
             return true;
     }

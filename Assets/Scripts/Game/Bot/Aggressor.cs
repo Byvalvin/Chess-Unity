@@ -9,10 +9,6 @@ Aggressor: Always looking to capture enemy pieces, favoring aggressive plays.
 */
 public class Aggressor : Bot
 {
-    public Aggressor(Aggressor original) : base(original) {// Copy constructor
-        // Additional initialization for Aggressor can be done here if needed
-    }
-
     protected override int EvaluateMove(Vector2Int from, Vector2Int to) //Prioritize capturing pieces or making aggressive moves
     {
         int score = 1;
@@ -25,12 +21,6 @@ public class Aggressor : Bot
         }else{
             // find a move that increases the number of valid moves a piece the most(to increase the chance to capture)
             // Simulate the move
-            //Vector2Int originalPosition = movingPiece.Position;
-
-            Game clone = new Game(CurrentGame);
-            clone.MakeBotMove(from, to);
-            foreach(Piece piece in clone.Players[TurnIndex].Pieces)
-                score+=piece.ValidMoves.Count;
         }
 
 

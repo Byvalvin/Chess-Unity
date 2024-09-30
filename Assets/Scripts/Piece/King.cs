@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class King : Piece
 {
-    public King(King original) : base(original){}
     public override bool CanMove(Vector2Int to)
     {
         if (!InBounds(to)) return false;

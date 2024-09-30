@@ -9,10 +9,7 @@ like positioning and counters.
 */
 public class Tactician : Bot
 {
-        public Tactician(Tactician original) : base(original) {// Copy constructor
-        // Additional initialization for Tactician can be done here if needed
-    }
-    
+
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         return 0; 

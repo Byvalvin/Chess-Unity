@@ -10,10 +10,7 @@ Gathers intelligence on opponent moves, adapting strategies based on their tacti
 */
 public class Oracle : Bot
 {
-    public Oracle(Oracle original) : base(original) {// Copy constructor
-        // Additional initialization for Oracle can be done here if needed
-    }
-    
+
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         return 0; // Placeholder logic; Focus on defensive scoring; prefer moves that protect pieces

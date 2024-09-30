@@ -9,10 +9,7 @@ Can sacrifice pieces for temporary advantages, with a focus on regeneration or c
 */
 public class Avenger : Bot
 {
-    public Avenger(Avenger original) : base(original) {// Copy constructor
-        // Additional initialization for Avenger can be done here if needed
-    }
-    
+
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         return 0; 

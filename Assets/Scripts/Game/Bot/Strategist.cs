@@ -8,10 +8,7 @@ Hoarder: Focuses on gathering and controlling resources, ensuring key pieces are
 */
 public class Strategist : Bot
 {
-    public Strategist(Strategist original) : base(original) {// Copy constructor
-        // Additional initialization for Strategist can be done here if needed
-    }
-    
+
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.

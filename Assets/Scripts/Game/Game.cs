@@ -12,27 +12,6 @@ public class Game : MonoBehaviour{
     Vector2Int originalPosition;
     private bool checkmate = false;
 
-    public Game(Game other) { // copy constructor
-        // Copy basic fields
-        this.currentIndex = other.currentIndex;
-        this.checkmate = other.checkmate;
-
-        // Deep copy the players array
-        this.players = new Player[other.players.Length];
-        for (int i = 0; i < other.players.Length; i++) {
-            this.players[i] = new Player(other.players[i]); // Assuming Player has a copy constructor
-        }
-
-        // Deep copy the board (assuming Board has a suitable copy constructor)
-        this.board = new Board(other.board);
-
-        // Copy selected and last moved pieces, if needed
-        this.selectedPiece = other.selectedPiece; // Assuming Piece has a way to clone or copy
-        this.lastMovedPiece = other.lastMovedPiece;
-        this.originalPosition = other.originalPosition;
-
-        // Handle other fields as necessary
-    }
     public Player[] Players=>players;
 
     public void SwitchPlayer()=>currentIndex = (currentIndex + 1) % players.Length;
@@ -498,7 +477,7 @@ void Awake() {
     Debug.Log("Awake called");
 
     Player P1 = gameObject.AddComponent<Player>();
-    Player P2 = gameObject.AddComponent<Aggressor>();
+    Player P2 = gameObject.AddComponent<Randi>();
 
     Debug.Log($"P1: {P1}, P2: {P2}");
 

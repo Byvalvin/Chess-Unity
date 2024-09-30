@@ -9,9 +9,7 @@ Enforcer: Punishes mistakes heavily, focusing on capitalizing when the opponent 
 */
 public class Sentinel : Bot
 {
-    public Sentinel(Sentinel original) : base(original) {// Copy constructor
-        // Additional initialization for Sentinel can be done here if needed
-    }
+
     
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {

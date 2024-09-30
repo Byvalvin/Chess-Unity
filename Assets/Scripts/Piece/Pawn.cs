@@ -8,12 +8,6 @@ public class Pawn : Piece
 
     public bool CanBeCapturedEnPassant => canBeCapturedEnPassant;
 
-
-    public Pawn(Pawn original) : base(original){ // Copy constructor
-        this.canBeCapturedEnPassant = original.canBeCapturedEnPassant;
-        this.enPassantCounter = original.enPassantCounter;
-    }
-
     public override bool CanMove(Vector2Int to)
     {
         if (!InBounds(to)) return false;
