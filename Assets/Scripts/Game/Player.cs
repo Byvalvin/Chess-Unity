@@ -10,7 +10,7 @@ public class PlayerState
     private bool colour = true; //assume white
     private int turnIndex = 0; //assume white turn
     private float tileSize;
-    private List<Piece> pieces = new List<Piece>(), captured = new List<Piece>();
+    private List<Piece> pieces = new List<PieceStates>(), captured = new List<Piece>();
 
     private bool inCheck = true, doubleCheck = true;
 
@@ -33,7 +33,7 @@ public class PlayerState
         get=>tileSize;
         set=>tileSize=value;
     }
-    public List<Piece> Pieces
+    public List<PieceStates> PieceStates
     {
         get=>pieces;
     }
@@ -62,7 +62,7 @@ public class PlayerState
         this.KingAttacker = original.KingAttacker; // the opposing piece attacking player's king 
     } 
 
-    public Piece GetKing() => Pieces[0];
+    public PieceState GetKing() => Pieces[0].State;
     public bool IsInCheck(){
         return doubleCheck || InCheck;
     }
@@ -90,6 +90,7 @@ public class PlayerState
 public class Player : MonoBehaviour
 {
    protected PlayerState state;
+   protected List<Piece> pieces = new List<Piece>(), captured = new List<Piece>();
 
    public PlayerState State{
        get=>state;

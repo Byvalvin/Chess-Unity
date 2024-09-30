@@ -13,7 +13,7 @@ public class TileState
     private float min,max,minx,miny,maxx,maxy;
 
     
-    public Piece piece;
+    public PieceState pieceState;
 
     public Vector2 Position{
         get{return position;}
@@ -61,6 +61,8 @@ public class Tile : MonoBehaviour
     TileState state;
     private Material tileMaterial; //store for reuse
 
+    public Piece piece;
+    
     public TileState State{
         get=>state;
         set=>state=value;
