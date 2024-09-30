@@ -7,7 +7,6 @@ using UnityEngine;
 public abstract class PieceState {
     protected string type;
     protected bool colour;
-    protected Color myColour;
     protected Vector2Int currentPos;
     protected static Vector2Int minPoint, maxPoint;
     public HashSet<Vector2Int> validMoves = new HashSet<Vector2Int>();
@@ -15,8 +14,8 @@ public abstract class PieceState {
     public static Vector2Int purgatory = new Vector2Int(-100,-100); // captured pieces go to purgatory
     public bool firstMove = true;
 
-    protected float tileSize;
-    protected float pieceColliderSize = 1;
+
+
 
     public PieceState(){}
 
@@ -63,7 +62,7 @@ public abstract class PieceState {
         set
         {
             colour=value;
-            myColour=colour? lightColour:darkColour;
+            //myColour=colour? lightColour:darkColour;
         }
     }
     public HashSet<Vector2Int> ValidMoves
@@ -71,16 +70,8 @@ public abstract class PieceState {
         get{return validMoves;}
         set{validMoves=value;}
     }
-    public Color MyColour
-    {
-        get{return myColour;}
-        set{myColour=value;}
-    }
 
-    public float TileSize{
-        get{return tileSize;}
-        set{tileSize=value;}
-    }
+
 
     public Vector2Int MinPoint{
         get{return minPoint;}
@@ -112,7 +103,10 @@ public abstract class Piece : MonoBehaviour {
     protected PieceState state;
     protected SpriteRenderer spriteR;
     protected Sprite pieceSprite;
+    protected Color myColour;
     protected BoxCollider2D pieceCollider;
+    protected float pieceColliderSize = 1;
+    protected float tileSize;
 
     static Color[] LightColors = {
         new Color(1f, 0.95f, 0.8f, 1f), // Cream
@@ -148,21 +142,31 @@ public abstract class Piece : MonoBehaviour {
         get{return pieceSprite;}
         set{pieceSprite=value;}
     }
+    public Color MyColour
+    {
+        get{return myColour;}
+        set{myColour=value;}
+    }
 
     public float PieceColliderSize{
         get{return pieceColliderSize;}
         set{pieceColliderSize=value;}
     }
 
+    public float TileSize{
+        get{return tileSize;}
+        set{tileSize=value;}
+    }
+
 
    protected void SetSprite(){
         if(pieceSprite!=null){
             spriteR.sprite = pieceSprite;
-            spriteR.color = state.MyColour;
+            spriteR.color = myColour;
         }
     }
     protected void SetPosition() {
-        transform.position = new Vector3(state.tileSize * state.Position.x, state.tileSize * state.Position.y, 0);
+        transform.position = new Vector3(tileSize * state.Position.x, tileSize * state.Position.y, 0);
     }
 
     public virtual void Move(Vector2Int to) {
@@ -189,7 +193,7 @@ public abstract class Piece : MonoBehaviour {
         spriteR = gameObject.AddComponent<SpriteRenderer>();
 
         pieceCollider = gameObject.AddComponent<BoxCollider2D>();
-        pieceCollider.size = new Vector2(state.PieceColliderSize, state.PieceColliderSize); // need a pieceCollider
+        pieceCollider.size = new Vector2(pieceColliderSize, pieceColliderSize); // need a pieceCollider
 
         SetPosition();
     }

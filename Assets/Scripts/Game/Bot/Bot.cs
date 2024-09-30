@@ -33,7 +33,7 @@ public abstract class BotState : PlayerState
         foreach (Piece piece in Pieces)
         {
             HashSet<Vector2Int> validMoves = CurrentGame.GetMovesAllowed(piece);
-            if(validMoves.Count!=0) moveMap[piece.Position] = validMoves;
+            if(validMoves.Count!=0) moveMap[piece.State.Position] = validMoves;
         }
         
         // call the thing that determines the mvoe to play given all the valid mvoes of all pieces

@@ -129,9 +129,9 @@ public class Board : MonoBehaviour
 
     private void CenterCamera()
     {
-        Camera.main.transform.position = new Vector3((N - 1) * tileSize / 2, (N - 1) * tileSize / 2, -10);
+        Camera.main.transform.position = new Vector3((state.N - 1) * tileSize / 2, (state.N - 1) * tileSize / 2, -10);
         Camera.main.orthographic = true; // Ensure it's set to Orthographic
-        Camera.main.orthographicSize = (N * tileSize) / 2; // Adjust size based on board dimensions
+        Camera.main.orthographicSize = (state.N * tileSize) / 2; // Adjust size based on board dimensions
     }
 
     private void LoadSprites()
@@ -234,9 +234,9 @@ public class Board : MonoBehaviour
 
         piece.State.Colour = colour;
         piece.State.Position = new Vector2Int(x, colour ? lightY : darkY);
-        piece.State.TileSize = tileSize;
-        piece.State.MinPoint = minPoint; 
-        piece.State.MaxPoint = maxPoint;
+        piece.TileSize = tileSize;
+        piece.State.MinPoint = state.MinPoint; 
+        piece.State.MaxPoint = state.MaxPoint;
         piece.PieceSprite = sprites[$"{type}"];
         piece.PieceColliderSize = 1 / pieceScaleFactor;
 
@@ -246,8 +246,8 @@ public class Board : MonoBehaviour
         //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.Type + " on tile " + x + " " + tileY);
 
         // Set UI
-        PieceObject.transform.position = new Vector3(x * state.TileSize, tileY * state.TileSize, 0);
-        PieceObject.transform.localScale = new Vector3(state.TileSize * pieceScaleFactor, state.TileSize * pieceScaleFactor, 1); // Adjust based on sprite size
+        PieceObject.transform.position = new Vector3(x * tileSize, tileY * tileSize, 0);
+        PieceObject.transform.localScale = new Vector3(tileSize * pieceScaleFactor, tileSize * pieceScaleFactor, 1); // Adjust based on sprite size
 
         // Give piece to player
         Player.State.AddPiece(piece);

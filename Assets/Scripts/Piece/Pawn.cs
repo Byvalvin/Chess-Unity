@@ -61,7 +61,7 @@ public class PawnState : PieceState
         bool doubleForwardMove = FirstMove && currentPos.y + 2 * forwardStep == to.y;
         if (doubleForwardMove)
         {
-            CanBeCapturedEnPassant = true; // Set en passant available
+            canBeCapturedEnPassant = true; // Set en passant available
             //enPassantCounter++; // Type-Safe Casting: When accessing PawnState specific properties, you can cast the state to PawnState.
         }
 
@@ -88,14 +88,7 @@ public class Pawn : Piece
 {
     public override void Move(Vector2Int to)
     {
-        int forwardStep = colour ? -1 : 1;
-        bool doubleForwardMove = pawnState.FirstMove && pawnState.Position.y + 2 * forwardStep == to.y;
-
-        if (doubleForwardMove){
-            pawnState.CanBeCapturedEnPassant = true; // Set en passant available
-        }
-
-        pawnState.Move(to); // Update the state
+        state.Move(to); // Update the state
         SetPosition(); // Update visual position
     }
 

@@ -81,7 +81,7 @@ public class PlayerState
     {
         Vector2Int[] fromTo = new Vector2Int[2];
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
-        Vector2Int targetPosition = Utility.RoundVector2(mousePosition / state.TileSize);
+        Vector2Int targetPosition = Utility.RoundVector2(mousePosition / tileSize);
         fromTo[1] = targetPosition;
         return fromTo;
     }
