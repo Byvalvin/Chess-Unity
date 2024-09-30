@@ -8,22 +8,35 @@ Focuses on protecting key pieces and minimizing risks
 Guardian: Focuses on protecting key pieces, especially the king, by creating a defensive wall.
 Wall: Emphasizes solid defenses, making it difficult for opponents to penetrate their setup.
 */
-public class Defender : Bot
+public class DefenderState : BotState
 {
+    public DefenderState()
+    {
+
+    }
+    public DefenderState(BotState botState) : base(botState){}
 
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
-        return 0; // Placeholder logic; Focus on defensive scoring; prefer moves that protect pieces
+        return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
+    }
+
+}
+public class Defender : Bot
+{
+    protected override void Awake()
+    {
+        state = new DefenderState();
     }
     
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
         
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
         
     }

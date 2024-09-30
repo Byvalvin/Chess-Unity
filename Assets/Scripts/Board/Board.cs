@@ -3,12 +3,80 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+public class BoardState
+{
+    private TileState[,] tileStates;
+    
+    private static Vector2Int minPoint, maxPoint;
+
+    public const int n = 8; // Size of the board
+
+    // to change and update state
+    public Vector2Int MinPoint{
+        get=>minPoint;
+        set=>minPoint=value;
+    }
+    public Vector2Int MaxPoint{
+        get=>maxPoint;
+        set=>maxPoint=value;
+    }
+    public int N => n;
+
+    public TileState[,] TileStates{
+        get=>tileStates;
+        set=>tileStates=value;
+    }
+
+
+
+
+    public TileState GetTile(Vector2Int pos)
+    {
+        int xIndex = pos.x;
+        int yIndex = pos.y; // Invert y coordinate for the array
+
+        if (0 <= xIndex && xIndex < N && 0 <= yIndex && yIndex < N)
+        {
+            return tileStates[yIndex, xIndex]; // Correct indexing for the array
+        }
+        return null; // Return null if out of bounds
+    }
+
+    public void MovePiece(Vector2Int from, Vector2Int to)
+    {
+        TileState fromTile = GetTile(from);
+        TileState toTile = GetTile(to);
+
+        if (fromTile != null && toTile != null)
+        {
+            Debug.Log($"Moving piece from {from} to {to}");
+            toTile.piece = fromTile.piece;
+            fromTile.piece = null;
+        }
+    }
+
+    // Piece Movement Logic
+    public bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
+
+    public void Castle(PieceState king, PieceState rook)
+    {
+        bool correctTypes = king.Type!="King" && rook.Type!="Rook", sameTeam = king.Colour==rook.Colour, firstMoves = king.FirstMove==rook.FirstMove==true;
+        if(correctTypes && sameTeam && firstMoves)
+        {
+            // castling logic base on side
+
+        }
+    }
+
+
+
+}
+
 public class Board : MonoBehaviour
 {
     // PRIVATE
+    BoardState state;
     private Tile[,] tiles;
-
-    private Vector2Int minPoint, maxPoint;
     private const float tileSize = 5f;
  
     // Load all sprites from the Pieces.png
@@ -19,25 +87,30 @@ public class Board : MonoBehaviour
         { 1, 1.25f },
     };
     float pieceScaleFactor = pieceScaleMap[sheetN]; // increase size of a piece also used to set collider of piece to reciprocal
-    Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
+    static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
-    public const int N = 8; // Size of the board
+
+    public float TileSize
+    {
+        get { return tileSize; }
+    }
+
     public void CreateBoard(Player Player1, Player Player2)
     {
         // Create and Add Tiles
-        tiles = new Tile[N, N];
-        minPoint = new Vector2Int(0, 0); maxPoint = new Vector2Int(N-1, N-1);
+        tiles = new Tile[state.N, state.N];
+        state.MinPoint = new Vector2Int(0, 0); state.MaxPoint = new Vector2Int(state.N-1, state.N-1);
 
-        for (int yi = 0; yi < N; yi++)
+        for (int yi = 0; yi < state.N; yi++)
         {
-            for (int xi = 0; xi < N; xi++)
+            for (int xi = 0; xi < state.N; xi++)
             {
                 GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 Tile tile = tileObject.AddComponent<Tile>();
 
-                tile.Position = new Vector2Int(xi, yi); // Note the order here
-                tile.Colour = (yi + xi) % 2 == 1; // Alternate colours
-                tile.N = tileSize;
+                tile.State.Position = new Vector2Int(xi, yi); // Note the order here
+                tile.State.Colour = (yi + xi) % 2 == 1; // Alternate colours
+                tile.State.N = tileSize;
 
                 tiles[yi, xi] = tile;
 
@@ -48,7 +121,7 @@ public class Board : MonoBehaviour
         }
 
         // need tileSize for bot moves
-        Player1.TileSize = tileSize; Player2.TileSize = tileSize;
+        Player1.State.TileSize = tileSize; Player2.State.TileSize = tileSize;
         
         // Create and Add Pieces
         PopulateBoard(Player1, Player2);
@@ -72,39 +145,11 @@ public class Board : MonoBehaviour
         }
     }
 
-    public float TileSize
-    {
-        get { return tileSize; }
-    }
 
-    public Tile GetTile(Vector2Int pos)
-    {
-        int xIndex = pos.x;
-        int yIndex = pos.y; // Invert y coordinate for the array
-
-        if (0 <= xIndex && xIndex < N && 0 <= yIndex && yIndex < N)
-        {
-            return tiles[yIndex, xIndex]; // Correct indexing for the array
-        }
-        return null; // Return null if out of bounds
-    }
-
-    public void MovePiece(Vector2Int from, Vector2Int to)
-    {
-        Tile fromTile = GetTile(from);
-        Tile toTile = GetTile(to);
-
-        if (fromTile != null && toTile != null)
-        {
-            Debug.Log($"Moving piece from {from} to {to}");
-            toTile.piece = fromTile.piece;
-            fromTile.piece = null;
-        }
-    }
 
     private void PopulateBoard(Player Player1, Player Player2)
     {
-        //string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
+        // string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
         string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" }; // orderd so the King is indeed the first piece in the Player's Pieces List
         foreach (string pieceType in pieceTypes)
         {
@@ -143,7 +188,7 @@ public class Board : MonoBehaviour
                 AddPiece(type, false, 5, Player2);
                 break;
             case "Pawn":
-                for (int xi = 0; xi < N; xi++)
+                for (int xi = 0; xi < state.N; xi++)
                 {
                     AddPiece(type, true, xi, Player1); // Light
                     AddPiece(type, false, xi, Player2); // Dark
@@ -157,7 +202,7 @@ public class Board : MonoBehaviour
 
     void AddPiece(string type, bool colour, int x, Player Player)
     {
-        int darkY = minPoint.y, lightY = maxPoint.y;
+        int darkY = state.MinPoint.y, lightY = state.MaxPoint.y;
 
         GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
         Piece piece = null;
@@ -187,44 +232,34 @@ public class Board : MonoBehaviour
                 break;
         }
 
-        piece.Colour = colour;
-        piece.Position = new Vector2Int(x, colour ? lightY : darkY);
-        piece.TileSize = tileSize;
-        piece.MinPoint = minPoint; 
-        piece.MaxPoint = maxPoint;
+        piece.State.Colour = colour;
+        piece.State.Position = new Vector2Int(x, colour ? lightY : darkY);
+        piece.State.TileSize = tileSize;
+        piece.State.MinPoint = minPoint; 
+        piece.State.MaxPoint = maxPoint;
         piece.PieceSprite = sprites[$"{type}"];
         piece.PieceColliderSize = 1 / pieceScaleFactor;
 
         // Set piece to tile
         int tileY = colour ? lightY : darkY;
-        tiles[tileY, x].piece = piece; // Adjust for array index
+        tiles[tileY, x].State.piece = piece; // Adjust for array index
         //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.Type + " on tile " + x + " " + tileY);
 
         // Set UI
-        PieceObject.transform.position = new Vector3(x * tileSize, tileY * tileSize, 0);
-        PieceObject.transform.localScale = new Vector3(tileSize * pieceScaleFactor, tileSize * pieceScaleFactor, 1); // Adjust based on sprite size
+        PieceObject.transform.position = new Vector3(x * state.TileSize, tileY * state.TileSize, 0);
+        PieceObject.transform.localScale = new Vector3(state.TileSize * pieceScaleFactor, state.TileSize * pieceScaleFactor, 1); // Adjust based on sprite size
 
         // Give piece to player
-        Player.AddPiece(piece);
+        Player.State.AddPiece(piece);
     }
 
-    // Piece Movement Logic
-    public bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
 
-    public void Castle(Piece king, Piece rook)
-    {
-        bool correctTypes = king.Type!="King" && rook.Type!="Rook", sameTeam = king.Colour==rook.Colour, firstMoves = king.FirstMove==rook.FirstMove==true;
-        if(correctTypes && sameTeam && firstMoves)
-        {
-            // castling logic base on side
-
-        }
-    }
     
     void Awake()
     {
         // create Sprite dict
-        LoadSprites();
+        if(sprites.Count==0)
+            LoadSprites();
     }
   
     // Start is called before the first frame update
@@ -239,3 +274,4 @@ public class Board : MonoBehaviour
         // Additional logic if needed
     }
 }
+

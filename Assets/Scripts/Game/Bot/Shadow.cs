@@ -9,8 +9,9 @@ Prowler: Stealthy and opportunistic, exploiting weak points.
 Assassin: Targets weak or exposed pieces, eliminating threats quickly.
 */
 
-public class Shadow : Bot
+public class ShadowState : BotState
 {
+
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         // Implement ambush logic
@@ -43,15 +44,23 @@ public class Shadow : Bot
         // Implement logic to determine if the move is overly defensive
         return false; // Placeholder
     }
+}
+
+public class Shadow : Bot
+{
+    protected override void Awake()
+    {
+        state = new ShadowState();
+    }
 
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
         
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
         
     }

@@ -10,23 +10,35 @@ Enforcer: Punishes mistakes heavily, focusing on capitalizing when the opponent 
 Barrage: Relies on overwhelming force, often sacrificing pieces for a stronger offensive.
 Aggressive, prioritizing captures.
 */
-public class Berserker : Bot
+public class BerserkerState : BotState
 {
+    public BerserkerState()
+    {
+        
+    }
+    public BerserkerState(BotState botState) : base(botState){}
 
-    
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
-        return 0; 
+        return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
+    }
+
+}
+public class Berserker : Bot
+{
+    protected override void Awake()
+    {
+        state = new BerserkerState();
     }
     
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
         
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
         
     }

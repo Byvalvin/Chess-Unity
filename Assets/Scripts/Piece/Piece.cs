@@ -91,11 +91,6 @@ public abstract class PieceState {
         set{maxPoint=value;}
     }
 
-    public float PieceColliderSize{
-        get{return pieceColliderSize;}
-        set{pieceColliderSize=value;}
-    }
-
     public void ResetValidMoves()=>SetValidMoves();
     public virtual void Move(Vector2Int to) {
         Position = to;
@@ -152,6 +147,11 @@ public abstract class Piece : MonoBehaviour {
     public Sprite PieceSprite{
         get{return pieceSprite;}
         set{pieceSprite=value;}
+    }
+
+    public float PieceColliderSize{
+        get{return pieceColliderSize;}
+        set{pieceColliderSize=value;}
     }
 
 

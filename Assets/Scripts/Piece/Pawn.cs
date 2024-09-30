@@ -61,7 +61,7 @@ public class PawnState : PieceState
         bool doubleForwardMove = FirstMove && currentPos.y + 2 * forwardStep == to.y;
         if (doubleForwardMove)
         {
-            ((PawnState)state).CanBeCapturedEnPassant = true; // Set en passant available
+            CanBeCapturedEnPassant = true; // Set en passant available
             //enPassantCounter++; // Type-Safe Casting: When accessing PawnState specific properties, you can cast the state to PawnState.
         }
 

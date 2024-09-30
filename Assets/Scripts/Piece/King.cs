@@ -3,10 +3,8 @@ using UnityEngine;
 
 public class KingState : PieceState
 {
-    public KingState(bool colour, Vector2Int position) : base()
+    public KingState() : base()
     {
-        this.colour = colour;
-        this.currentPos = position;
         this.type = "King";
     }
 
@@ -49,7 +47,7 @@ public class King : Piece
     protected override void Awake()
     {
         base.Awake();
-        state = new KingState(colour, currentPos); // Initialize king state
+        state = new KingState(); // Initialize king state
     }
     protected override void Start()
     {

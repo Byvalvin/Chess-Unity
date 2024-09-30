@@ -2,8 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class Bot : Player
+
+public abstract class BotState : PlayerState
 {
+    private Game currentGame;
     protected static Dictionary<string, int> pieceValue = new Dictionary<string, int>
     {
         { "Pawn", 1 },
@@ -13,11 +15,15 @@ public abstract class Bot : Player
         { "Queen", 9 },
         { "King", int.MaxValue } // King is invaluable
     };
-    private Game currentGame;
 
     public override Game CurrentGame{
         get=>currentGame;
         set=>currentGame=value;
+    }
+
+    public BotState(){}
+    public BotState(BotState original){
+        this.currentGame = original.currentGame;
     }
     public override Vector2Int[] GetMove()
     {
@@ -59,16 +65,26 @@ public abstract class Bot : Player
         return new Vector2Int[] { bestFrom, bestTo };
     }
     protected virtual int EvaluateMove(Vector2Int from, Vector2Int to)=>1; // placeholder assumes all moves are equal but diff bots will have diff scoring
+
+}
+public abstract class Bot : Player
+{
+
+    protected override void Awake()
+    {
+        //state = new BotState();
+    }
     
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
         
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
         
     }
 }
+

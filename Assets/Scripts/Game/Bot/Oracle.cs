@@ -8,23 +8,37 @@ Scout: Gathers information about the opponent's moves before acting.
 Echo: Mimics successful strategies, adapting to the opponent's style.
 Gathers intelligence on opponent moves, adapting strategies based on their tactics.
 */
-public class Oracle : Bot
+public class OracleState : BotState
 {
+    public OracleState()
+    {
+
+    }
+    public OracleState(BotState botState) : base(botState){}
 
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
-        return 0; // Placeholder logic; Focus on defensive scoring; prefer moves that protect pieces
+        return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
+    }
+
+}
+public class Oracle : Bot
+{
+    protected override void Awake()
+    {
+        state = new OracleState();
     }
     
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
         
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
         
     }
 }
+
