@@ -377,6 +377,32 @@ public class Board : MonoBehaviour
     }
 
 
+    public Tile GetTile(Vector2Int pos)
+    {
+        int xIndex = pos.x;
+        int yIndex = pos.y; // Invert y coordinate for the array
+
+        if (0 <= xIndex && xIndex < state.N && 0 <= yIndex && yIndex < state.N)
+        {
+            return tiles[yIndex, xIndex]; // Correct indexing for the array
+        }
+        return null; // Return null if out of bounds
+    }
+
+    public void MovePiece(Vector2Int from, Vector2Int to)
+    {
+        Tile fromTile = GetTile(from);
+        Tile toTile = GetTile(to);
+
+        if (fromTile != null && toTile != null)
+        {
+            Debug.Log($"Moving piece from {from} to {to}");
+            toTile.piece = fromTile.piece;
+            fromTile.piece = null;
+        }
+    }
+
+
     
     void Awake()
     {

@@ -86,11 +86,11 @@ public class PawnState : PieceState
 
 public class Pawn : Piece
 {
-    public override void Move(Vector2Int to)
-    {
-        state.Move(to); // Update the state
-        SetPosition(); // Update visual position
-    }
+    // public override void Move(Vector2Int to)
+    // {
+    //     state.Move(to); // Update the state
+    //     SetPosition(); // Update visual position
+    // }
 
     // GUI
     protected override void Awake(){

@@ -24,7 +24,8 @@ public class GameState{
         get=>selectedPieceState;
         set{
             selectedPieceState=value;
-            originalPosition = selectedPieceState.Position; // Store original position
+            if(selectedPieceState!=null)
+                originalPosition = selectedPieceState.Position; // Store original position
         }
     }
 
@@ -412,13 +413,16 @@ public class GameState{
 
     
     public void ExecuteMove(Vector2Int targetPosition){
+        Debug.Log("got to execution");
         if (isCapture(targetPosition)){
+            Debug.Log("got to execution first if ");
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
             playerStates[currentIndex].Capture(captured);
             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
             captured.Captured = true;
         }
         if (lastMovedPieceState is PawnState && lastMovedPieceState.Position.x == targetPosition.x){ // Handle en passant
+        Debug.Log("got to execution second if");
             Vector2Int enPassantTarget = lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
             if (targetPosition == enPassantTarget){ //Debug.Log("Execute EnPassant");
                 // Remove the pawn that is captured en passant
@@ -437,8 +441,6 @@ public class GameState{
             End();
     }
     bool isCapture(Vector2Int targetPosition) => boardState.GetTile(targetPosition).HasPieceState();
-
-
 }
 
 
@@ -501,6 +503,34 @@ public class Game : MonoBehaviour{
     Piece selectedPiece;
 
     // Player GUI
+    //  void ExecuteMove(Vector2Int targetPosition){
+    //     Debug.Log("got to execution");
+    //     if (isCapture(targetPosition)){
+    //         Debug.Log("got to execution first if ");
+    //         PieceState captured = boardState.GetTile(targetPosition).pieceState;
+    //         playerStates[currentIndex].Capture(captured);
+    //         playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
+    //         captured.Captured = true;
+    //     }
+    //     if (lastMovedPieceState is PawnState && lastMovedPieceState.Position.x == targetPosition.x){ // Handle en passant
+    //     Debug.Log("got to execution second if");
+    //         Vector2Int enPassantTarget = lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
+    //         if (targetPosition == enPassantTarget){ //Debug.Log("Execute EnPassant");
+    //             // Remove the pawn that is captured en passant
+    //             PieceState captured = boardState.GetTile(lastMovedPieceState.Position).pieceState;
+    //             playerStates[currentIndex].Capture(captured);
+    //             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
+    //             captured.Captured = true;
+    //         }
+    //     }
+    //     boardState.MovePiece(selectedPieceState.Position, targetPosition);
+    //     selectedPieceState.Move(targetPosition);
+    //     lastMovedPieceState = selectedPieceState; // Store the last moved piece
+    //     UpdateGameState();
+    //     SwitchPlayer();
+    //     if(IsGameEnd())
+    //         End();
+    // }
     void SelectPiece(){
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Collider2D collision = Physics2D.OverlapPoint(mousePosition);
@@ -527,12 +557,28 @@ public class Game : MonoBehaviour{
         state.MakeBotMove(fromPosition, targetPosition);
     }
     void ReleasePiece(){
+
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1]; // non-bot playerStates will use GUI so no need for from position
+                Debug.Log("released" + selectedPiece.State+targetPosition);
         HashSet<Vector2Int> gameValidMoves = state.GetMovesAllowed(state.SelectedPieceState);
-        if(gameValidMoves.Contains(targetPosition))
+        foreach (var item in gameValidMoves)
+        {
+
+        Debug.Log(item);
+        }
+        Debug.Log("------------");
+        if(gameValidMoves.Contains(targetPosition)){
+            Debug.Log("in if");
             state.ExecuteMove(targetPosition);
-        else
+            board.MovePiece(state.SelectedPieceState.Position, targetPosition);
+            selectedPiece.Move(targetPosition);
+            //lastMovedPiece = selectedPiece; // Store the last moved piece
+        }
+        else{
+            Debug.Log("not in if");
+            selectedPiece.Position = state.OriginalPosition;
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
+        }
         
         state.SelectedPieceState = null;
         selectedPiece = null; // Deselect piece
@@ -575,7 +621,7 @@ public class Game : MonoBehaviour{
         state = new GameState(P1State, P2State);
 
         Player P1 = gameObject.AddComponent<Player>();
-        Player P2 = gameObject.AddComponent<Randi>();
+        Player P2 = gameObject.AddComponent<Player>();
         Debug.Log($"P1: {P1}, P2: {P2}");
         P1.State=P1State; P2.State=P2State;
         players[0] = P1;

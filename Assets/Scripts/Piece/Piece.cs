@@ -15,8 +15,6 @@ public abstract class PieceState {
     public bool firstMove = true;
 
 
-
-
     public PieceState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint){
         colour=_colour; currentPos=_currentPos; minPoint=_minPoint; maxPoint=_maxPoint;
     }
@@ -110,6 +108,9 @@ public abstract class Piece : MonoBehaviour {
     protected float pieceColliderSize = 1;
     protected float tileSize;
 
+
+    protected Vector2Int currentPos;
+
     static Color[] LightColors = {
         new Color(1f, 0.95f, 0.8f, 1f), // Cream
         new Color(0.9f, 0.9f, 0.9f, 1f), // Very Light Gray
@@ -141,7 +142,7 @@ public abstract class Piece : MonoBehaviour {
         set{
             state=value;
             MyColour = state.Colour ? lightColour : darkColour; // set colour
-            SetPosition();
+            Position = state.Position;
         }
     }
     public Sprite PieceSprite{
@@ -164,6 +165,15 @@ public abstract class Piece : MonoBehaviour {
         set{tileSize=value;}
     }
 
+    public Vector2Int Position
+    {
+        get{return currentPos;}
+        set{
+            currentPos=value;
+            SetPosition();
+        }
+    }
+
 
    protected void SetSprite(){
         if(pieceSprite!=null){
@@ -172,12 +182,12 @@ public abstract class Piece : MonoBehaviour {
         }
     }
     protected void SetPosition() {
-        transform.position = new Vector3(tileSize * state.Position.x, tileSize * state.Position.y, 0);
+        transform.position = new Vector3(tileSize * Position.x, tileSize * Position.y, 0);
     }
 
     public virtual void Move(Vector2Int to) {
         if (state.CanMove(to)) {
-            state.Move(to);
+            //state.Move(to);
             SetPosition();
         }
     }
