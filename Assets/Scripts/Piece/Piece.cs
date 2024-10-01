@@ -191,7 +191,6 @@ public abstract class Piece : MonoBehaviour {
             colourIndex = Random.Range(0, LightColors.Length);
         lightColour = LightColors[colourIndex];
         darkColour = DarkColors[colourIndex];
-
     }
     // Start method can be overridden by derived classes as needed
     protected virtual void Start() {

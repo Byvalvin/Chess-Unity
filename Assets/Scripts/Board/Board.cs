@@ -365,7 +365,8 @@ public class Board : MonoBehaviour
 
         // Set piece to tile
         tiles[tileY, x].piece = piece; // Adjust for array index
-        //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.Type + " on tile " + x + " " + tileY);
+        Debug.Log(piece);
+        Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.State.Type + " on tile " + x + " " + tileY);
 
         // Set UI
         PieceObject.transform.position = new Vector3(x * tileSize, tileY * tileSize, 0);
