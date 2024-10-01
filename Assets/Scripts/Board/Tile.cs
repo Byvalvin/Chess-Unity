@@ -42,8 +42,8 @@ public class TileState
 
     public TileState(){}
 
-    public bool HasPiece(){
-        return piece!=null;
+    public bool HasPieceState(){
+        return pieceState!=null;
     }
 }
 

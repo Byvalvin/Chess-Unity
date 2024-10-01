@@ -10,10 +10,7 @@ Aggressor: Always looking to capture enemy pieces, favoring aggressive plays.
 
 public class AggressorState : BotState
 {
-    public AggressorState()
-    {
-
-    }
+    public AggressorState(string _playerName, bool _colour) : base(_playerName, _colour){}
     public AggressorState(BotState botState) : base(botState){}
     
     protected override int EvaluateMove(Vector2Int from, Vector2Int to) //Prioritize capturing pieces or making aggressive moves
@@ -41,7 +38,7 @@ public class Aggressor : Bot
     
     protected override void Awake()
     {
-        state = new AggressorState();
+        //state = new AggressorState();
     }
     
     // Start is called before the first frame update

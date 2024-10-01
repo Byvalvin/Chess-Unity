@@ -27,9 +27,7 @@ public class BoardState
         set=>tileStates=value;
     }
 
-    public BoardState(){
-        //CreateBoardState();
-    }
+    public BoardState(){}
 
     public void CreateBoardState(PlayerState player1, PlayerState player2)
     {
@@ -37,10 +35,8 @@ public class BoardState
         tileStates = new TileState[N, N];
         minPoint = new Vector2Int(0, 0); maxPoint = new Vector2Int(N-1, N-1);
 
-        for (int yi = 0; yi < N; yi++)
-        {
-            for (int xi = 0; xi < N; xi++)
-            {
+        for (int yi = 0; yi < N; yi++){
+            for (int xi = 0; xi < N; xi++){
                 TileState tileState = new TileState();
 
                 tileState.Colour = (yi + xi) % 2 == 1; // Alternate colours
@@ -97,7 +93,7 @@ public class BoardState
                 AddPieceState(type, false, 5, player2);
                 break;
             case "Pawn":
-                for (int xi = 0; xi < state.N; xi++)
+                for (int xi = 0; xi < n; xi++)
                 {
                     AddPieceState(type, true, xi, player1); // Light
                     AddPieceState(type, false, xi, player2); // Dark
@@ -175,8 +171,8 @@ public class BoardState
         if (fromTile != null && toTile != null)
         {
             Debug.Log($"Moving piece from {from} to {to}");
-            toTile.piece = fromTile.piece;
-            fromTile.piece = null;
+            toTile.pieceState = fromTile.piece;
+            fromTile.pieceState = null;
         }
     }
 
@@ -218,6 +214,11 @@ public class Board : MonoBehaviour
     public float TileSize
     {
         get { return tileSize; }
+    }
+
+    public BoardState State{
+        get=>state;
+        set=>state=value;
     }
 
     public void CreateBoard(Player Player1, Player Player2)
@@ -354,13 +355,15 @@ public class Board : MonoBehaviour
                 break;
         }
 
-       
+
+        int tileY = colour ? lightY : darkY;
+        
+        piece.State = state.TileStates[tileY, x].pieceState;
         piece.TileSize = tileSize;
         piece.PieceSprite = sprites[$"{type}"];
         piece.PieceColliderSize = 1 / pieceScaleFactor;
 
         // Set piece to tile
-        int tileY = colour ? lightY : darkY;
         tiles[tileY, x].piece = piece; // Adjust for array index
         //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.Type + " on tile " + x + " " + tileY);
 

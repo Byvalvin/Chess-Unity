@@ -69,7 +69,7 @@ public class Rook : Piece
     }
     protected override void Awake()
     {
-        state = new RookState(); // Initialize rook state
+        //state = new RookState(); // Initialize rook state
         base.Awake();
     }
 

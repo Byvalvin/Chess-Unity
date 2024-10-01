@@ -9,7 +9,7 @@ Works on solid formations and teamwork
 */
 public class PhalanxState : BotState
 {
-    public PhalanxState()
+    public PhalanxState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
 
     }
@@ -25,7 +25,7 @@ public class Phalanx : Bot
 {
     protected override void Awake()
     {
-        state = new PhalanxState();
+        //state = new PhalanxState();
     }
     
     // Start is called before the first frame update

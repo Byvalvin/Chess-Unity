@@ -64,7 +64,7 @@ public class Knight : Piece
     
     protected override void Awake()
     {
-        state = new KnightState(); // Initialize knight state
+        //state = new KnightState(); // Initialize knight state
         base.Awake();
     }
 

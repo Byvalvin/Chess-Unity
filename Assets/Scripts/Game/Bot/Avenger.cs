@@ -9,7 +9,7 @@ Can sacrifice pieces for temporary advantages, with a focus on regeneration or c
 */
 public class AvengerState : BotState
 {
-    public AvengerState()
+    public AvengerState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
 
     }
@@ -25,7 +25,7 @@ public class Avenger : Bot
 {
     protected override void Awake()
     {
-        state = new AvengerState();
+        //state = new AvengerState();
     }
     
     // Start is called before the first frame update

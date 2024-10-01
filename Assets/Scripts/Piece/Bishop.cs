@@ -73,7 +73,7 @@ public class Bishop : Piece
     protected override void Awake()
     {
         base.Awake();
-        state = new BishopState(); // Initialize bishop state
+        //state = new BishopState(); // Initialize bishop state
     }
 
     protected override void Start()

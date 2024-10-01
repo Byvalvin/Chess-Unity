@@ -94,7 +94,7 @@ public class Pawn : Piece
 
     // GUI
     protected override void Awake(){
-        state = new PawnState();
+        //state = new PawnState();
         base.Awake();
     }
     protected override void Start(){

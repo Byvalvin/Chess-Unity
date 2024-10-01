@@ -8,7 +8,7 @@ Hoarder: Focuses on gathering and controlling resources, ensuring key pieces are
 */
 public class StrategistState : BotState
 {
-    public StrategistState()
+    public StrategistState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
 
     }
@@ -24,7 +24,7 @@ public class Strategist : Bot
 {
     protected override void Awake()
     {
-        state = new StrategistState();
+        //state = new StrategistState();
     }
     
     // Start is called before the first frame update

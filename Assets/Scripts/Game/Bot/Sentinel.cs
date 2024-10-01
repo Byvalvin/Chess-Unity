@@ -9,7 +9,7 @@ Enforcer: Punishes mistakes heavily, focusing on capitalizing when the opponent 
 */
 public class SentinelState : BotState
 {
-    public SentinelState()
+    public SentinelState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
 
     }
@@ -25,7 +25,7 @@ public class Sentinel : Bot
 {
     protected override void Awake()
     {
-        state = new SentinelState();
+        //state = new SentinelState();
     }
     
     // Start is called before the first frame update

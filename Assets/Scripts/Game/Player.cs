@@ -14,7 +14,7 @@ public class PlayerState
 
     private bool inCheck = true, doubleCheck = true;
 
-    public Piece KingAttacker = null; // the opposing piece attacking player's king 
+    public PieceState KingAttacker = null; // the opposing piece attacking player's king 
 
     public string PlayerName{
         get=>playerName;
@@ -44,7 +44,10 @@ public class PlayerState
         set=>doubleCheck=value;
     }
 
-    public PlayerState(){}
+    public PlayerState(string _playerName, bool _colour){
+        playerName = _playerName; Colour=_colour;
+    }
+
     public PlayerState(PlayerState original){
         this.playerName = original.playerName;
         this.colour = original.colour; //assume white
@@ -70,7 +73,7 @@ public class PlayerState
     public void Capture(PieceState piece) => captured.Add(piece);
 
     // for only bot inheirtence
-    public virtual Game CurrentGame{
+    public virtual GameState CurrentGame{
         get; set;
     }
 
@@ -97,7 +100,7 @@ public class Player : MonoBehaviour
     // GUI
     protected virtual void Awake()
     {
-     state = new PlayerState();   
+     //state = new PlayerState();   
     }
 
     // Start is called before the first frame update

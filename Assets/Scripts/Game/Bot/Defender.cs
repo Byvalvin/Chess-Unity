@@ -10,7 +10,7 @@ Wall: Emphasizes solid defenses, making it difficult for opponents to penetrate 
 */
 public class DefenderState : BotState
 {
-    public DefenderState()
+    public DefenderState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
 
     }
@@ -26,7 +26,7 @@ public class Defender : Bot
 {
     protected override void Awake()
     {
-        state = new DefenderState();
+        //state = new DefenderState();
     }
     
     // Start is called before the first frame update

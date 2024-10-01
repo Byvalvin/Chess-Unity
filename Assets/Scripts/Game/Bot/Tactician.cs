@@ -9,7 +9,7 @@ like positioning and counters.
 */
 public class TacticianState : BotState
 {
-    public TacticianState()
+    public TacticianState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
 
     }
@@ -25,7 +25,7 @@ public class Tactician : Bot
 {
     protected override void Awake()
     {
-        state = new TacticianState();
+        //state = new TacticianState();
     }
     
     // Start is called before the first frame update

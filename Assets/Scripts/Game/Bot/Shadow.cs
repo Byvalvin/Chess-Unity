@@ -11,6 +11,7 @@ Assassin: Targets weak or exposed pieces, eliminating threats quickly.
 
 public class ShadowState : BotState
 {
+    public ShadowState(string _playerName, bool _colour) : base(_playerName, _colour){}
 
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
@@ -50,7 +51,7 @@ public class Shadow : Bot
 {
     protected override void Awake()
     {
-        state = new ShadowState();
+        //state = new ShadowState();
     }
 
     // Start is called before the first frame update

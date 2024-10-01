@@ -10,7 +10,7 @@ Gathers intelligence on opponent moves, adapting strategies based on their tacti
 */
 public class OracleState : BotState
 {
-    public OracleState()
+    public OracleState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
 
     }
@@ -26,7 +26,7 @@ public class Oracle : Bot
 {
     protected override void Awake()
     {
-        state = new OracleState();
+        //state = new OracleState();
     }
     
     // Start is called before the first frame update

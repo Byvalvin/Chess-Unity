@@ -5,7 +5,7 @@ using UnityEngine;
 
 public abstract class BotState : PlayerState
 {
-    private Game currentGame;
+    private GameState currentGame;
     protected static Dictionary<string, int> pieceValue = new Dictionary<string, int>
     {
         { "Pawn", 1 },
@@ -16,13 +16,13 @@ public abstract class BotState : PlayerState
         { "King", int.MaxValue } // King is invaluable
     };
 
-    public override Game CurrentGame{
+    public override GameState CurrentGame{
         get=>currentGame;
         set=>currentGame=value;
     }
 
-    public BotState(){}
-    public BotState(BotState original){
+    public BotState(string _playerName, bool _colour) : base(_playerName, _colour){}
+    public BotState(PlayerState original) : base(original){
         this.currentGame = original.currentGame;
     }
     public override Vector2Int[] GetMove()

@@ -12,7 +12,7 @@ Aggressive, prioritizing captures.
 */
 public class BerserkerState : BotState
 {
-    public BerserkerState()
+    public BerserkerState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
         
     }
@@ -28,7 +28,7 @@ public class Berserker : Bot
 {
     protected override void Awake()
     {
-        state = new BerserkerState();
+        //state = new BerserkerState();
     }
     
     // Start is called before the first frame update

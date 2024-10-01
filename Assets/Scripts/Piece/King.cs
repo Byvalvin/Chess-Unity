@@ -47,7 +47,7 @@ public class King : Piece
     protected override void Awake()
     {
         base.Awake();
-        state = new KingState(); // Initialize king state
+        //state = new KingState(); // Initialize king state
     }
     protected override void Start()
     {

@@ -9,10 +9,7 @@ Creates synergies between pieces.
 
 public class AlchemistState : BotState
 {
-    public AlchemistState()
-    {
-
-    }
+    public AlchemistState(string _playerName, bool _colour) : base(_playerName, _colour){}
     public AlchemistState(BotState botState) : base(botState){}
 
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
@@ -25,7 +22,7 @@ public class Alchemist : Bot
 {
     protected override void Awake()
     {
-        state = new AlchemistState();
+        //state = new AlchemistState();
     }
     
     // Start is called before the first frame update

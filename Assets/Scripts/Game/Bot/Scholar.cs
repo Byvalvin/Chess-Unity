@@ -9,7 +9,7 @@ Finesse: Prefers delicate maneuvers, prioritizing precision and subtlety over br
 */
 public class ScholarState : BotState
 {
-    public ScholarState()
+    public ScholarState(string _playerName, bool _colour) : base(_playerName, _colour)
     {
 
     }
@@ -25,7 +25,7 @@ public class Scholar : Bot
 {
     protected override void Awake()
     {
-        state = new ScholarState();
+        //state = new ScholarState();
     }
     
     // Start is called before the first frame update

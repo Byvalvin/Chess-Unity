@@ -67,7 +67,7 @@ public class Queen : Piece
 {
     protected override void Awake()
     {
-        state = new QueenState(); // Initialize queen state
+        //state = new QueenState(); // Initialize queen state
         base.Awake();
     }
 
