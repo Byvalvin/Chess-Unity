@@ -140,6 +140,7 @@ public abstract class Piece : MonoBehaviour {
         get=>state;
         set{
             state=value;
+            MyColour = state.Colour ? lightColour : darkColour; // set colour
             SetPosition();
         }
     }
