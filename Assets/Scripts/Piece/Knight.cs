@@ -53,14 +53,6 @@ public class KnightState : PieceState
 
 public class Knight : Piece
 {
-    public override void Move(Vector2Int to)
-    {
-        if (state.CanMove(to))
-        {
-            state.Move(to);
-            SetPosition(); // Update visual position
-        }
-    }
     
     protected override void Awake()
     {

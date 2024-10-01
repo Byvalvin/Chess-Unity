@@ -62,7 +62,7 @@ public class PlayerState
         this.KingAttacker = original.KingAttacker; // the opposing piece attacking player's king 
     } 
 
-    public PieceState GetKing() => Pieces[0].State;
+    public PieceState GetKing() => PieceStates[0];
     public bool IsInCheck(){
         return doubleCheck || InCheck;
     }
@@ -72,10 +72,6 @@ public class PlayerState
 
     public void Capture(PieceState piece) => captured.Add(piece);
 
-    // for only bot inheirtence
-    public virtual GameState CurrentGame{
-        get; set;
-    }
 
     public virtual Vector2Int[] GetMove()
     {
@@ -85,6 +81,14 @@ public class PlayerState
         fromTo[1] = targetPosition;
         return fromTo;
     }
+
+    //bots
+    protected GameState currentGame;
+    public GameState CurrentGame{
+        get=>currentGame;
+        set=>currentGame=value;
+    }
+
 }
 
 public class Player : MonoBehaviour
@@ -96,6 +100,12 @@ public class Player : MonoBehaviour
        get=>state;
        set=>state=value;
    }
+
+   // need to have the PieceObjects fro dispaly
+    public void AddPiece(Piece piece) => pieces.Add(piece);
+    public void RemovePiece(Piece piece) => pieces.Remove(piece);
+    public void Capture(Piece piece) => captured.Add(piece);
+
 
     // GUI
     protected virtual void Awake()

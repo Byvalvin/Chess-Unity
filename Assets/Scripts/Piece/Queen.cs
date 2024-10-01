@@ -71,15 +71,6 @@ public class Queen : Piece
         base.Awake();
     }
 
-    public override void Move(Vector2Int to)
-    {
-        if (state.CanMove(to))
-        {
-            state.Move(to);
-            SetPosition(); // Update visual position
-        }
-    }
-
     protected override void Start()
     {
         base.Start();

@@ -16,12 +16,12 @@ public class AggressorState : BotState
     protected override int EvaluateMove(Vector2Int from, Vector2Int to) //Prioritize capturing pieces or making aggressive moves
     {
         int score = 1;
-        Piece movingPiece = CurrentGame.GetTile(from).State.piece;
-        Piece targetPiece = CurrentGame.GetTile(to).State.piece;
+        PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
+        PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
         
         if (targetPiece != null){
             // If capturing, add the value of the captured piece
-            score += pieceValue[targetPiece.State.Type]+10;
+            score += pieceValue[targetPiece.Type]+10;
         }else{
             // find a move that increases the number of valid moves a piece the most(to increase the chance to capture)
             // Simulate the move

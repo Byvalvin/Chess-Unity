@@ -42,6 +42,8 @@ public class GameState{
 
     public void SwitchPlayer()=>currentIndex = (currentIndex + 1) % playerStates.Length;
 
+    public TileState GetTile(Vector2Int pos) => boardState.GetTile(pos);
+
     // Game ends
     bool IsGameEnd(){
         foreach (PlayerState player in playerStates){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
@@ -88,17 +90,17 @@ public class GameState{
         HashSet<Vector2Int> pieceMoves = FilterMoves(piece), gameValidMoves=new HashSet<Vector2Int>();
 
         // add enPassantMove for checking
-        bool isAnEnPassantMove = lastMovedPiece!=null 
-                && piece.Type=="Pawn" && lastMovedPiece.Type=="Pawn" 
-                && Mathf.Abs(lastMovedPiece.Position.x-piece.Position.x)==1
-                && lastMovedPiece.Position.y==piece.Position.y
-                && (lastMovedPiece as Pawn).CanBeCapturedEnPassant;
+        bool isAnEnPassantMove = lastMovedPieceState!=null 
+                && piece.Type=="Pawn" && lastMovedPieceState.Type=="Pawn" 
+                && Mathf.Abs(lastMovedPieceState.Position.x-piece.Position.x)==1
+                && lastMovedPieceState.Position.y==piece.Position.y
+                && (lastMovedPieceState as PawnState).CanBeCapturedEnPassant;
         if(isAnEnPassantMove){
-            Vector2Int enPassantMove = lastMovedPiece.Position+new Vector2Int(0, currentIndex==0 ? -1:1);
+            Vector2Int enPassantMove = lastMovedPieceState.Position+new Vector2Int(0, currentIndex==0 ? -1:1);
             pieceMoves.Add(enPassantMove);
         }
 
-        bool isKing = piece is King;
+        bool isKing = piece is KingState;
         foreach (Vector2Int move in pieceMoves){
             // condition 1
             bool mustMoveKing = playerStates[currentIndex].DoubleCheck && isKing;
@@ -134,7 +136,7 @@ public class GameState{
     }
     HashSet<Vector2Int> GetAllPlayerMoves(PlayerState player){
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
-        foreach (PieceState piece in player.Pieces)
+        foreach (PieceState piece in player.PieceStates)
             foreach (Vector2Int move in piece.ValidMoves)
                 allMoves.Add(move);
         return allMoves;
@@ -143,7 +145,7 @@ public class GameState{
     // JUST FOR POSITIONS THE OPPOSING PLAYER PIECES ARE ATTACKING, not necessarily defended positions(same as defended positons only for pawns)
     HashSet<Vector2Int> GetAllPlayerAttackMoves(PlayerState player){
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
-        foreach (PieceState piece in player.Pieces)
+        foreach (PieceState piece in player.PieceStates)
         {
             bool isPawn = piece.Type=="Pawn";
             if(isPawn)
@@ -384,10 +386,10 @@ public class GameState{
         player.DoubleCheck = attackingPiecesCount > 1;
     }
 
-    private void UpdateGameState(){
+    public void UpdateGameState(){
         // Reset and filter valid moves for each piece
         foreach (PlayerState player in playerStates){
-            foreach (PieceState piece in player.Pieces){
+            foreach (PieceState piece in player.PieceStates){
                 piece.ResetValidMoves();
                 piece.ValidMoves = FilterMoves(piece);
 
@@ -409,18 +411,18 @@ public class GameState{
     }
 
     
-    void ExecuteMove(Vector2Int targetPosition){
+    public void ExecuteMove(Vector2Int targetPosition){
         if (isCapture(targetPosition)){
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
             playerStates[currentIndex].Capture(captured);
             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
             captured.Captured = true;
         }
-        if (lastMovedPieceState is Pawn && lastMovedPieceState.Position.x == targetPosition.x){ // Handle en passant
+        if (lastMovedPieceState is PawnState && lastMovedPieceState.Position.x == targetPosition.x){ // Handle en passant
             Vector2Int enPassantTarget = lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
             if (targetPosition == enPassantTarget){ //Debug.Log("Execute EnPassant");
                 // Remove the pawn that is captured en passant
-                PieceState captured = boardState.GetTile(lastMovedPieceState.Position).piece;
+                PieceState captured = boardState.GetTile(lastMovedPieceState.Position).pieceState;
                 playerStates[currentIndex].Capture(captured);
                 playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
                 captured.Captured = true;
@@ -517,7 +519,7 @@ public class Game : MonoBehaviour{
     }
 
     void BotMove() {
-        Vector2Int[] fromTo = player[currentIndex].GetMove();
+        Vector2Int[] fromTo = players[state.PlayerIndex].State.GetMove();
         Vector2Int fromPosition = fromTo[0];
         Vector2Int targetPosition = fromTo[1];
 
@@ -526,11 +528,11 @@ public class Game : MonoBehaviour{
     }
     void ReleasePiece(){
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1]; // non-bot playerStates will use GUI so no need for from position
-        HashSet<Vector2Int> gameValidMoves = state.GetMovesAllowed(selectedPiece.State);
+        HashSet<Vector2Int> gameValidMoves = state.GetMovesAllowed(state.SelectedPieceState);
         if(gameValidMoves.Contains(targetPosition))
             state.ExecuteMove(targetPosition);
         else
-            selectedPiece.State.Position = originalPosition; // Reset to original
+            state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
         
         state.SelectedPieceState = null;
         selectedPiece = null; // Deselect piece
@@ -566,9 +568,9 @@ public class Game : MonoBehaviour{
         PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new PlayerState(P2Name, P2Colour);
         state =  new GameState(P1State, P2State);
         if (P1State is BotState)
-            (P1State as BotState).CurrentGame = this;
+            (P1State as BotState).CurrentGame = this.state;
         if (P2State is BotState)
-            (P2State as BotState).CurrentGame = this;
+            (P2State as BotState).CurrentGame = this.state;
 
         state = new GameState(P1State, P2State);
 

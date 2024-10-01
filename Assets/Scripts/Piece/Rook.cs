@@ -59,14 +59,6 @@ public class RookState : PieceState
 
 public class Rook : Piece
 {
-    public override void Move(Vector2Int to)
-    {
-        if (state.CanMove(to))
-        {
-            state.Move(to);
-            SetPosition(); // Update visual position
-        }
-    }
     protected override void Awake()
     {
         //state = new RookState(); // Initialize rook state

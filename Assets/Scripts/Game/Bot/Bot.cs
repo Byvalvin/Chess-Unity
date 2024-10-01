@@ -5,7 +5,6 @@ using UnityEngine;
 
 public abstract class BotState : PlayerState
 {
-    private GameState currentGame;
     protected static Dictionary<string, int> pieceValue = new Dictionary<string, int>
     {
         { "Pawn", 1 },
@@ -16,13 +15,9 @@ public abstract class BotState : PlayerState
         { "King", int.MaxValue } // King is invaluable
     };
 
-    public override GameState CurrentGame{
-        get=>currentGame;
-        set=>currentGame=value;
-    }
 
     public BotState(string _playerName, bool _colour) : base(_playerName, _colour){}
-    public BotState(PlayerState original) : base(original){
+    public BotState(BotState original) : base(original){
         this.currentGame = original.currentGame;
     }
     public override Vector2Int[] GetMove()
@@ -30,10 +25,10 @@ public abstract class BotState : PlayerState
         //Vector2Int moveFrom = new Vector2Int(3,1), moveTo = new Vector2Int(3,3);
         
         Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap = new Dictionary<Vector2Int, HashSet<Vector2Int>>();
-        foreach (Piece piece in Pieces)
+        foreach (PieceState piece in PieceStates)
         {
             HashSet<Vector2Int> validMoves = CurrentGame.GetMovesAllowed(piece);
-            if(validMoves.Count!=0) moveMap[piece.State.Position] = validMoves;
+            if(validMoves.Count!=0) moveMap[piece.Position] = validMoves;
         }
         
         // call the thing that determines the mvoe to play given all the valid mvoes of all pieces

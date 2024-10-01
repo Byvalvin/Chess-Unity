@@ -138,7 +138,10 @@ public abstract class Piece : MonoBehaviour {
     
     public PieceState State{
         get=>state;
-        set=>state=value;
+        set{
+            state=value;
+            SetPosition();
+        }
     }
     public Sprite PieceSprite{
         get{return pieceSprite;}

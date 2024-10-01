@@ -34,14 +34,6 @@ public class KingState : PieceState
 
 public class King : Piece
 {    
-    public override void Move(Vector2Int to)
-    {
-        if (state.CanMove(to)) // Check if the move is valid
-        {
-            state.Move(to); // Update the state
-            SetPosition(); // Update visual position
-        }
-    }
 
 
     protected override void Awake()

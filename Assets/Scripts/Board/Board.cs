@@ -40,10 +40,10 @@ public class BoardState
                 TileState tileState = new TileState();
 
                 tileState.Colour = (yi + xi) % 2 == 1; // Alternate colours
-                tileState.Min = minPoint; tileState.Max = maxPoint;
+                tileState.Min = minPoint.x; tileState.Max = maxPoint.x;
                 tileState.Position = new Vector2Int(xi, yi); // Note the order here
 
-                tiles[yi, xi] = tile;
+                tileStates[yi, xi] = tileState;
 
             }
         }
@@ -58,7 +58,7 @@ public class BoardState
         string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" }; // orderd so the King is indeed the first piece in the Player's Pieces List
         foreach (string pieceType in pieceTypes)
         {
-            AddPieceStates(pieceType, Player1, Player2);
+            AddPieceStates(pieceType, player1, player2);
         }
     }
 
@@ -171,7 +171,7 @@ public class BoardState
         if (fromTile != null && toTile != null)
         {
             Debug.Log($"Moving piece from {from} to {to}");
-            toTile.pieceState = fromTile.piece;
+            toTile.pieceState = fromTile.pieceState;
             fromTile.pieceState = null;
         }
     }

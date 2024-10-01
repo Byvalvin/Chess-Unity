@@ -11,7 +11,6 @@ public class TileState
     private bool colour;
     private float min,max,minx,miny,maxx,maxy;
 
-    
     public PieceState pieceState;
 
     public Vector2 Position{
@@ -19,7 +18,6 @@ public class TileState
         set{position = value;}
     }
 
-    
     public bool Colour{
         get{return colour;}
         set{colour = value;}
@@ -76,7 +74,7 @@ public class Tile : MonoBehaviour
         tileMaterial.color = state.Colour ? Color.white : Color.black;
     }
 
-    private void ScaleTile()=>transform.localScale = new Vector3(state.N, state.N, 1); // Adjust scale for visual representation
+    private void ScaleTile()=>transform.localScale = new Vector3(n, n, 1); // Adjust scale for visual representation
 
 
     void Start()
