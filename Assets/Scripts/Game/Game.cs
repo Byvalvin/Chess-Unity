@@ -412,7 +412,7 @@ public class GameState{
     }
 
     
-    public void ExecuteMove(Vector2Int targetPosition){
+    public Vector2Int ExecuteMove(Vector2Int targetPosition){
         Debug.Log("got to execution");
         if (isCapture(targetPosition)){
             Debug.Log("got to execution first if ");
@@ -433,12 +433,18 @@ public class GameState{
             }
         }
         boardState.MovePiece(selectedPieceState.Position, targetPosition);
+        Vector2Int lastPosition = selectedPieceState.Position;
         selectedPieceState.Move(targetPosition);
         lastMovedPieceState = selectedPieceState; // Store the last moved piece
+
         UpdateGameState();
         SwitchPlayer();
         if(IsGameEnd())
             End();
+        
+        Debug.Log(lastPosition + "and " + selectedPieceState.Position);
+        
+        return lastPosition;
     }
     bool isCapture(Vector2Int targetPosition) => boardState.GetTile(targetPosition).HasPieceState();
 }
@@ -503,34 +509,13 @@ public class Game : MonoBehaviour{
     Piece selectedPiece;
 
     // Player GUI
-    //  void ExecuteMove(Vector2Int targetPosition){
-    //     Debug.Log("got to execution");
-    //     if (isCapture(targetPosition)){
-    //         Debug.Log("got to execution first if ");
-    //         PieceState captured = boardState.GetTile(targetPosition).pieceState;
-    //         playerStates[currentIndex].Capture(captured);
-    //         playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
-    //         captured.Captured = true;
-    //     }
-    //     if (lastMovedPieceState is PawnState && lastMovedPieceState.Position.x == targetPosition.x){ // Handle en passant
-    //     Debug.Log("got to execution second if");
-    //         Vector2Int enPassantTarget = lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
-    //         if (targetPosition == enPassantTarget){ //Debug.Log("Execute EnPassant");
-    //             // Remove the pawn that is captured en passant
-    //             PieceState captured = boardState.GetTile(lastMovedPieceState.Position).pieceState;
-    //             playerStates[currentIndex].Capture(captured);
-    //             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
-    //             captured.Captured = true;
-    //         }
-    //     }
-    //     boardState.MovePiece(selectedPieceState.Position, targetPosition);
-    //     selectedPieceState.Move(targetPosition);
-    //     lastMovedPieceState = selectedPieceState; // Store the last moved piece
-    //     UpdateGameState();
-    //     SwitchPlayer();
-    //     if(IsGameEnd())
-    //         End();
-    // }
+     void ExecuteMove(Vector2Int targetPosition){
+        Vector2Int lastPiecePos = state.ExecuteMove(targetPosition);
+        board.MovePiece(lastPiecePos, targetPosition);
+        selectedPiece.Move(targetPosition);
+        //lastMovedPieceState = selectedPieceState; // Store the last moved piece
+
+    }
     void SelectPiece(){
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Collider2D collision = Physics2D.OverlapPoint(mousePosition);
@@ -569,7 +554,7 @@ public class Game : MonoBehaviour{
         Debug.Log("------------");
         if(gameValidMoves.Contains(targetPosition)){
             Debug.Log("in if");
-            state.ExecuteMove(targetPosition);
+            ExecuteMove(targetPosition);
             board.MovePiece(state.SelectedPieceState.Position, targetPosition);
             selectedPiece.Move(targetPosition);
             //lastMovedPiece = selectedPiece; // Store the last moved piece

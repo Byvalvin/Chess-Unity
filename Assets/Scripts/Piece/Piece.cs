@@ -186,10 +186,8 @@ public abstract class Piece : MonoBehaviour {
     }
 
     public virtual void Move(Vector2Int to) {
-        if (state.CanMove(to)) {
-            //state.Move(to);
-            SetPosition();
-        }
+        //if(state.Move(to)) we would have already updated state before the ui
+        Position=to; // update ui
     }
 
     public virtual void HandleInput() {
