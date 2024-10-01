@@ -8,7 +8,7 @@ public class PawnState : PieceState
     private int enPassantCounter;
     public bool CanBeCapturedEnPassant => canBeCapturedEnPassant;
 
-    public PawnState() : base()
+    public PawnState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint) : base(_colour, _currentPos,  _minPoint, _maxPoint)
     {
         this.type = "Pawn";
         this.canBeCapturedEnPassant = false;

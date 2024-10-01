@@ -9,7 +9,6 @@ public class TileState
     // Start is called before the first frame update
     private Vector2 position;
     private bool colour;
-    private float n; // length of tile
     private float min,max,minx,miny,maxx,maxy;
 
     
@@ -24,14 +23,6 @@ public class TileState
     public bool Colour{
         get{return colour;}
         set{colour = value;}
-    }
-    public float N{
-        get{return n;}
-        set{
-            if(minx<value && value<maxx){
-                n=value;
-            }
-        }
     }
 
     public float Min{
@@ -59,6 +50,7 @@ public class TileState
 public class Tile : MonoBehaviour
 {
     TileState state;
+    private float n; // length of tile
     private Material tileMaterial; //store for reuse
 
     public Piece piece;
@@ -66,6 +58,14 @@ public class Tile : MonoBehaviour
     public TileState State{
         get=>state;
         set=>state=value;
+    }
+    public float N{
+        get{return n;}
+        set{
+            if(state.Min<value && value<state.Max){
+                n=value;
+            }
+        }
     }
     private void RenderTileColour(){
         if(tileMaterial==null)

@@ -27,6 +27,131 @@ public class BoardState
         set=>tileStates=value;
     }
 
+    public BoardState(){
+        //CreateBoardState();
+    }
+
+    public void CreateBoardState(PlayerState player1, PlayerState player2)
+    {
+        // Create and Add Tiles
+        tileStates = new TileState[N, N];
+        minPoint = new Vector2Int(0, 0); maxPoint = new Vector2Int(N-1, N-1);
+
+        for (int yi = 0; yi < N; yi++)
+        {
+            for (int xi = 0; xi < N; xi++)
+            {
+                TileState tileState = new TileState();
+
+                tileState.Colour = (yi + xi) % 2 == 1; // Alternate colours
+                tileState.Min = minPoint; tileState.Max = maxPoint;
+                tileState.Position = new Vector2Int(xi, yi); // Note the order here
+
+                tiles[yi, xi] = tile;
+
+            }
+        }
+        
+        // Create and Add Pieces
+        PopulateBoardState(player1, player2);
+    }
+
+        private void PopulateBoardState(PlayerState player1, PlayerState player2)
+    {
+        // string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
+        string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" }; // orderd so the King is indeed the first piece in the Player's Pieces List
+        foreach (string pieceType in pieceTypes)
+        {
+            AddPieceStates(pieceType, Player1, Player2);
+        }
+    }
+
+    private void AddPieceStates(string type, PlayerState player1, PlayerState player2)
+    {
+        switch (type)
+        {
+            case "King":
+                AddPieceState(type, true, 3, player1);
+                AddPieceState(type, false, 3, player2);
+                break;
+            case "Queen":
+                AddPieceState(type, true, 4, player1);
+                AddPieceState(type, false, 4, player2);
+                break;
+            case "Rook":
+                AddPieceState(type, true, 0, player1);
+                AddPieceState(type, true, 7, player1);
+                AddPieceState(type, false, 0, player2);
+                AddPieceState(type, false, 7, player2);
+                break;
+            case "Knight":
+                AddPieceState(type, true, 1, player1);
+                AddPieceState(type, true, 6, player1);
+                AddPieceState(type, false, 1, player2);
+                AddPieceState(type, false, 6, player2);
+                break;
+            case "Bishop":
+                AddPieceState(type, true, 2, player1);
+                AddPieceState(type, true, 5, player1);
+                AddPieceState(type, false, 2, player2);
+                AddPieceState(type, false, 5, player2);
+                break;
+            case "Pawn":
+                for (int xi = 0; xi < state.N; xi++)
+                {
+                    AddPieceState(type, true, xi, player1); // Light
+                    AddPieceState(type, false, xi, player2); // Dark
+                }
+                break;
+            default:
+                Debug.Log("Unknown piece type: " + type);
+                break;
+        }
+    }
+
+    void AddPieceState(string type, bool colour, int x, PlayerState player)
+    {
+        int darkY = minPoint.y, lightY = maxPoint.y;
+
+        //GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
+        PieceState pieceState = null;
+        Vector2Int startPos = new Vector2Int(x, colour ? lightY : darkY);
+        switch (type)
+        {
+            case "King":
+                pieceState = new KingState(colour, startPos, minPoint, maxPoint);
+                break;
+            case "Queen":
+                pieceState = new QueenState(colour, startPos, minPoint, maxPoint);
+                break;
+            case "Rook":
+                pieceState = new RookState(colour, startPos, minPoint, maxPoint);
+                break;
+            case "Knight":
+                pieceState = new KnightState(colour, startPos, minPoint, maxPoint);
+                break;
+            case "Bishop":
+                pieceState = new BishopState(colour, startPos, minPoint, maxPoint);
+                break;
+            case "Pawn":
+                darkY++; lightY--;
+                pieceState = new PawnState(colour, new Vector2Int(x, colour ? lightY : darkY), minPoint, maxPoint);
+                break;
+            default:
+                Debug.Log("Unknown piece type: " + type);
+                break;
+        }
+
+
+        // Set piece to tile
+        int tileY = colour ? lightY : darkY;
+        tileStates[tileY, x].pieceState = pieceState; // Adjust for array index
+        //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.Type + " on tile " + x + " " + tileY);
+
+        // Give piece to player
+        player.AddPieceState(pieceState);
+    }
+
 
 
 
@@ -99,7 +224,6 @@ public class Board : MonoBehaviour
     {
         // Create and Add Tiles
         tiles = new Tile[state.N, state.N];
-        state.MinPoint = new Vector2Int(0, 0); state.MaxPoint = new Vector2Int(state.N-1, state.N-1);
 
         for (int yi = 0; yi < state.N; yi++)
         {
@@ -107,10 +231,8 @@ public class Board : MonoBehaviour
             {
                 GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 Tile tile = tileObject.AddComponent<Tile>();
-
-                tile.State.Position = new Vector2Int(xi, yi); // Note the order here
-                tile.State.Colour = (yi + xi) % 2 == 1; // Alternate colours
-                tile.State.N = tileSize;
+                tile.State = state.TileStates[yi, xi];
+                tile.N = tileSize;
 
                 tiles[yi, xi] = tile;
 
@@ -120,7 +242,7 @@ public class Board : MonoBehaviour
             }
         }
 
-        // need tileSize for bot moves
+        // need tileSize for both player and bot moves
         Player1.State.TileSize = tileSize; Player2.State.TileSize = tileSize;
         
         // Create and Add Pieces
@@ -232,17 +354,14 @@ public class Board : MonoBehaviour
                 break;
         }
 
-        piece.State.Colour = colour;
-        piece.State.Position = new Vector2Int(x, colour ? lightY : darkY);
+       
         piece.TileSize = tileSize;
-        piece.State.MinPoint = state.MinPoint; 
-        piece.State.MaxPoint = state.MaxPoint;
         piece.PieceSprite = sprites[$"{type}"];
         piece.PieceColliderSize = 1 / pieceScaleFactor;
 
         // Set piece to tile
         int tileY = colour ? lightY : darkY;
-        tiles[tileY, x].State.piece = piece; // Adjust for array index
+        tiles[tileY, x].piece = piece; // Adjust for array index
         //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.Type + " on tile " + x + " " + tileY);
 
         // Set UI
@@ -250,7 +369,7 @@ public class Board : MonoBehaviour
         PieceObject.transform.localScale = new Vector3(tileSize * pieceScaleFactor, tileSize * pieceScaleFactor, 1); // Adjust based on sprite size
 
         // Give piece to player
-        Player.State.AddPiece(piece);
+        Player.AddPiece(piece);
     }
 
 

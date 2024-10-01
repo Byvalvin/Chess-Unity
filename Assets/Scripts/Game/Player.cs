@@ -10,7 +10,7 @@ public class PlayerState
     private bool colour = true; //assume white
     private int turnIndex = 0; //assume white turn
     private float tileSize;
-    private List<Piece> pieces = new List<PieceStates>(), captured = new List<Piece>();
+    private List<PieceState> pieces = new List<PieceState>(), captured = new List<PieceState>();
 
     private bool inCheck = true, doubleCheck = true;
 
@@ -33,10 +33,7 @@ public class PlayerState
         get=>tileSize;
         set=>tileSize=value;
     }
-    public List<PieceStates> PieceStates
-    {
-        get=>pieces;
-    }
+    public List<PieceState> PieceStates=>pieces;
 
     public bool InCheck{
         get=>inCheck;
@@ -53,8 +50,8 @@ public class PlayerState
         this.colour = original.colour; //assume white
         this.turnIndex = original.turnIndex; //assume white turn
         this.tileSize = original.tileSize;
-        this.pieces = new List<Piece>(original.pieces);
-        this.captured = new List<Piece>(original.captured);
+        this.pieces = new List<PieceState>(original.pieces);
+        this.captured = new List<PieceState>(original.captured);
 
         this.inCheck = original.inCheck;
         this.doubleCheck = original.doubleCheck;
@@ -67,10 +64,10 @@ public class PlayerState
         return doubleCheck || InCheck;
     }
 
-    public void AddPiece(Piece piece) => pieces.Add(piece);
-    public void RemovePiece(Piece piece) => pieces.Remove(piece);
+    public void AddPieceState(PieceState piece) => pieces.Add(piece);
+    public void RemovePieceState(PieceState piece) => pieces.Remove(piece);
 
-    public void Capture(Piece piece) => captured.Add(piece);
+    public void Capture(PieceState piece) => captured.Add(piece);
 
     // for only bot inheirtence
     public virtual Game CurrentGame{

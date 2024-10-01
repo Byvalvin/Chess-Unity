@@ -17,7 +17,9 @@ public abstract class PieceState {
 
 
 
-    public PieceState(){}
+    public PieceState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint){
+        colour=_colour; currentPos=_currentPos; minPoint=_minPoint; maxPoint=_maxPoint;
+    }
 
     // Copy constructor
     public PieceState(PieceState original) {

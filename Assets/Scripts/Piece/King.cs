@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class KingState : PieceState
 {
-    public KingState() : base()
+    public KingState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint) : base(_colour, _currentPos,  _minPoint, _maxPoint)
     {
         this.type = "King";
     }

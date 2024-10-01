@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class BishopState : PieceState
 {
-    public BishopState() : base()
+    public BishopState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint) : base(_colour, _currentPos,  _minPoint, _maxPoint)
     {
         this.type = "Bishop";
     }
