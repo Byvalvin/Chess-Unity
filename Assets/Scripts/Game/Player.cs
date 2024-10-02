@@ -34,6 +34,7 @@ public class PlayerState
         set=>tileSize=value;
     }
     public List<PieceState> PieceStates=>pieces;
+    public List<PieceState> CappedStates=>captured;
 
     public bool InCheck{
         get=>inCheck;
@@ -94,17 +95,21 @@ public class PlayerState
 public class Player : MonoBehaviour
 {
    protected PlayerState state;
-   protected List<Piece> pieces = new List<Piece>(), captured = new List<Piece>();
+   protected List<Piece> pieces = new List<Piece>(), capturedPieces = new List<Piece>();
 
    public PlayerState State{
        get=>state;
        set=>state=value;
    }
 
+   public List<Piece> Pieces => pieces;
+   public List<Piece> CapturedPieces => capturedPieces;
+
+
    // need to have the PieceObjects fro dispaly
     public void AddPiece(Piece piece) => pieces.Add(piece);
     public void RemovePiece(Piece piece) => pieces.Remove(piece);
-    public void Capture(Piece piece) => captured.Add(piece);
+    public void Capture(Piece piece) => capturedPieces.Add(piece);
 
 
     // GUI

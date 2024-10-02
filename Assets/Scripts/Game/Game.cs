@@ -28,6 +28,7 @@ public class GameState{
                 originalPosition = selectedPieceState.Position; // Store original position
         }
     }
+    public PieceState LastMovedPieceState=>lastMovedPieceState;
 
     public Vector2Int OriginalPosition => originalPosition;
 
@@ -510,11 +511,35 @@ public class Game : MonoBehaviour{
 
     // Player GUI
      void ExecuteMove(Vector2Int targetPosition){
-        Vector2Int lastPiecePos = state.ExecuteMove(targetPosition);
+        int lenCaptureBeforeMove = state.PlayerStates[state.PlayerIndex].CappedStates.Count, lenCapturesAfterMove;
+
+        Vector2Int lastPiecePos = state.ExecuteMove(targetPosition); // get the from location
+
+
+        // update ui
+        lenCapturesAfterMove = state.PlayerStates[1-state.PlayerIndex].CappedStates.Count;
+                Debug.Log(lenCaptureBeforeMove + " kkkk" + lenCapturesAfterMove);
+        if( lenCapturesAfterMove > lenCaptureBeforeMove){ // a capture happened, update
+            Piece capturedPiece = null; // last capped piece
+            foreach (Piece piece in players[state.PlayerIndex].Pieces)
+            {
+                if(state.PlayerStates[1-state.PlayerIndex].CappedStates[lenCapturesAfterMove-1].Position==targetPosition 
+                    || (state.LastMovedPieceState is PawnState && state.LastMovedPieceState.Position.x == targetPosition.x)){
+                    capturedPiece = piece;
+                    break;
+                }
+                
+            }
+            Debug.Log(capturedPiece);
+            players[1-state.PlayerIndex].Capture(capturedPiece);
+            players[state.PlayerIndex].RemovePiece(capturedPiece);
+            //capturedPiece.Capped = true;
+
+        }
+
         board.MovePiece(lastPiecePos, targetPosition);
         selectedPiece.Move(targetPosition);
         //lastMovedPieceState = selectedPieceState; // Store the last moved piece
-
     }
     void SelectPiece(){
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
@@ -554,14 +579,13 @@ public class Game : MonoBehaviour{
         Debug.Log("------------");
         if(gameValidMoves.Contains(targetPosition)){
             Debug.Log("in if");
-            ExecuteMove(targetPosition);
-            board.MovePiece(state.SelectedPieceState.Position, targetPosition);
-            selectedPiece.Move(targetPosition);
+            state.ExecuteMove(targetPosition);
+            
             //lastMovedPiece = selectedPiece; // Store the last moved piece
         }
         else{
             Debug.Log("not in if");
-            selectedPiece.Position = state.OriginalPosition;
+            //selectedPiece.Position = state.OriginalPosition;
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
         }
         

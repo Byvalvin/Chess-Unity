@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 
 [System.Serializable]
 public abstract class PieceState {
+    public event Action OnPositionChanged;
     protected string type;
     protected bool colour;
     protected Vector2Int currentPos;
@@ -49,6 +51,8 @@ public abstract class PieceState {
         get{return currentPos;}
         set{
             currentPos=value;
+            OnPositionChanged?.Invoke();
+
         }
     }
     public string Type
@@ -109,7 +113,7 @@ public abstract class Piece : MonoBehaviour {
     protected float tileSize;
 
 
-    protected Vector2Int currentPos;
+   // protected Vector2Int currentPos;
 
     static Color[] LightColors = {
         new Color(1f, 0.95f, 0.8f, 1f), // Cream
@@ -142,7 +146,9 @@ public abstract class Piece : MonoBehaviour {
         set{
             state=value;
             MyColour = state.Colour ? lightColour : darkColour; // set colour
-            Position = state.Position;
+            //Position = state.Position;
+            state.OnPositionChanged += SetPosition; // Subscribe to state changes
+            SetPosition(); // Initial update
         }
     }
     public Sprite PieceSprite{
@@ -165,14 +171,14 @@ public abstract class Piece : MonoBehaviour {
         set{tileSize=value;}
     }
 
-    public Vector2Int Position
-    {
-        get{return currentPos;}
-        set{
-            currentPos=value;
-            SetPosition();
-        }
-    }
+    // public Vector2Int Position
+    // {
+    //     get{return currentPos;}
+    //     set{
+    //         currentPos=value;
+    //         SetPosition();
+    //     }
+    // }
 
 
    protected void SetSprite(){
@@ -182,12 +188,12 @@ public abstract class Piece : MonoBehaviour {
         }
     }
     protected void SetPosition() {
-        transform.position = new Vector3(tileSize * Position.x, tileSize * Position.y, 0);
+        transform.position = new Vector3(tileSize * state.Position.x, tileSize * state.Position.y, 0);
     }
 
     public virtual void Move(Vector2Int to) {
         //if(state.Move(to)) we would have already updated state before the ui
-        Position=to; // update ui
+        //Position=to; // update ui
     }
 
     public virtual void HandleInput() {
@@ -197,7 +203,7 @@ public abstract class Piece : MonoBehaviour {
 
     protected virtual void Awake() {
         if (colourIndex == -1) // Generate once
-            colourIndex = Random.Range(0, LightColors.Length);
+            colourIndex = UnityEngine.Random.Range(0, LightColors.Length);
         lightColour = LightColors[colourIndex];
         darkColour = DarkColors[colourIndex];
     }
