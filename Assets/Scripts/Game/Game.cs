@@ -5,6 +5,8 @@ using System;
 using Newtonsoft.Json; // for saving and loading games
 
 public class GameState{
+
+    public event Action<PieceState> OnSelectedPieceChanged;
     private BoardState boardState;
     private PlayerState[] playerStates = new PlayerState[2];
     private int currentIndex = 0;
@@ -24,6 +26,7 @@ public class GameState{
         get=>selectedPieceState;
         set{
             selectedPieceState=value;
+            OnSelectedPieceChanged?.Invoke(selectedPieceState);
             if(selectedPieceState!=null)
                 originalPosition = selectedPieceState.Position; // Store original position
         }
@@ -552,6 +555,26 @@ public class Game : MonoBehaviour{
     //     selectedPiece.Move(targetPosition);
     //     //lastMovedPieceState = selectedPieceState; // Store the last moved piece
     // }
+    private void UpdateSelectedPiece(PieceState newPieceState)
+    {
+        // Find the corresponding Piece based on the PieceState
+        selectedPiece = FindPieceFromState(newPieceState);
+    }
+    private Piece FindPieceFromState(PieceState pieceState)
+    {
+        foreach (Player player in players)
+        {
+            // Assuming you have access to a list of pieces
+            foreach (Piece piece in player.Pieces) // Adjust this as necessary
+            {
+                if (piece.State == pieceState)
+                {
+                    return piece;
+                }
+            }
+        }
+        return null; // Or handle the case where no match is found
+    }
     void SelectPiece(){
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Collider2D collision = Physics2D.OverlapPoint(mousePosition);
@@ -580,7 +603,7 @@ public class Game : MonoBehaviour{
     void ReleasePiece(){
 
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1]; // non-bot playerStates will use GUI so no need for from position
-                Debug.Log("released" + selectedPiece.State+targetPosition);
+                //Debug.Log("released" + selectedPiece.State+targetPosition);
         HashSet<Vector2Int> gameValidMoves = state.GetMovesAllowed(state.SelectedPieceState);
         if(gameValidMoves.Contains(targetPosition)){
             state.ExecuteMove(targetPosition);
@@ -588,7 +611,6 @@ public class Game : MonoBehaviour{
             //lastMovedPiece = selectedPiece; // Store the last moved piece
         }
         else{
-            Debug.Log("not in if");
             //selectedPiece.Position = state.OriginalPosition;
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
         }
@@ -624,8 +646,9 @@ public class Game : MonoBehaviour{
         string P1Name = "P1", P2Name = "P2";
         bool P1Colour = true, P2Colour = false;
 
-        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new PlayerState(P2Name, P2Colour);
+        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new RandiState(P2Name, P2Colour);
         state =  new GameState(P1State, P2State);
+        state.OnSelectedPieceChanged += UpdateSelectedPiece;
         if (P1State is BotState)
             (P1State as BotState).CurrentGame = this.state;
         if (P2State is BotState)
@@ -633,7 +656,7 @@ public class Game : MonoBehaviour{
 
 
         Player P1 = gameObject.AddComponent<Player>();
-        Player P2 = gameObject.AddComponent<Player>();
+        Player P2 = gameObject.AddComponent<Randi>();
         Debug.Log($"P1: {P1}, P2: {P2}");
         P1.State=P1State; P2.State=P2State;
         players[0] = P1;
@@ -653,4 +676,12 @@ public class Game : MonoBehaviour{
     void Update(){
         HandleInput();
     }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe from event to prevent memory leaks
+        state.OnSelectedPieceChanged -= UpdateSelectedPiece;
+    }
+
+
 }

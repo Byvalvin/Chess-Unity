@@ -5,6 +5,7 @@ using System;
 
 public class BoardState
 {
+    public event Action<Vector2Int, Vector2Int> OnPieceMoved;
     private TileState[,] tileStates;
     
     private static Vector2Int minPoint, maxPoint;
@@ -174,6 +175,8 @@ public class BoardState
             toTile.pieceState = fromTile.pieceState;
             fromTile.pieceState = null;
         }
+
+        OnPieceMoved?.Invoke(from, to); // for the board tiles too
     }
 
     // Piece Movement Logic
@@ -218,7 +221,10 @@ public class Board : MonoBehaviour
 
     public BoardState State{
         get=>state;
-        set=>state=value;
+        set{
+            state=value;
+            state.OnPieceMoved += MovePiece;
+        }
     }
 
     public void CreateBoard(Player Player1, Player Player2)

@@ -209,4 +209,10 @@ public abstract class Piece : MonoBehaviour {
         HandleInput();
     }
 
+    private void OnDestroy()
+    {
+        // Unsubscribe from event to prevent memory leaks
+        state.OnPositionChanged -= SetPosition;
+    }
+
 }
