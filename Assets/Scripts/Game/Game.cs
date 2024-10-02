@@ -45,6 +45,18 @@ public class GameState{
         boardState.CreateBoardState(playerStates[0], playerStates[1]);
     }
 
+    public GameState(GameState original){
+        this.boardState = original.boardState;
+        this.playerStates[0] = original.playerStates[0];
+        this.playerStates[1] = original.playerStates[1];
+        this.currentIndex = original.currentIndex;
+        this.selectedPieceState = original.selectedPieceState;
+        this.originalPosition = original.originalPosition;
+        this.checkmate = original.checkmate;
+    }
+
+    public GameState Clone()=>new GameState(this);
+
     public void SwitchPlayer()=>currentIndex = (currentIndex + 1) % playerStates.Length;
 
     public TileState GetTile(Vector2Int pos) => boardState.GetTile(pos);
@@ -646,7 +658,7 @@ public class Game : MonoBehaviour{
         string P1Name = "P1", P2Name = "P2";
         bool P1Colour = true, P2Colour = false;
 
-        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new RandiState(P2Name, P2Colour);
+        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new AggressorState(P2Name, P2Colour);
         state =  new GameState(P1State, P2State);
         state.OnSelectedPieceChanged += UpdateSelectedPiece;
         if (P1State is BotState)
@@ -656,7 +668,7 @@ public class Game : MonoBehaviour{
 
 
         Player P1 = gameObject.AddComponent<Player>();
-        Player P2 = gameObject.AddComponent<Randi>();
+        Player P2 = gameObject.AddComponent<Aggressor>();
         Debug.Log($"P1: {P1}, P2: {P2}");
         P1.State=P1State; P2.State=P2State;
         players[0] = P1;

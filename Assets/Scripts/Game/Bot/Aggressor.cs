@@ -25,6 +25,12 @@ public class AggressorState : BotState
         }else{
             // find a move that increases the number of valid moves a piece the most(to increase the chance to capture)
             // Simulate the move
+            GameState clone = currentGame.Clone();
+            clone.MakeBotMove(from, to);
+            foreach (PieceState pieceState in clone.PlayerStates[TurnIndex].PieceStates)
+            {
+                score += pieceState.ValidMoves.Count;
+            }
         }
         return score; // Return the total score for the move
     }
