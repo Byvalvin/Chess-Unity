@@ -41,7 +41,7 @@ public abstract class BotState : PlayerState
     {
         Vector2Int bestFrom = default;
         Vector2Int bestTo = default;
-        int bestScore = 0;
+        int bestScore = int.MinValue; // -2 147 483 648
 
         foreach (var kvp in moveMap)
         {
