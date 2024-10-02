@@ -21,7 +21,6 @@ public class AggressorState : BotState
         PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
         PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
                 
-        Debug.Log(targetPiece + "value");
         
         if (targetPiece != null){
             // If capturing, add the value of the captured piece
@@ -36,7 +35,7 @@ public class AggressorState : BotState
                 score += pieceState.ValidMoves.Count;
             }
         }
-        Debug.Log(movingPiece.Type+movingPiece.Colour + from + to + score);
+        //Debug.Log(movingPiece.Type+movingPiece.Colour + from + to + score);
         return score; // Return the total score for the move
     }
 }

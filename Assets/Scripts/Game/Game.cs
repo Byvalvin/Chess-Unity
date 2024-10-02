@@ -536,37 +536,6 @@ public class Game : MonoBehaviour{
     Piece selectedPiece;
 
     // Player GUI
-    //  void ExecuteMove(Vector2Int targetPosition){
-    //     int lenCaptureBeforeMove = state.PlayerStates[state.PlayerIndex].CappedStates.Count, lenCapturesAfterMove;
-
-    //     Vector2Int lastPiecePos = state.ExecuteMove(targetPosition); // get the from location
-
-
-    //     // update ui
-    //     lenCapturesAfterMove = state.PlayerStates[1-state.PlayerIndex].CappedStates.Count;
-    //             Debug.Log(lenCaptureBeforeMove + " kkkk" + lenCapturesAfterMove);
-    //     if( lenCapturesAfterMove > lenCaptureBeforeMove){ // a capture happened, update
-    //         Piece capturedPiece = null; // last capped piece
-    //         foreach (Piece piece in players[state.PlayerIndex].Pieces)
-    //         {
-    //             if(state.PlayerStates[1-state.PlayerIndex].CappedStates[lenCapturesAfterMove-1].Position==targetPosition 
-    //                 || (state.LastMovedPieceState is PawnState && state.LastMovedPieceState.Position.x == targetPosition.x)){
-    //                 capturedPiece = piece;
-    //                 break;
-    //             }
-                
-    //         }
-    //         Debug.Log(capturedPiece);
-    //         players[1-state.PlayerIndex].Capture(capturedPiece);
-    //         players[state.PlayerIndex].RemovePiece(capturedPiece);
-    //         //capturedPiece.Capped = true;
-
-    //     }
-
-    //     board.MovePiece(lastPiecePos, targetPosition);
-    //     selectedPiece.Move(targetPosition);
-    //     //lastMovedPieceState = selectedPieceState; // Store the last moved piece
-    // }
     private void UpdateSelectedPiece(PieceState newPieceState)
     {
         // Find the corresponding Piece based on the PieceState
@@ -615,7 +584,6 @@ public class Game : MonoBehaviour{
     void ReleasePiece(){
 
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1]; // non-bot playerStates will use GUI so no need for from position
-                //Debug.Log("released" + selectedPiece.State+targetPosition);
         HashSet<Vector2Int> gameValidMoves = state.GetMovesAllowed(state.SelectedPieceState);
         if(gameValidMoves.Contains(targetPosition)){
             state.ExecuteMove(targetPosition);

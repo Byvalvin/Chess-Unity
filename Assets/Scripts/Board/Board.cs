@@ -180,7 +180,7 @@ public class BoardState
 
         if (fromTile != null && toTile != null)
         {
-            Debug.Log($"Moving piece from {from} to {to}");
+            //Debug.Log($"Moving piece from {from} to {to}");
             toTile.pieceState = fromTile.pieceState;
             fromTile.pieceState = null;
         }
