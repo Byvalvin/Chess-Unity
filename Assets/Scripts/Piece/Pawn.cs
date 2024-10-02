@@ -16,11 +16,11 @@ public class PawnState : PieceState
     }
 
     // Copy constructor
-    public PawnState(PawnState original) : base(original){
+    public PawnState(PawnState original) : base(original)
+    {
         canBeCapturedEnPassant = original.canBeCapturedEnPassant;
         enPassantCounter = original.enPassantCounter;
     }
-
     
     public override bool CanMove(Vector2Int to)
     {

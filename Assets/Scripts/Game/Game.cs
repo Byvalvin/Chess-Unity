@@ -46,11 +46,11 @@ public class GameState{
     }
 
     public GameState(GameState original){
-        this.boardState = original.boardState;
-        this.playerStates[0] = original.playerStates[0];
-        this.playerStates[1] = original.playerStates[1];
+        this.boardState = original.boardState.Clone();
+        this.playerStates[0] = original.playerStates[0].Clone();
+        this.playerStates[1] = original.playerStates[1].Clone();
         this.currentIndex = original.currentIndex;
-        this.selectedPieceState = original.selectedPieceState;
+        this.selectedPieceState = original.selectedPieceState?.Clone();
         this.originalPosition = original.originalPosition;
         this.checkmate = original.checkmate;
     }

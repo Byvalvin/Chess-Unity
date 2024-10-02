@@ -50,19 +50,29 @@ public class PlayerState
         playerName = _playerName; Colour=_colour;
     }
 
-    public PlayerState(PlayerState original){
+    public PlayerState(PlayerState original)
+    {
         this.playerName = original.playerName;
-        this.colour = original.colour; //assume white
-        this.turnIndex = original.turnIndex; //assume white turn
+        this.colour = original.colour;
+        this.turnIndex = original.turnIndex;
         this.tileSize = original.tileSize;
-        this.pieces = new List<PieceState>(original.pieces);
-        this.captured = new List<PieceState>(original.captured);
+        this.pieces = new List<PieceState>();
+        foreach (var piece in original.pieces)
+        {
+            pieces.Add(piece.Clone()); // Assuming PieceState has a Clone method
+        }
+        this.captured = new List<PieceState>();
+        foreach (var piece in original.captured)
+        {
+            captured.Add(piece.Clone());
+        }
 
         this.inCheck = original.inCheck;
         this.doubleCheck = original.doubleCheck;
+        this.KingAttacker = original.KingAttacker?.Clone(); // Handle cloning if necessary
+    }
 
-        this.KingAttacker = original.KingAttacker; // the opposing piece attacking player's king 
-    } 
+    public virtual PlayerState Clone() => new PlayerState(this); 
 
     public PieceState GetKing() => PieceStates[0];
     public bool IsInCheck(){

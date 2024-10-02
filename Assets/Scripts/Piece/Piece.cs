@@ -23,6 +23,7 @@ public abstract class PieceState {
 
     // Copy constructor
     public PieceState(PieceState original) {
+        type = original.type;
         colour = original.Colour; // also set myColour
         //myColour = original.myColour;
         currentPos = original.currentPos;
@@ -31,7 +32,7 @@ public abstract class PieceState {
         firstMove = original.firstMove;
         validMoves = new HashSet<Vector2Int>(original.validMoves);
     }
-
+    
     public bool Captured
     {
         get{return captured;}

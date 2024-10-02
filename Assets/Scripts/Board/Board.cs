@@ -29,6 +29,15 @@ public class BoardState
     }
 
     public BoardState(){}
+    public BoardState(BoardState original){
+        // Clone the tile states
+        this.tileStates = new TileState[N, N];
+        for (int yi = 0; yi < N; yi++)
+            for (int xi = 0; xi < N; xi++)
+                tileStates[yi, xi] = original.tileStates[yi, xi]?.Clone(); // Clone each tile
+    }
+
+    public BoardState Clone() => new BoardState(this); // Clone method
 
     public void CreateBoardState(PlayerState player1, PlayerState player2)
     {
@@ -191,8 +200,6 @@ public class BoardState
 
         }
     }
-
-
 
 }
 

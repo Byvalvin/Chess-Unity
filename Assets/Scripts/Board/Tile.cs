@@ -40,6 +40,20 @@ public class TileState
 
     public TileState(){}
 
+    // Copy constructor
+    public TileState(TileState original)
+    {
+        this.position = original.position;
+        this.colour = original.colour;
+        this.Min = original.min;
+        this.Max = original.max;
+        
+        // Clone the piece state if it exists
+        pieceState = original.pieceState?.Clone();
+    }
+
+    public TileState Clone() => new TileState(this); // Clone method
+
     public bool HasPieceState(){
         return pieceState!=null;
     }

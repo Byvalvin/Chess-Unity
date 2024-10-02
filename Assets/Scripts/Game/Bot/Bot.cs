@@ -20,6 +20,7 @@ public abstract class BotState : PlayerState
     public BotState(BotState original) : base(original){
         this.currentGame = original.currentGame;
     }
+    public override PlayerState Clone() => MemberwiseClone() as BotState;
     public override Vector2Int[] GetMove()
     {
         //Vector2Int moveFrom = new Vector2Int(3,1), moveTo = new Vector2Int(3,3);
