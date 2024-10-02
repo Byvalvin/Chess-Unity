@@ -167,9 +167,8 @@ public class BoardState
         int yIndex = pos.y; // Invert y coordinate for the array
 
         if (0 <= xIndex && xIndex < N && 0 <= yIndex && yIndex < N)
-        {
             return tileStates[yIndex, xIndex]; // Correct indexing for the array
-        }
+        
         return null; // Return null if out of bounds
     }
 
