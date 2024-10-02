@@ -6,6 +6,7 @@ using System;
 
 public class PlayerState
 {
+    public event Action<PieceState> OnPieceRemoved, OnPieceCaptured;
     private string playerName;
     private bool colour = true; //assume white
     private int turnIndex = 0; //assume white turn
@@ -69,9 +70,15 @@ public class PlayerState
     }
 
     public void AddPieceState(PieceState piece) => pieces.Add(piece);
-    public void RemovePieceState(PieceState piece) => pieces.Remove(piece);
+    public void RemovePieceState(PieceState piece) {
+        pieces.Remove(piece);
+        OnPieceRemoved?.Invoke(piece); // Notify listeners
+    }
 
-    public void Capture(PieceState piece) => captured.Add(piece);
+    public void Capture(PieceState piece) {
+        captured.Add(piece);
+        OnPieceCaptured?.Invoke(piece); // Notify listeners
+    }
 
 
     public virtual Vector2Int[] GetMove()
@@ -99,7 +106,21 @@ public class Player : MonoBehaviour
 
    public PlayerState State{
        get=>state;
-       set=>state=value;
+       set{
+
+           if (state != null)
+            {
+                // Unsubscribe from previous state events
+                state.OnPieceRemoved -= RemovePiece;
+                state.OnPieceCaptured -= Capture;
+            }
+            
+            state = value;
+
+            // Subscribe to events of the new state
+            state.OnPieceRemoved += RemovePiece;
+            state.OnPieceCaptured += Capture;
+       }
    }
 
    public List<Piece> Pieces => pieces;
@@ -108,8 +129,40 @@ public class Player : MonoBehaviour
 
    // need to have the PieceObjects fro dispaly
     public void AddPiece(Piece piece) => pieces.Add(piece);
-    public void RemovePiece(Piece piece) => pieces.Remove(piece);
-    public void Capture(Piece piece) => capturedPieces.Add(piece);
+    public void RemovePiece(PieceState pieceState) {
+        // Find the corresponding Piece
+        Piece correspondingPiece = null;
+        foreach (var piece in pieces)
+        {
+            if (piece.State == pieceState) // Assuming Piece has a State property
+            {
+                correspondingPiece = piece;
+                break; // Exit loop if found
+            }
+        }
+
+        // If the corresponding Piece was found, remove it
+        if (correspondingPiece != null)
+        {
+            pieces.Remove(correspondingPiece);
+        }
+    }
+    public void Capture(PieceState pieceState){
+        // Find corresponding Piece and add to captured pieces
+        Piece correspondingPiece = null;
+        foreach (var piece in pieces)
+        {
+            if (piece.State == pieceState) // Assuming Piece has a State property
+            {
+                correspondingPiece = piece;
+                break; // Exit loop if found
+            }
+        }
+        if (correspondingPiece != null)
+        {
+            capturedPieces.Add(correspondingPiece);
+        }
+    }
 
 
     // GUI

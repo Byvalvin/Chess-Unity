@@ -120,9 +120,22 @@ public class GameState{
             // condition 3: cant move a pinned piece
             bool pinnedPiece = false, pinnedPieceCanCaptureAttacker = false;
             PieceState attacker = GetAttacker(piece); // selected piece is attacked
+
             if(attacker!=null){
                 HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(playerStates[currentIndex].GetKing().Position, attacker.Position);
                 pinnedPiece = tilesBetweenKingAndAttacker.Contains(piece.Position);
+                // if there are multiple pieces in th epath, any can move
+                HashSet<Vector2Int> tBKaA_without_piecePos = new HashSet<Vector2Int>(tilesBetweenKingAndAttacker);
+                tBKaA_without_piecePos.Remove(piece.Position);
+                foreach (Vector2Int anotherPiecePosition in tBKaA_without_piecePos)
+                {
+                    if(GetTile(anotherPiecePosition).HasPieceState()){
+                        pinnedPiece = false;
+                        break;
+                    }
+                    
+                }
+                
                 HashSet<Vector2Int> allowedPinnedPieceMoves = tilesBetweenKingAndAttacker; // because a pinned piece can still attack
                 allowedPinnedPieceMoves.Add(attacker.Position);
                 pinnedPieceCanCaptureAttacker = allowedPinnedPieceMoves.Contains(move);
@@ -372,6 +385,7 @@ public class GameState{
 
         // Check how many opposing pieces can attack the king
         int attackingPiecesCount = 0;
+        //player.KingAttacker = null;
         foreach (var move in opposingMoves){
             if (move == king.Position){
                 attackingPiecesCount++;
@@ -398,6 +412,7 @@ public class GameState{
                 // Reset en passant status after each move
                 if (piece is PawnState pawn)
                     pawn.ResetEnPassant();
+
                     
             }
         }
@@ -410,20 +425,18 @@ public class GameState{
             UpdateKingAttack(player.GetKing()); // Update King's moves based on opponent pieces
         }
 
+                        
     }
 
     
     public Vector2Int ExecuteMove(Vector2Int targetPosition){
-        Debug.Log("got to execution");
         if (isCapture(targetPosition)){
-            Debug.Log("got to execution first if ");
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
             playerStates[currentIndex].Capture(captured);
             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
             captured.Captured = true;
         }
         if (lastMovedPieceState is PawnState && lastMovedPieceState.Position.x == targetPosition.x){ // Handle en passant
-        Debug.Log("got to execution second if");
             Vector2Int enPassantTarget = lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
             if (targetPosition == enPassantTarget){ //Debug.Log("Execute EnPassant");
                 // Remove the pawn that is captured en passant
@@ -442,8 +455,6 @@ public class GameState{
         SwitchPlayer();
         if(IsGameEnd())
             End();
-        
-        Debug.Log(lastPosition + "and " + selectedPieceState.Position);
         
         return lastPosition;
     }
@@ -510,37 +521,37 @@ public class Game : MonoBehaviour{
     Piece selectedPiece;
 
     // Player GUI
-     void ExecuteMove(Vector2Int targetPosition){
-        int lenCaptureBeforeMove = state.PlayerStates[state.PlayerIndex].CappedStates.Count, lenCapturesAfterMove;
+    //  void ExecuteMove(Vector2Int targetPosition){
+    //     int lenCaptureBeforeMove = state.PlayerStates[state.PlayerIndex].CappedStates.Count, lenCapturesAfterMove;
 
-        Vector2Int lastPiecePos = state.ExecuteMove(targetPosition); // get the from location
+    //     Vector2Int lastPiecePos = state.ExecuteMove(targetPosition); // get the from location
 
 
-        // update ui
-        lenCapturesAfterMove = state.PlayerStates[1-state.PlayerIndex].CappedStates.Count;
-                Debug.Log(lenCaptureBeforeMove + " kkkk" + lenCapturesAfterMove);
-        if( lenCapturesAfterMove > lenCaptureBeforeMove){ // a capture happened, update
-            Piece capturedPiece = null; // last capped piece
-            foreach (Piece piece in players[state.PlayerIndex].Pieces)
-            {
-                if(state.PlayerStates[1-state.PlayerIndex].CappedStates[lenCapturesAfterMove-1].Position==targetPosition 
-                    || (state.LastMovedPieceState is PawnState && state.LastMovedPieceState.Position.x == targetPosition.x)){
-                    capturedPiece = piece;
-                    break;
-                }
+    //     // update ui
+    //     lenCapturesAfterMove = state.PlayerStates[1-state.PlayerIndex].CappedStates.Count;
+    //             Debug.Log(lenCaptureBeforeMove + " kkkk" + lenCapturesAfterMove);
+    //     if( lenCapturesAfterMove > lenCaptureBeforeMove){ // a capture happened, update
+    //         Piece capturedPiece = null; // last capped piece
+    //         foreach (Piece piece in players[state.PlayerIndex].Pieces)
+    //         {
+    //             if(state.PlayerStates[1-state.PlayerIndex].CappedStates[lenCapturesAfterMove-1].Position==targetPosition 
+    //                 || (state.LastMovedPieceState is PawnState && state.LastMovedPieceState.Position.x == targetPosition.x)){
+    //                 capturedPiece = piece;
+    //                 break;
+    //             }
                 
-            }
-            Debug.Log(capturedPiece);
-            players[1-state.PlayerIndex].Capture(capturedPiece);
-            players[state.PlayerIndex].RemovePiece(capturedPiece);
-            //capturedPiece.Capped = true;
+    //         }
+    //         Debug.Log(capturedPiece);
+    //         players[1-state.PlayerIndex].Capture(capturedPiece);
+    //         players[state.PlayerIndex].RemovePiece(capturedPiece);
+    //         //capturedPiece.Capped = true;
 
-        }
+    //     }
 
-        board.MovePiece(lastPiecePos, targetPosition);
-        selectedPiece.Move(targetPosition);
-        //lastMovedPieceState = selectedPieceState; // Store the last moved piece
-    }
+    //     board.MovePiece(lastPiecePos, targetPosition);
+    //     selectedPiece.Move(targetPosition);
+    //     //lastMovedPieceState = selectedPieceState; // Store the last moved piece
+    // }
     void SelectPiece(){
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Collider2D collision = Physics2D.OverlapPoint(mousePosition);
@@ -571,14 +582,7 @@ public class Game : MonoBehaviour{
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1]; // non-bot playerStates will use GUI so no need for from position
                 Debug.Log("released" + selectedPiece.State+targetPosition);
         HashSet<Vector2Int> gameValidMoves = state.GetMovesAllowed(state.SelectedPieceState);
-        foreach (var item in gameValidMoves)
-        {
-
-        Debug.Log(item);
-        }
-        Debug.Log("------------");
         if(gameValidMoves.Contains(targetPosition)){
-            Debug.Log("in if");
             state.ExecuteMove(targetPosition);
             
             //lastMovedPiece = selectedPiece; // Store the last moved piece
@@ -627,7 +631,6 @@ public class Game : MonoBehaviour{
         if (P2State is BotState)
             (P2State as BotState).CurrentGame = this.state;
 
-        state = new GameState(P1State, P2State);
 
         Player P1 = gameObject.AddComponent<Player>();
         Player P2 = gameObject.AddComponent<Player>();

@@ -52,7 +52,7 @@ public class BoardState
         PopulateBoardState(player1, player2);
     }
 
-        private void PopulateBoardState(PlayerState player1, PlayerState player2)
+    private void PopulateBoardState(PlayerState player1, PlayerState player2)
     {
         // string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
         string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" }; // orderd so the King is indeed the first piece in the Player's Pieces List
@@ -365,8 +365,8 @@ public class Board : MonoBehaviour
 
         // Set piece to tile
         tiles[tileY, x].piece = piece; // Adjust for array index
-        Debug.Log(piece);
-        Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.State.Type + " on tile " + x + " " + tileY);
+        //Debug.Log(piece);
+        //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.State.Type + " on tile " + x + " " + tileY);
 
         // Set UI
         PieceObject.transform.position = new Vector3(x * tileSize, tileY * tileSize, 0);

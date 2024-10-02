@@ -113,8 +113,6 @@ public abstract class Piece : MonoBehaviour {
     protected float tileSize;
 
 
-   // protected Vector2Int currentPos;
-
     static Color[] LightColors = {
         new Color(1f, 0.95f, 0.8f, 1f), // Cream
         new Color(0.9f, 0.9f, 0.9f, 1f), // Very Light Gray
@@ -170,16 +168,6 @@ public abstract class Piece : MonoBehaviour {
         get{return tileSize;}
         set{tileSize=value;}
     }
-
-    // public Vector2Int Position
-    // {
-    //     get{return currentPos;}
-    //     set{
-    //         currentPos=value;
-    //         SetPosition();
-    //     }
-    // }
-
 
    protected void SetSprite(){
         if(pieceSprite!=null){
