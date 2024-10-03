@@ -127,34 +127,34 @@ public abstract class BotState : PlayerState
         return after==0 ? int.MaxValue/2 : difference > 0 ? 5*difference : 0;
     }
 
-    protected int PieceDefended(GameState gameState, PieceState pieceState){
+    protected int PieceDefended(GameState gameState, PieceState pieceState, Vector2Int to){
         int defended = 0;
         foreach (PieceState piece in gameState.PlayerStates[pieceState.Colour?0:1].PieceStates)
         {
             switch(piece.Type){
                 case "King":
-                    if(gameState.KingAttackedTiles(piece).Contains(pieceState.Position))
+                    if(gameState.KingAttackedTiles(piece).Contains(to))
                         defended++;
                     break;
                 case "Knight":
-                    if(gameState.KnightAttackedTiles(piece).Contains(pieceState.Position))
+                    if(gameState.KnightAttackedTiles(piece).Contains(to))
                         defended++;
                     break;
                 case "Pawn":
-                    if(gameState.PawnAttackedTiles(piece).Contains(pieceState.Position))
+                    if(gameState.PawnAttackedTiles(piece).Contains(to))
                         defended++;
                     break;
                 default: // Queen, Rook, Bishop
                     HashSet<Vector2Int> pointsBetweenAndEnds;
                     switch(piece.Type){
                         case "Bishop":
-                            pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(piece.Position, pieceState.Position, includeEnds:true);
+                            pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(piece.Position, to, includeEnds:true);
                             break;
                         case "Rook":
-                            pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(piece.Position, pieceState.Position, includeEnds:true);
+                            pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(piece.Position, to, includeEnds:true);
                             break;
                         case "Queen":
-                            pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(piece.Position, pieceState.Position, includeEnds:true);
+                            pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(piece.Position, to, includeEnds:true);
                             break;
                         default:
                             pointsBetweenAndEnds = new HashSet<Vector2Int>();
@@ -162,7 +162,7 @@ public abstract class BotState : PlayerState
                     }
                     bool pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
                     if(pointsBetweenAndEnds.Count > 2){ // if there is a defender then only do this check if there are tiles between the defender and defended
-                        pointsBetweenAndEnds.Remove(piece.Position); pointsBetweenAndEnds.Remove(pieceState.Position);
+                        pointsBetweenAndEnds.Remove(piece.Position); pointsBetweenAndEnds.Remove(to);
                         foreach (Vector2Int point in pointsBetweenAndEnds){
                             pieceAtposDefended = pieceAtposDefended && !gameState.GetTile(point).HasPieceState(); // if a single piece on path, path is blocked and piece cant be defended
                             if(!pieceAtposDefended)

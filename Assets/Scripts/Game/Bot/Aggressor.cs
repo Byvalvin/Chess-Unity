@@ -32,7 +32,7 @@ public class AggressorState : BotState
             score += pieceValue[targetPiece.Type]+aggressiveBoost;
 
             // but is it defended?
-            score += (-10*PieceDefended(clone, targetPiece));
+            score += (-10*PieceDefended(clone, targetPiece, to));
         }
         
         // 2. Central Control

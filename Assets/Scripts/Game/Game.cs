@@ -627,7 +627,7 @@ public class Game : MonoBehaviour{
         string P1Name = "P1", P2Name = "P2";
         bool P1Colour = true, P2Colour = false;
 
-        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new AggressorState(P2Name, P2Colour);
+        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new AlchemistState(P2Name, P2Colour);
         state =  new GameState(P1State, P2State);
         state.OnSelectedPieceChanged += UpdateSelectedPiece;
         if (P1State is BotState)
@@ -637,7 +637,7 @@ public class Game : MonoBehaviour{
 
 
         Player P1 = gameObject.AddComponent<Player>();
-        Player P2 = gameObject.AddComponent<Aggressor>();
+        Player P2 = gameObject.AddComponent<Alchemist>();
         Debug.Log($"P1: {P1}, P2: {P2}");
         P1.State=P1State; P2.State=P2State;
         players[0] = P1;
