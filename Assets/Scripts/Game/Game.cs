@@ -187,7 +187,7 @@ public class GameState{
         }
         return allMoves;
     }
-    HashSet<Vector2Int> PawnAttackedTiles(PieceState piece){
+    public HashSet<Vector2Int> PawnAttackedTiles(PieceState piece){
         HashSet<Vector2Int> attackedTiles = new HashSet<Vector2Int>();
         Vector2Int left = piece.Colour?  new Vector2Int(1,-1) : new Vector2Int(-1,1),
                 right = piece.Colour? new Vector2Int(-1,-1) : new Vector2Int(1,1);
@@ -195,12 +195,12 @@ public class GameState{
         if(boardState.InBounds(piece.Position+right)) attackedTiles.Add(piece.Position+right);
         return attackedTiles;
     }
-    HashSet<Vector2Int> KingAttackedTiles(PieceState piece){
+    public HashSet<Vector2Int> KingAttackedTiles(PieceState piece){
         HashSet<Vector2Int> attackedTiles, allAttackedTiles = Utility.GetSurroundingPoints(piece.Position);
         attackedTiles = Utility.FindAll<Vector2Int>(allAttackedTiles,boardState.InBounds);
         return attackedTiles;
     }
-    HashSet<Vector2Int> KnightAttackedTiles(PieceState piece){
+    public HashSet<Vector2Int> KnightAttackedTiles(PieceState piece){
         HashSet<Vector2Int> attackedTiles = new HashSet<Vector2Int>();
         return attackedTiles;
     }

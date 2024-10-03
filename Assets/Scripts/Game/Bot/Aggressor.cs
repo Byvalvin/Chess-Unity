@@ -27,9 +27,13 @@ public class AggressorState : BotState
         clone.MakeBotMove(from, to);
                 
          // 1. Capture Bonus
-        if (targetPiece != null)
+        if (targetPiece != null){
             // If capturing, add the value of the captured piece
             score += pieceValue[targetPiece.Type]+aggressiveBoost;
+
+            // but is it defended?
+            score += (-10*PieceDefended(clone, targetPiece));
+        }
         
         // 2. Central Control
         score += CentralControlBonus(to, clone);
@@ -47,6 +51,9 @@ public class AggressorState : BotState
         // 5. Check the value of my pieces
         //score += ArmyValue(clone, true);
 
+        // 6. King attacks
+        score += AttackedKingTiles(clone);
+
         // last. Adjust Aggressiveness
         score = AdjustAggressiveness(score);
 
@@ -55,41 +62,6 @@ public class AggressorState : BotState
         return score; // Return the total score for the move
     }
 
-    private int ArmyValue(GameState gameState,bool myArmy=true){
-        int av = 0;
-        foreach (PieceState piece in gameState.PlayerStates[myArmy ? TurnIndex : 1-TurnIndex].PieceStates)
-            if(piece is not KingState)
-                av+=pieceValue[piece.Type];
-        return av;
-    }
-
-    private int CentralControlBonus(Vector2Int position, GameState gameState)
-    {
-        // Implement a method to calculate score based on board control
-        // Example: add 1 point for controlling the center squares
-        int centreControl = InCenter(position)? 2:0;
-        foreach (PieceState piece in gameState.PlayerStates[TurnIndex].PieceStates){
-            centreControl += Utility.FindAll(piece.validMoves, InCenter).Count;
-        }
-            
-        return centreControl;
-    }
-
-    private int EvaluatePieceSafety(Vector2Int from, Vector2Int to, string type, GameState gameState)
-    {
-
-        int toNotSafe = 0, fromNotSafe = 0; // must move pieces under attack, dont go to places under attack
-        foreach (PieceState opponentPiece in gameState.PlayerStates[1-TurnIndex].PieceStates)
-            if(opponentPiece.ValidMoves.Contains(to))
-                toNotSafe-=5; // dont go there
-        foreach (PieceState opponentPiece in currentGame.PlayerStates[1-TurnIndex].PieceStates)
-            if(opponentPiece.ValidMoves.Contains(from))
-                fromNotSafe+=10; // dont stay here
-        
-
-        // Factor in piece value for safety evaluation
-        return (toNotSafe + fromNotSafe)*pieceValue[type]; // Higher penalty for more valuable pieces
-    }
 
     private int AdjustAggressiveness(int score)
     {
@@ -113,10 +85,7 @@ public class AggressorState : BotState
         return null;
     }
 
-    bool InCenter(Vector2Int position){
-        HashSet<int> centerCoords = new HashSet<int>{3,4};
-        return centerCoords.Contains(position.x) && centerCoords.Contains(position.y);
-    }
+
 
 }
 
