@@ -67,7 +67,7 @@ public class AggressorState : BotState
     {
         // Implement a method to calculate score based on board control
         // Example: add 1 point for controlling the center squares
-        int centreControl = InCenter(position)? 5:0;
+        int centreControl = InCenter(position)? 2:0;
         foreach (PieceState piece in gameState.PlayerStates[TurnIndex].PieceStates){
             centreControl += Utility.FindAll(piece.validMoves, InCenter).Count;
         }
@@ -78,16 +78,17 @@ public class AggressorState : BotState
     private int EvaluatePieceSafety(Vector2Int from, Vector2Int to, string type, GameState gameState)
     {
 
-        int dangerCount = 0, mustMove = 0; // must move pieces under attack
-        foreach (PieceState opponentPiece in gameState.PlayerStates[1-TurnIndex].PieceStates){
+        int toNotSafe = 0, fromNotSafe = 0; // must move pieces under attack, dont go to places under attack
+        foreach (PieceState opponentPiece in gameState.PlayerStates[1-TurnIndex].PieceStates)
             if(opponentPiece.ValidMoves.Contains(to))
-                dangerCount-=5;
+                toNotSafe-=5; // dont go there
+        foreach (PieceState opponentPiece in currentGame.PlayerStates[1-TurnIndex].PieceStates)
             if(opponentPiece.ValidMoves.Contains(from))
-                mustMove+=2;
-        }
+                fromNotSafe+=10; // dont stay here
+        
 
         // Factor in piece value for safety evaluation
-        return (dangerCount + mustMove)*pieceValue[type]; // Higher penalty for more valuable pieces
+        return (toNotSafe + fromNotSafe)*pieceValue[type]; // Higher penalty for more valuable pieces
     }
 
     private int AdjustAggressiveness(int score)
