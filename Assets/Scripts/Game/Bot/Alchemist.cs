@@ -22,41 +22,59 @@ public class AlchemistState : BotState
         GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
+        // 1a. Capture Bonus
+        if (targetPiece != null){
+            // If capturing, add the value of the captured piece
+            score += pieceValue[targetPiece.Type]+5;
+
+            // but is it defended?
+            int nDefenders = PieceDefended(currentGame, targetPiece, to);
+            score += (-5*nDefenders);
+            // If the piece is highly defended, reduce the score significantly
+        }
+
         // 1. Evaluate potential piece exchange
-        score += EvaluatePieceExchange(movingPiece, targetPiece);
+        score += EvaluatePieceExchange(clone, movingPiece, targetPiece);
 
         // 2. Central Control
-        score += CentralControlBonus(to, clone);
+        score += 2*CentralControlBonus(to, clone);
 
         // 3. Synergies
-        score += EvaluatePieceSynergies(from, to);
+        score += EvaluatePieceSynergies(clone, to);
 
         // 4. Piece Safety
         score += EvaluatePieceSafety(from, to, movingPiece.Type, clone);
 
-        // 5. Army value impact
-        score += ArmyValue(clone, true) - ArmyValue(clone, false);
+        // 6. Army value impact
+        //score += ArmyValue(clone, true) - ArmyValue(clone, false);
 
-        // 5. Check if moving piece is defended
-        score += PieceDefended(clone, movingPiece, to);
+        // 7. Check for threats to the king
+        score += AttackedKingTiles(clone);
+
+        Debug.Log(movingPiece.Type+movingPiece.Colour + from + to + score);
 
         return score;
     }
 
-    private int EvaluatePieceSynergies(Vector2Int from, Vector2Int to)
+    private int EvaluatePieceSynergies(GameState gameState,  Vector2Int to)
     {
         int synergyScore = 0;
 
-        // Example: Reward positioning that allows pieces to protect each other
-        // Check for pieces in close proximity that can support each other
-        foreach (PieceState piece in currentGame.PlayerStates[TurnIndex].PieceStates)
+        // Reward positioning that allows pieces to protect each other
+        foreach (PieceState piece in gameState.PlayerStates[TurnIndex].PieceStates)
         {
-            if (piece.Position != from)
+            if (piece.Position != to)
             {
-                // Calculate distance and potential support
-                if (Vector2Int.Distance(to, piece.Position) == 1)
+                // Check for proximity
+                if (piece.ValidMoves.Contains(to))
                 {
-                    synergyScore += 2; // Reward close support
+                    synergyScore += 1; // Reward close support
+                }
+
+                // Reward formations that can provide additional support
+                if (IsFormationStrong(gameState, to))
+                {
+                    synergyScore += 1; // Bonus for strong formations
                 }
             }
         }
@@ -64,16 +82,79 @@ public class AlchemistState : BotState
         return synergyScore;
     }
 
-    private int EvaluatePieceExchange(PieceState movingPiece, PieceState targetPiece)
+    private bool IsFormationStrong(GameState gameState, Vector2Int moveTo)
     {
-        if (targetPiece != null) // Capturing
+        // Get the current player's pieces
+        var myPieces = gameState.PlayerStates[TurnIndex].PieceStates;
+
+        // Check for knight formations
+        if (gameState.GetTile(moveTo).pieceState.Type == "Knight" && IsKnightSupported(moveTo, myPieces))
         {
-            return pieceValue[targetPiece.Type] - pieceValue[movingPiece.Type];
+            return true;
         }
-        return 0; // No exchange
+
+        // Check for bishop formations
+        if (gameState.GetTile(moveTo).pieceState.Type == "Bishop" && AreBishopsAligned(moveTo, myPieces))
+        {
+            return true;
+        }
+
+        // Check for pawn formations
+        if (gameState.GetTile(moveTo).pieceState.Type == "Pawn" && ArePawnsSupported(moveTo, myPieces, gameState.GetTile(moveTo).pieceState.Colour))
+        {
+            return true;
+        }
+
+        return false; // Default to not strong if no conditions met
+    }
+
+    // Check if a knight is supported by another knight
+    private bool IsKnightSupported(Vector2Int knightPos, List<PieceState> myPieces)
+    {
+        return false;
+    }
+
+    // Check if bishops are aligned
+    private bool AreBishopsAligned(Vector2Int bishopPos, List<PieceState> myPieces)
+    {
+        return false;
+    }
+
+    // Check if pawns are supporting each other
+    private bool ArePawnsSupported(Vector2Int pawnPos, List<PieceState> myPieces, bool colour)
+    {
+        Vector2Int leftSupport = new Vector2Int(pawnPos.x - 1, pawnPos.y + (colour?-1:1));
+        Vector2Int rightSupport = new Vector2Int(pawnPos.x + 1, pawnPos.y + (colour?-1:1));
+
+        // Check if adjacent pawns exist
+        foreach (var piece in myPieces)
+        {
+            if (piece.Type == "Pawn")
+            {
+                if (piece.Position == leftSupport || piece.Position == rightSupport)
+                {
+                    return true; // Pawns are supporting each other
+                }
+            }
+        }
+        return false;
+    }
+
+    // Helper method to check if two positions are on the same diagonal
+    private bool IsOnSameDiagonal(Vector2Int pos1, Vector2Int pos2)
+    {
+        return Mathf.Abs(pos1.x - pos2.x) == Mathf.Abs(pos1.y - pos2.y);
     }
 
 
+    private int EvaluatePieceExchange(GameState gameState, PieceState movingPiece, PieceState targetPiece)
+    {
+        if (targetPiece != null && PieceDefended(gameState, targetPiece, targetPiece.Position)<=2) // Capturing
+        {
+            return 10*(pieceValue[targetPiece.Type] - pieceValue[movingPiece.Type]);
+        }
+        return 0; // No exchange
+    }
 }
 public class Alchemist : Bot
 {
