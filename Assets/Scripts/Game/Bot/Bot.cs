@@ -127,6 +127,11 @@ public abstract class BotState : PlayerState
         return after==0 ? int.MaxValue/2 : difference > 0 ? 5*difference : 0;
     }
 
+    protected int KingTiles(GameState gameState){
+        int tileValue = 2, tileCount = currentGame.PlayerStates[1-TurnIndex].GetKing().ValidMoves.Count;
+        return tileCount==0 ? int.MaxValue/2 : tileValue * (8-tileCount);
+    }
+
     protected int PieceDefended(GameState gameState, PieceState pieceState, Vector2Int to){
         int defended = 0;
         foreach (PieceState piece in gameState.PlayerStates[pieceState.Colour?0:1].PieceStates)

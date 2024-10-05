@@ -48,7 +48,7 @@ public class LeviState : BotState
         }
         if(dupIndex > 0)
         {
-            return bestMovesMap[Random.Range(0,dupIndex)];
+            return bestMovesMap[Random.Range(0,dupIndex+1)];
         }
 
         return new Vector2Int[] { bestFrom, bestTo };
@@ -143,21 +143,24 @@ public class LeviState : BotState
         
         // 3. Mobility, contrrol
         // find a move that increases the number of valid moves a piece the most(to increase the chance to capture)
+        int spaceControl = 0, enemyControl = 0;
         foreach (PieceState pieceState in gameState.PlayerStates[TurnIndex].PieceStates)
-            score += 2*pieceState.ValidMoves.Count;
+            spaceControl += pieceState.ValidMoves.Count;
+        foreach (PieceState pieceState in gameState.PlayerStates[1-TurnIndex].PieceStates)
+            enemyControl += pieceState.ValidMoves.Count;
+        score += 10*(spaceControl-enemyControl); // score is now more relative to the enemy
 
         // 4. Piece Saftety
-        foreach (PieceState mypiece in gameState.PlayerStates[TurnIndex].PieceStates){
-            int risk = 0;
+        foreach (PieceState mypiece in gameState.PlayerStates[TurnIndex].PieceStates)
             foreach (PieceState opponentPiece in gameState.PlayerStates[1-TurnIndex].PieceStates)
-                if(opponentPiece.ValidMoves.Contains(mypiece.Position)) risk++;
-            score-=risk;
+                if(opponentPiece.ValidMoves.Contains(mypiece.Position)){
+                    score += (PieceDefended(gameState, mypiece, mypiece.Position) - 10); // if piece is defended more than it is attacked them move is good
         }
 
         score += ArmyValue(gameState, TurnIndex) - ArmyValue(gameState, 1-TurnIndex);
 
         // 6. King attacks
-        score += AttackedKingTiles(gameState);
+        score += 10*KingTiles(gameState);
 
         return score;
     }
