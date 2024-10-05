@@ -2,6 +2,39 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+
+trategies for Optimization
+Move Ordering:
+
+Implement move ordering to prioritize likely better moves, which enhances pruning effectiveness. Consider checking for captures first, then high-value moves.
+Transposition Tables:
+
+Implement transposition tables to store and reuse results of previously computed positions. This can significantly reduce computation time for positions that recur in the search tree.
+Parallel Processing:
+
+If applicable, consider using parallel processing to evaluate moves in parallel. However, ensure thread safety when accessing shared resources.
+Incremental Search:
+
+If your game allows, consider using an incremental search technique where the bot builds on previous searches instead of starting from scratch.
+
+
+
+
+Move Ordering Enhancements
+Prioritize Captures:
+
+Since you're already adding a bonus for captures in the EvaluateMove method, you can further refine how you order the moves during the evaluation phase. Before evaluating all moves, you can separate capturing moves from non-capturing ones and evaluate captures first.
+Categorize Moves:
+
+You can categorize moves into three groups: captures, checks, and non-capturing moves. This way, you can prioritize the most critical moves:
+Captures: Evaluate these first, as they often have a significant impact on the game.
+Checks: Moves that put the opponent's king in check should be prioritized next, as they force a reaction from your opponent.
+Non-capturing moves: Evaluate these last.
+Improve Capture Detection:
+
+When generating moves in your GenerateAllMoves method, you can add a check for whether a target square contains an enemy piece. This will allow you to build a list of capturing moves directly, making the ordering process smoother.
+*/
 public class LeviState : BotState
 {
     private const int MaxDepth = 3; // You can adjust this for performance vs. accuracy
@@ -111,17 +144,31 @@ public class LeviState : BotState
     {
         var moves = new List<Vector2Int[]>();
         var pieces = gameState.PlayerStates[playerIndex].PieceStates;
+        bool moveOrderPredicate = false; // faster pruning in ordering
 
         foreach (var piece in pieces)
         {
             var validMoves = gameState.GetMovesAllowed(piece);
             foreach (var to in validMoves)
             {
-                moves.Add(new Vector2Int[] { piece.Position, to });
+                // Check if the move captures an enemy piece
+                PieceState targetPiece = gameState.GetTile(to).pieceState;
+                moveOrderPredicate = targetPiece != null && targetPiece.Colour != gameState.PlayerStates[playerIndex].Colour;
+                if (moveOrderPredicate)
+                {
+                    // Prioritize capture moves by adding them first
+                    moves.Insert(0, new Vector2Int[] { piece.Position, to }); // Insert at the start
+                }
+                else
+                {
+                    // Add non-capturing moves normally
+                    moves.Add(new Vector2Int[] { piece.Position, to });
+                }
             }
         }
         return moves;
     }
+
 
     private int EvaluateGameState(GameState gameState)
     {
