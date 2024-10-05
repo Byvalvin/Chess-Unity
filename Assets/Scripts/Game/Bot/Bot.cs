@@ -68,7 +68,7 @@ public abstract class BotState : PlayerState
                 }
             }
         }
-        if(dupIndex > 1)
+        if(dupIndex > 0)
         {
             return bestMovesMap[Random.Range(0,dupIndex)];
         }
@@ -84,9 +84,9 @@ public abstract class BotState : PlayerState
     }
 
     // some commonon factors to consider
-    protected int ArmyValue(GameState gameState,bool myArmy=true){
+    protected int ArmyValue(GameState gameState, int playerIndex){
         int av = 0;
-        foreach (PieceState piece in gameState.PlayerStates[myArmy ? TurnIndex : 1-TurnIndex].PieceStates)
+        foreach (PieceState piece in gameState.PlayerStates[playerIndex].PieceStates)
             if(piece is not KingState)
                 av+=pieceValue[piece.Type];
         return av;

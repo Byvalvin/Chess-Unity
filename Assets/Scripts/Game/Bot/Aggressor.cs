@@ -65,7 +65,6 @@ public class AggressorState : BotState
         // last. Adjust Aggressiveness
         score = AdjustAggressiveness(score);
 
-        
         Debug.Log(movingPiece.Type+movingPiece.Colour + from + to + score);
         return score; // Return the total score for the move
     }
@@ -73,8 +72,8 @@ public class AggressorState : BotState
 
     private int AdjustAggressiveness(int score)
     {
-        int myArmyValue = ArmyValue(currentGame, true);
-        int opponentArmyValue = ArmyValue(currentGame, false);
+        int myArmyValue = ArmyValue(currentGame, TurnIndex);
+        int opponentArmyValue = ArmyValue(currentGame, 1-TurnIndex);
 
         if (myArmyValue > opponentArmyValue)
             score += 10; // More aggressive if ahead

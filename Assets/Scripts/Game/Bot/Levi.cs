@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class LeviState : BotState
 {
-    private const int MaxDepth = 5; // You can adjust this for performance vs. accuracy
+    private const int MaxDepth = 3; // You can adjust this for performance vs. accuracy
 
     public LeviState(string playerName, bool colour) : base(playerName, colour) { }
     public LeviState(BotState original) : base(original) { }
@@ -15,6 +15,9 @@ public class LeviState : BotState
         Vector2Int bestTo = default;
         int bestScore = int.MinValue;
 
+        Dictionary<int, Vector2Int[]> bestMovesMap = new Dictionary<int, Vector2Int[]>();
+        int dupIndex = 0;
+
         foreach (var kvp in moveMap)
         {
             Vector2Int from = kvp.Key;
@@ -24,15 +27,28 @@ public class LeviState : BotState
                 clonedGame.MakeBotMove(from, to); // Simulate the move
 
                 // Evaluate using Minimax
-                int score = Minimax(clonedGame, MaxDepth, int.MinValue, int.MaxValue, false);
+                int score = Minimax(clonedGame, MaxDepth, int.MinValue, int.MaxValue, Colour);
+                Debug.Log("score eval: " + from  + to + score);
 
                 if (score > bestScore)
                 {
                     bestScore = score;
                     bestFrom = from;
                     bestTo = to;
+
+                    dupIndex = 0;
+                    bestMovesMap.Clear();
+                    bestMovesMap[dupIndex]=new Vector2Int[]{bestFrom,bestTo};
+                }
+                else if(score==bestScore)
+                {
+                    bestMovesMap[++dupIndex]=new Vector2Int[]{from,to};
                 }
             }
+        }
+        if(dupIndex > 0)
+        {
+            return bestMovesMap[Random.Range(0,dupIndex)];
         }
 
         return new Vector2Int[] { bestFrom, bestTo };
@@ -45,7 +61,7 @@ public class LeviState : BotState
             return EvaluateGameState(gameState);
         }
 
-        if (maximizingPlayer)
+        if (maximizingPlayer==Colour)
         {
             int maxEval = int.MinValue;
             foreach (var move in GenerateAllMoves(gameState, TurnIndex))
@@ -53,7 +69,7 @@ public class LeviState : BotState
                 GameState clonedGame = gameState.Clone();
                 clonedGame.MakeBotMove(move[0], move[1]); // Make the move
                 
-                int eval = Minimax(clonedGame, depth - 1, alpha, beta, false);
+                int eval = Minimax(clonedGame, depth - 1, alpha, beta, !Colour);
                 maxEval = Mathf.Max(maxEval, eval);
                 alpha = Mathf.Max(alpha, eval);
 
@@ -72,7 +88,7 @@ public class LeviState : BotState
                 GameState clonedGame = gameState.Clone();
                 clonedGame.MakeBotMove(move[0], move[1]); // Make the move
 
-                int eval = Minimax(clonedGame, depth - 1, alpha, beta, true);
+                int eval = Minimax(clonedGame, depth - 1, alpha, beta, Colour);
                 minEval = Mathf.Min(minEval, eval);
                 beta = Mathf.Min(beta, eval);
 
@@ -115,6 +131,7 @@ public class LeviState : BotState
         score += EvaluateMaterial(gameState);
 
         // Evaluate piece positioning
+        //Central control
         score += EvaluatePositioning(gameState);
 
         // Evaluate king safety
@@ -122,6 +139,25 @@ public class LeviState : BotState
 
         // Additional heuristics can be added here
         // e.g., control of center, piece activity, etc.
+
+        
+        // 3. Mobility, contrrol
+        // find a move that increases the number of valid moves a piece the most(to increase the chance to capture)
+        foreach (PieceState pieceState in gameState.PlayerStates[TurnIndex].PieceStates)
+            score += 2*pieceState.ValidMoves.Count;
+
+        // 4. Piece Saftety
+        foreach (PieceState mypiece in gameState.PlayerStates[TurnIndex].PieceStates){
+            int risk = 0;
+            foreach (PieceState opponentPiece in gameState.PlayerStates[1-TurnIndex].PieceStates)
+                if(opponentPiece.ValidMoves.Contains(mypiece.Position)) risk++;
+            score-=risk;
+        }
+
+        score += ArmyValue(gameState, TurnIndex) - ArmyValue(gameState, 1-TurnIndex);
+
+        // 6. King attacks
+        score += AttackedKingTiles(gameState);
 
         return score;
     }

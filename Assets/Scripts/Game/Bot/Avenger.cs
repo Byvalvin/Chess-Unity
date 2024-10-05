@@ -37,7 +37,7 @@ public class AvengerState : BotState
         // 4. General board control and safety
         score += CentralControlBonus(to, clone);
         score += EvaluatePieceSafety(from, to, movingPiece.Type, clone);
-        score += ArmyValue(clone, true) - ArmyValue(clone, false);
+        score += ArmyValue(clone, TurnIndex) - ArmyValue(clone, 1-TurnIndex);
 
         return score;
     }
@@ -58,7 +58,7 @@ public class AvengerState : BotState
         int recoveryScore = 0;
 
         // Assess if the bot is down material
-        if (ArmyValue(clone, true) < ArmyValue(clone, false))
+        if (ArmyValue(clone, TurnIndex) < ArmyValue(clone, 1-TurnIndex))
         {
             recoveryScore += 5; // Reward for being aware of material disadvantage
 
