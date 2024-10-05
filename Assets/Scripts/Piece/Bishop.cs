@@ -1,8 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Bishop : Piece
+public class BishopState : PieceState
 {
+    public BishopState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint) : base(_colour, _currentPos,  _minPoint, _maxPoint)
+    {
+        this.type = "Bishop";
+    }
+
+    // Copy constructor
+    public BishopState(BishopState original) : base(original) { }
+
     public override bool CanMove(Vector2Int to)
     {
         if (!InBounds(to)) return false;
@@ -16,10 +24,8 @@ public class Bishop : Piece
 
     protected override void SetValidMoves()
     {
-        //validMoves.Clear();
-
+        validMoves.Clear(); // Clear previous moves
         HashSet<Vector2Int> moves = new HashSet<Vector2Int>();
-        //Debug.Log("My current pos: " + currentPos);
 
         int x = currentPos.x;
         int y = currentPos.y;
@@ -47,24 +53,27 @@ public class Bishop : Piece
             }
         }
 
-        // Filter valid moves using HashSet
         validMoves = FindAll(moves);
-
     }
 
-    protected override void Awake(){
+    public override PieceState Clone() => new BishopState(this);
+}
+
+public class Bishop : Piece
+{
+
+    protected override void Awake()
+    {
         base.Awake();
-        type = "Bishop";
+        //state = new BishopState(); // Initialize bishop state
     }
 
-    // Start is called before the first frame update
     protected override void Start()
     {
         base.Start();
-        SetSprite();   
+        SetSprite();
     }
 
-    // Update is called once per frame
     protected override void Update()
     {
         base.Update();

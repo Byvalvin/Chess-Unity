@@ -7,35 +7,112 @@ Aggressor: Always looking to capture enemy pieces, favoring aggressive plays.
  Strong offensive moves, aiming for maximum damage.
  Knight: Uses direct and aggressive tactics to pressure opponents, favoring offensive play
 */
-public class Aggressor : Bot
+
+public class AggressorState : BotState
 {
+    static int aggressiveBoost = 5;
+    public AggressorState(string _playerName, bool _colour) : base(_playerName, _colour){}
+    public AggressorState(BotState botState) : base(botState){}
+    public override PlayerState Clone() => new AggressorState(this); 
+    
     protected override int EvaluateMove(Vector2Int from, Vector2Int to) //Prioritize capturing pieces or making aggressive moves
     {
-        int score = 1;
-        Piece movingPiece = CurrentGame.GetTile(from).piece;
-        Piece targetPiece = CurrentGame.GetTile(to).piece;
-        
+       
+        int score = 0;
+        PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
+        PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
+
+        // Simulate the move
+        GameState clone = currentGame.Clone();
+        clone.MakeBotMove(from, to);
+                
+         // 1. Capture Bonus
         if (targetPiece != null){
             // If capturing, add the value of the captured piece
-            score += pieceValue[targetPiece.Type]+10;
-        }else{
-            // find a move that increases the number of valid moves a piece the most(to increase the chance to capture)
-            // Simulate the move
+            score += pieceValue[targetPiece.Type]+aggressiveBoost;
+
+            // but is it defended?
+            int nDefenders = PieceDefended(currentGame, targetPiece, to);
+            score += (-10*nDefenders);
+            // If the piece is highly defended, reduce the score significantly
+            if (nDefenders > 1) 
+            {
+                score -= 20; // Heavily penalize capturing a well-defended piece
+            }
+        }
+        
+        // 2. Central Control
+        score += CentralControlBonus(to, clone);
+
+        // 3. Mobility
+        // find a move that increases the number of valid moves a piece the most(to increase the chance to capture)
+        foreach (PieceState pieceState in clone.PlayerStates[TurnIndex].PieceStates)
+        {
+            score += pieceState.ValidMoves.Count;
         }
 
+        // 4. Piece Saftety
+        int risk = EvaluatePieceSafety(from, to, movingPiece.Type, clone);
+        score += risk;
 
+        // 5. Check the value of my pieces
+        //score += ArmyValue(clone, true);
+
+        // 6. King attacks
+        int checkBonus = currentGame.PlayerStates[1-TurnIndex].GetKing().Position==to? 20:0;
+        score += AttackedKingTiles(clone) + checkBonus;
+
+        // last. Adjust Aggressiveness
+        score = AdjustAggressiveness(score);
+
+        Debug.Log(movingPiece.Type+movingPiece.Colour + from + to + score);
         return score; // Return the total score for the move
+    }
+
+
+    private int AdjustAggressiveness(int score)
+    {
+        int myArmyValue = ArmyValue(currentGame, TurnIndex);
+        int opponentArmyValue = ArmyValue(currentGame, 1-TurnIndex);
+
+        if (myArmyValue > opponentArmyValue)
+            score += 10; // More aggressive if ahead
+        else if (myArmyValue < opponentArmyValue)
+            score -= 10; // More cautious if behind
+
+        return score;
+    }
+
+
+    PieceState FutureState(Vector2Int to, GameState gameState, bool isSelf=true){
+        foreach (PieceState piece in gameState.PlayerStates[isSelf? TurnIndex:1-TurnIndex].PieceStates){
+            if(piece.Position==to)
+                return piece;
+        }
+        return null;
+    }
+
+
+
+}
+
+
+
+public class Aggressor : Bot
+{
+    
+    protected override void Awake()
+    {
+        //state = new AggressorState();
     }
     
     // Start is called before the first frame update
-    void Start()
-    {
+    protected override void Start(){
         
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    protected override void Update(){
         
     }
 }

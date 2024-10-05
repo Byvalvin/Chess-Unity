@@ -7,24 +7,37 @@ Sentinel: Plays defensively but punishes overextensions by the opponent, focusin
 Strong defensive plays, protecting key pieces.
 Enforcer: Punishes mistakes heavily, focusing on capitalizing when the opponent makes a blunder.
 */
-public class Sentinel : Bot
+public class SentinelState : BotState
 {
+    public SentinelState(string _playerName, bool _colour) : base(_playerName, _colour)
+    {
 
-    
+    }
+    public SentinelState(BotState botState) : base(botState){}
+
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
-        return 0; // Placeholder logic; Focus on defensive scoring; prefer moves that protect pieces
+        return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
+    }
+
+}
+public class Sentinel : Bot
+{
+    protected override void Awake()
+    {
+        //state = new SentinelState();
     }
     
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
         
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
         
     }
 }
+

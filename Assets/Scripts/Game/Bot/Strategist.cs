@@ -6,22 +6,35 @@ using UnityEngine;
 Focuses on long-term advantages, calculating the best overall moves based on potential outcomes.
 Hoarder: Focuses on gathering and controlling resources, ensuring key pieces are well-protected.
 */
-public class Strategist : Bot
+public class StrategistState : BotState
 {
+    public StrategistState(string _playerName, bool _colour) : base(_playerName, _colour)
+    {
+
+    }
+    public StrategistState(BotState botState) : base(botState){}
 
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
     }
+
+}
+public class Strategist : Bot
+{
+    protected override void Awake()
+    {
+        //state = new StrategistState();
+    }
     
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
         
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
         
     }
