@@ -182,7 +182,6 @@ public class LeviState : BotState
         score += EvaluatePositioning(gameState);
 
         // Evaluate king safety
-        score += EvaluateKingSafety(gameState);
 
         // Additional heuristics can be added here
         // e.g., control of center, piece activity, etc.
@@ -195,38 +194,23 @@ public class LeviState : BotState
             spaceControl += pieceState.ValidMoves.Count;
         foreach (PieceState pieceState in gameState.PlayerStates[1-TurnIndex].PieceStates)
             enemyControl += pieceState.ValidMoves.Count;
-        score += 10*(spaceControl-enemyControl); // score is now more relative to the enemy
+        score += 5*(spaceControl-enemyControl); // score is now more relative to the enemy
 
         // 4. Piece Saftety
         foreach (PieceState mypiece in gameState.PlayerStates[TurnIndex].PieceStates)
             foreach (PieceState opponentPiece in gameState.PlayerStates[1-TurnIndex].PieceStates)
                 if(opponentPiece.ValidMoves.Contains(mypiece.Position)){
-                    score += (PieceDefended(gameState, mypiece, mypiece.Position) - 10); // if piece is defended more than it is attacked them move is good
+                    score += (PieceDefended(gameState, mypiece, mypiece.Position)*pieceValue[mypiece.Type] - 20); // if piece is defended more than it is attacked them move is good
         }
 
-        score += ArmyValue(gameState, TurnIndex) - ArmyValue(gameState, 1-TurnIndex);
 
         // 6. King attacks
-        score += 10*KingTiles(gameState);
+        score += 5*KingTiles(gameState);
 
         return score;
     }
 
-    private int EvaluateMaterial(GameState gameState)
-    {
-        int materialScore = 0;
-        foreach (PieceState piece in gameState.PlayerStates[TurnIndex].PieceStates)
-        {
-            materialScore += pieceValue[piece.Type]; // Sum values of pieces for the current player
-        }
-
-        foreach (PieceState piece in gameState.PlayerStates[1 - TurnIndex].PieceStates)
-        {
-            materialScore -= pieceValue[piece.Type]; // Subtract values of opponent's pieces
-        }
-
-        return materialScore;
-    }
+    private int EvaluateMaterial(GameState gameState) => ArmyValue(gameState, TurnIndex) - ArmyValue(gameState, 1-TurnIndex);
 
     private int EvaluatePositioning(GameState gameState)
     {
@@ -243,17 +227,6 @@ public class LeviState : BotState
         return positionScore;
     }
 
-    private int EvaluateKingSafety(GameState gameState)
-    {
-        int kingSafetyScore = 0;
-        // Assess the safety of the player's king
-        // Higher scores for safer positions, lower for exposed positions
-        PieceState king = gameState.PlayerStates[TurnIndex].GetKing();
-        int defenders = PieceDefended(gameState, king, king.Position);
-        kingSafetyScore += defenders * 5; // Example weighting
-
-        return kingSafetyScore;
-    }
 
 }
 
