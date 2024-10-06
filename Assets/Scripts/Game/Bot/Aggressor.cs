@@ -32,13 +32,18 @@ public class AggressorState : BotState
             score += pieceValue[targetPiece.Type]+aggressiveBoost;
 
             // but is it defended?
-            int nDefenders = PieceDefended(currentGame, targetPiece, to);
-            score += (-10*nDefenders);
-            // If the piece is highly defended, reduce the score significantly
-            if (nDefenders > 1) 
+            int nDefenders = PieceDefended(currentGame, targetPiece, to), nAttackers=1;
+            foreach (PieceState piece in currentGame.PlayerStates[TurnIndex].PieceStates)
             {
-                score -= 20; // Heavily penalize capturing a well-defended piece
+                if(piece.ValidMoves.Contains(to))
+                    nAttackers++;
             }
+            score += aggressiveBoost*(nAttackers - nDefenders);
+            // // If the piece is highly defended, reduce the score significantly
+            // if (nDefenders > 4) 
+            // {
+            //     score -= 20; // Heavily penalize capturing a well-defended piece
+            // }
         }
         
         // 2. Central Control
@@ -56,11 +61,11 @@ public class AggressorState : BotState
         score += risk;
 
         // 5. Check the value of my pieces
-        //score += ArmyValue(clone, true);
+        score += 2*(ArmyValue(clone, TurnIndex) - ArmyValue(clone, 1-TurnIndex));
 
         // 6. King attacks
         int checkBonus = currentGame.PlayerStates[1-TurnIndex].GetKing().Position==to? 20:0;
-        score += AttackedKingTiles(clone) + checkBonus;
+        score += KingTiles(clone) + checkBonus;
 
         // last. Adjust Aggressiveness
         score = AdjustAggressiveness(score);
