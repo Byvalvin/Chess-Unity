@@ -621,32 +621,49 @@ public class Game : MonoBehaviour{
             HandleDragAndDrop();
     }
 
-    void Awake() {
-        Debug.Log("Awake called");
+    private void InitializeGame(){
+        InitializeGameState(InitializePlayerStates());
+        InitializeBoard();
+    }
 
-        string P1Name = "P1", P2Name = "P2";
-        bool P1Colour = true, P2Colour = false;
+    private void InitializeBoard(){
+        board = gameObject.AddComponent<Board>();
+        board.State = state.CurrentBoardState;
+        board.CreateBoard(players[0], players[1]);
+        Debug.Log("Board created");
+    }
 
-        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new AggressorState(P2Name, P2Colour);
+    private void InitializeGameState(PlayerState[] PlayerInitialStates){
+        PlayerState P1State = PlayerInitialStates[0], P2State = PlayerInitialStates[1];
         state =  new GameState(P1State, P2State);
         state.OnSelectedPieceChanged += UpdateSelectedPiece;
         if (P1State is BotState)
             (P1State as BotState).CurrentGame = this.state;
         if (P2State is BotState)
             (P2State as BotState).CurrentGame = this.state;
-
-
+        
+        InitializePlayers(P1State, P2State);
+    }
+    private void InitializePlayers(PlayerState Player1InitialState, PlayerState Player2InitialState){
         Player P1 = gameObject.AddComponent<Player>();
         Player P2 = gameObject.AddComponent<Aggressor>();
         Debug.Log($"P1: {P1}, P2: {P2}");
-        P1.State=P1State; P2.State=P2State;
+        P1.State=Player1InitialState; P2.State=Player2InitialState;
         players[0] = P1;
         players[1] = P2;
+    }
 
-        board = gameObject.AddComponent<Board>();
-        board.State = state.CurrentBoardState;
-        board.CreateBoard(P1, P2);
-        Debug.Log("Board created");
+    private PlayerState[] InitializePlayerStates(){
+        string P1Name = "P1", P2Name = "P2";
+        bool P1Colour = true, P2Colour = false;
+
+        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new AggressorState(P2Name, P2Colour);
+        return new PlayerState[]{P1State, P2State};  
+    }
+
+    void Awake() {
+        Debug.Log("Awake called");
+        InitializeGame();
     }
 
     // Start is called before the first frame update
