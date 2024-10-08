@@ -627,6 +627,7 @@ public class Game : MonoBehaviour{
         InitializePlayers(whitePlayerType, blackPlayerType);
         // Initialize board after players are set
         InitializeBoard();
+        state.UpdateGameState(); // ready to start
     }
 
     private void InitializeBoard()
@@ -647,33 +648,57 @@ public class Game : MonoBehaviour{
             (P2State as BotState).CurrentGame = this.state;
     }
 
-        // Use this method to initialize the game with selected player types
-    private void InitializePlayers(string whitePlayerType, string blackPlayerType)
+private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName)
+{
+    Debug.Log("here1 " + whitePlayerTypeName + " " + blackPlayerTypeName);
+
+
+    PlayerState P1State = CreatePlayerState(whitePlayerTypeName, "P1", true);
+    PlayerState P2State = CreatePlayerState(blackPlayerTypeName, "P2", false);
+    InitializeGameState(P1State, P2State);
+
+    // Dynamically add the components using the Type objects
+    // Convert the selected type names to Type objects
+    Type whitePlayerType = Type.GetType(whitePlayerTypeName);
+    Type blackPlayerType = Type.GetType(blackPlayerTypeName);
+    if (whitePlayerType == null || blackPlayerType == null){
+        Debug.LogError("Could not find player types!");
+        return;
+    }
+    Player P1 = gameObject.AddComponent(whitePlayerType) as Player,
+        P2 = gameObject.AddComponent(blackPlayerType) as Player;
+        /*
+    Debug.Log("PlayerPlayer stement" + P1+" "+(P1 is Player) + (P1 is Avenger));
+    Debug.Log("PlayerPlayer stement" + P2+" "+(P2 is Player) + (P2 is Avenger));
+    */
+
+    // Ensure that P1 and P2 are not null after adding components
+    if (P1 == null || P2 == null)
     {
-        Debug.Log("here1 "+whitePlayerType + " " + blackPlayerType);
-        PlayerState P1State = CreatePlayerState(whitePlayerType, "P1", true);
-        PlayerState P2State = CreatePlayerState(blackPlayerType, "P2", false);
-
-        Player P1 = gameObject.AddComponent<Player>();
-        Player P2 = gameObject.AddComponent<Aggressor>();
-        P1.State = P1State;
-        P2.State = P2State;
-        Debug.Log($"P1: {P1}, P2: {P2}");
-        players[0] = P1;
-        players[1] = P2;
-
-        InitializeGameState(P1State, P2State);
+        Debug.LogError("Failed to add player components!");
+        return;
     }
 
-    private PlayerState CreatePlayerState(string playerType, string playerName, bool isWhite)
+    P1.State = P1State;
+    P2.State = P2State;
+
+    Debug.Log($"P1: {P1}, P2: {P2}");
+    players[0] = P1;
+    players[1] = P2;
+}
+
+
+    private PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite)
     {
         // Use reflection to instantiate the appropriate player state
         var type = System.Reflection.Assembly.GetExecutingAssembly().GetTypes()
-            .FirstOrDefault(t => t.Name == playerType);
+            .FirstOrDefault(t => t.Name == $"{playerTypeName}State");
         
         if (type != null)
         {
-            return (PlayerState)Activator.CreateInstance(type, playerName, isWhite);
+            PlayerState playerState = (PlayerState)Activator.CreateInstance(type, playerName, isWhite);
+            //Debug.Log("Player stement" + playerState+" "+(playerState is AvengerState));
+            return playerState;
         }
         return null; // Handle case where type is not found
     }
