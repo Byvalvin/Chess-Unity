@@ -72,6 +72,7 @@ public class LeviState : BotState
                     dupIndex = 0;
                     bestMovesMap.Clear();
                     bestMovesMap[dupIndex]=new Vector2Int[]{bestFrom,bestTo};
+                    dupIndex++;
                 }
                 else if(score==bestScore)
                 {
@@ -79,9 +80,9 @@ public class LeviState : BotState
                 }
             }
         }
-        if(dupIndex > 0)
+        if(dupIndex > 1) // first item is the original so more 2 OR MORE only
         {
-            return bestMovesMap[Random.Range(0,dupIndex+1)];
+            return bestMovesMap[Random.Range(0,dupIndex)];
         }
 
         return new Vector2Int[] { bestFrom, bestTo };

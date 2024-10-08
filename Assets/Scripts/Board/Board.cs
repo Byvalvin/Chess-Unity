@@ -115,49 +115,38 @@ public class BoardState
         }
     }
 
-    void AddPieceState(string type, bool colour, int x, PlayerState player)
-    {
+    void AddPieceState(string type, bool colour, int x, PlayerState player){
         int darkY = minPoint.y, lightY = maxPoint.y;
+        PieceState pieceState;
 
-        //GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
-        PieceState pieceState = null;
-        Vector2Int startPos = new Vector2Int(x, colour ? lightY : darkY);
-        switch (type)
-        {
-            case "King":
-                pieceState = new KingState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Queen":
-                pieceState = new QueenState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Rook":
-                pieceState = new RookState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Knight":
-                pieceState = new KnightState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Bishop":
-                pieceState = new BishopState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Pawn":
-                darkY++; lightY--;
-                pieceState = new PawnState(colour, new Vector2Int(x, colour ? lightY : darkY), minPoint, maxPoint);
-                break;
-            default:
-                Debug.Log("Unknown piece type: " + type);
-                break;
+        // Handle special case for Pawn
+        if (type == "Pawn"){
+            darkY++; lightY--;
+            pieceState = new PawnState(colour, new Vector2Int(x, colour ? lightY : darkY), minPoint, maxPoint);
+        }else{
+            // Use Type.GetType to get the type of the piece state dynamically
+            Type pieceStateType = Type.GetType(type + "State"); // Assumes the class names are in the format "KingState", "QueenState", etc.
+            if (pieceStateType == null){
+                Debug.LogError($"Could not find type: {type}State");
+                return;
+            }
+            Vector2Int startPos = new Vector2Int(x, colour ? lightY : darkY);
+
+            // Create an instance of the PieceState using reflection
+            pieceState = (PieceState)Activator.CreateInstance(pieceStateType, new object[] { colour, startPos, minPoint, maxPoint });
+            if (pieceState == null){
+                Debug.LogError($"Failed to create instance of type: {type}State");
+                return;
+            }
         }
-
 
         // Set piece to tile
         int tileY = colour ? lightY : darkY;
         tileStates[tileY, x].pieceState = pieceState; // Adjust for array index
-        //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.Type + " on tile " + x + " " + tileY);
 
         // Give piece to player
         player.AddPieceState(pieceState);
     }
-
 
 
 
