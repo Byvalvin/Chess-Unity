@@ -59,6 +59,13 @@ public class PlayerSelectionUI : MonoBehaviour
             eventSystemObject.AddComponent<StandaloneInputModule>();
         }
 
+        // Load the image sprite
+        string choice = "Queen";
+        Sprite logoSprite = Board.LoadSprites()[choice]; // Update this path to your image
+
+        // Create the image at the top center
+        CreateImage("GameLogo", logoSprite);
+
         // Create Dropdowns
         whitePlayerDropdown = CreateDropdown("WhitePlayerDropdown", Color.cyan);
         blackPlayerDropdown = CreateDropdown("BlackPlayerDropdown", Color.magenta);
@@ -70,6 +77,7 @@ public class PlayerSelectionUI : MonoBehaviour
         // Layout
         ArrangeUI();
     }
+
 
     private TMP_Dropdown CreateDropdown(string name, Color backgroundColor)
     {
@@ -169,6 +177,34 @@ public class PlayerSelectionUI : MonoBehaviour
         RectTransform rectTransform = button.GetComponent<RectTransform>();
         rectTransform.localScale = Vector3.one; // Reset scale
     }
+
+    private Image CreateImage(string name, Sprite sprite)
+    {
+        GameObject imageObject = new GameObject(name);
+        imageObject.transform.SetParent(canvas.transform, false);
+
+        Image image = imageObject.AddComponent<Image>();
+        image.sprite = sprite;
+
+        RectTransform rectTransform = image.GetComponent<RectTransform>();
+
+        // Adjust these values based on your image's dimensions
+        float imageWidth = sprite.rect.width;
+        float imageHeight = sprite.rect.height;
+
+        // You can adjust the size based on your design preferences
+        float desiredWidth = 100; // Set desired width
+        float aspectRatio = imageWidth / imageHeight;
+
+        rectTransform.sizeDelta = new Vector2(desiredWidth, desiredWidth / aspectRatio); // Maintain aspect ratio
+        rectTransform.anchorMin = new Vector2(0.5f, 1); // Anchor to the top center
+        rectTransform.anchorMax = new Vector2(0.5f, 1);
+        rectTransform.anchoredPosition = new Vector2(0, -100); // Adjust vertical position as needed
+
+        return image;
+    }
+
+
 
     private void ArrangeUI()
     {

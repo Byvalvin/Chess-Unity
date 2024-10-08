@@ -206,7 +206,7 @@ public class Board : MonoBehaviour
         { 1, 1.25f },
     };
     float pieceScaleFactor = pieceScaleMap[sheetN]; // increase size of a piece also used to set collider of piece to reciprocal
-    static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
+    public static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
 
     public float TileSize
@@ -258,7 +258,7 @@ public class Board : MonoBehaviour
         Camera.main.orthographicSize = (state.N * tileSize) / 2; // Adjust size based on board dimensions
     }
 
-    private void LoadSprites()
+    public static Dictionary<string, Sprite> LoadSprites()
     {
         // Load all sprites from the Pieces.png
         Sprite[] allSprites = Resources.LoadAll<Sprite>($"Sprites/Pieces{sheetN}"); // Adjust path if needed
@@ -267,6 +267,7 @@ public class Board : MonoBehaviour
         {
             sprites[sprite.name] = sprite; // Map sprite names to the dictionary
         }
+        return sprites;
     }
 
 
