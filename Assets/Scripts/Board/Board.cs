@@ -340,34 +340,17 @@ public class Board : MonoBehaviour
         int darkY = state.MinPoint.y, lightY = state.MaxPoint.y;
 
         GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
-        Piece piece = null;
-        switch (type)
-        {
-            case "King":
-                piece = PieceObject.AddComponent<King>();
-                break;
-            case "Queen":
-                piece = PieceObject.AddComponent<Queen>();
-                break;
-            case "Rook":
-                piece = PieceObject.AddComponent<Rook>();
-                break;
-            case "Knight":
-                piece = PieceObject.AddComponent<Knight>();
-                break;
-            case "Bishop":
-                piece = PieceObject.AddComponent<Bishop>();
-                break;
-            case "Pawn":
-                darkY++; lightY--;
-                piece = PieceObject.AddComponent<Pawn>();
-                break;
-            default:
-                Debug.Log("Unknown piece type: " + type);
-                break;
+        // Convert the type string to a Type object
+        Type pieceType = Type.GetType(type);
+        Piece piece = PieceObject.AddComponent(pieceType) as Piece;
+        if (piece == null){
+            Debug.LogError($"Failed to add component of type: {type}");
+            return;
         }
 
-
+        if(type=="Pawn"){
+            darkY++; lightY--;
+        }
         int tileY = colour ? lightY : darkY;
         
         piece.State = state.TileStates[tileY, x].pieceState;
