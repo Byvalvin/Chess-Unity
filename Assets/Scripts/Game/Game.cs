@@ -446,34 +446,40 @@ public class GameState{
 
     
     public Vector2Int ExecuteMove(Vector2Int targetPosition){
+        // Check for capture
         if (isCapture(targetPosition)){
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
             playerStates[currentIndex].Capture(captured);
             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
             captured.Captured = true;
         }
-        if (lastMovedPieceState is PawnState && lastMovedPieceState.Position.x == targetPosition.x){ // Handle en passant
-            Vector2Int enPassantTarget = lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
-            if (targetPosition == enPassantTarget){ //Debug.Log("Execute EnPassant");
-                // Remove the pawn that is captured en passant
-                PieceState captured = boardState.GetTile(lastMovedPieceState.Position).pieceState;
+
+        // Handle en passant
+        if (lastMovedPieceState is PawnState lastPawn && lastPawn.CanBeCapturedEnPassant && SelectedPieceState is PawnState) {
+            Vector2Int enPassantTarget = lastPawn.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
+            if (targetPosition == enPassantTarget) {
+                PieceState captured = boardState.GetTile(lastPawn.Position).pieceState;
                 playerStates[currentIndex].Capture(captured);
                 playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
                 captured.Captured = true;
             }
         }
+
+        // Move the piece
         boardState.MovePiece(selectedPieceState.Position, targetPosition);
         Vector2Int lastPosition = selectedPieceState.Position;
         selectedPieceState.Move(targetPosition);
         lastMovedPieceState = selectedPieceState; // Store the last moved piece
 
+        //updates
         UpdateGameState();
         SwitchPlayer();
         if(IsGameEnd())
             End();
-        
+
         return lastPosition;
     }
+
     bool isCapture(Vector2Int targetPosition) => boardState.GetTile(targetPosition).HasPieceState();
 }
 
