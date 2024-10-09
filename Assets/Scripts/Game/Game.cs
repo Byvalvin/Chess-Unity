@@ -809,6 +809,6 @@ public class Game : MonoBehaviour{
     private void OnDestroy()
     {
         // Unsubscribe from event to prevent memory leaks
-        state.OnSelectedPieceChanged -= UpdateSelectedPiece;
+        if(state!=null)state.OnSelectedPieceChanged -= UpdateSelectedPiece;
     }
 }
