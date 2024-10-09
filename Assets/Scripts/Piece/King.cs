@@ -19,13 +19,24 @@ public class KingState : PieceState
         int deltaX = Mathf.Abs(currentPos.x - to.x);
         int deltaY = Mathf.Abs(currentPos.y - to.y);
 
-        return (deltaX <= 1 && deltaY <= 1); // Valid if the move is within one square
+        // castling
+        bool castleMove = firstMove && currentPos.y==to.y && deltaX==2;
+
+        return (deltaX <= 1 && deltaY <= 1) || castleMove; // Valid if the move is within one square
     }
 
     protected override void SetValidMoves()
     {
         validMoves.Clear(); // Clear previous moves
         HashSet<Vector2Int> moves = Utility.GetSurroundingPoints(currentPos);
+        // add castling
+        // conditions
+        // havent made first move(will check all other conditions at game)
+        HashSet<Vector2Int> castleMoves = new HashSet<Vector2Int>{
+            new Vector2Int(currentPos.x-2, currentPos.y),
+            new Vector2Int(currentPos.x+2, currentPos.y)
+        };
+        if(firstMove) moves.UnionWith(castleMoves);
         validMoves = FindAll(moves);
     }
 

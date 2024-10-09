@@ -81,8 +81,8 @@ public class BoardState
                 AddPieceState(type, false, 3, player2);
                 break;
             case "Queen":
-                AddPieceState(type, true, 4, player1);
-                AddPieceState(type, false, 4, player2);
+                // AddPieceState(type, true, 4, player1);
+                // AddPieceState(type, false, 4, player2);
                 break;
             case "Rook":
                 AddPieceState(type, true, 0, player1);
@@ -91,10 +91,10 @@ public class BoardState
                 AddPieceState(type, false, 7, player2);
                 break;
             case "Knight":
-                AddPieceState(type, true, 1, player1);
-                AddPieceState(type, true, 6, player1);
-                AddPieceState(type, false, 1, player2);
-                AddPieceState(type, false, 6, player2);
+                // AddPieceState(type, true, 1, player1);
+                // AddPieceState(type, true, 6, player1);
+                // AddPieceState(type, false, 1, player2);
+                // AddPieceState(type, false, 6, player2);
                 break;
             case "Bishop":
                 AddPieceState(type, true, 2, player1);
@@ -161,6 +161,17 @@ public class BoardState
         return null; // Return null if out of bounds
     }
 
+    public TileState GetTile(int x, int y) // overload
+    {
+        int xIndex = x;
+        int yIndex = y; // Invert y coordinate for the array
+
+        if (0 <= xIndex && xIndex < N && 0 <= yIndex && yIndex < N)
+            return tileStates[yIndex, xIndex]; // Correct indexing for the array
+        
+        return null; // Return null if out of bounds
+    }
+
     public void MovePiece(Vector2Int from, Vector2Int to)
     {
         TileState fromTile = GetTile(from);
@@ -178,28 +189,6 @@ public class BoardState
 
     // Piece Movement Logic
     public bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
-
-    public void Castle(PieceState king, PieceState rook)
-    {
-        bool correctTypes = king.Type=="King" && rook.Type=="Rook", sameTeam = king.Colour==rook.Colour, firstMoves = king.FirstMove==rook.FirstMove==true;
-        if(correctTypes && sameTeam && firstMoves)
-        {
-            // castling logic base on side
-            // no pieces between king and rook
-            // no opponent pieces attacking the space between king and rook
-            // king not in check
-            // king cannot move into check
-            
-            // king i
-            //White Castles
-            //top left 2
-            //top right 3
-            //Black Castles
-            //bot left 2
-            //bot right 3
-
-        }
-    }
 
 }
 
@@ -303,8 +292,8 @@ public class Board : MonoBehaviour
                 AddPiece(type, false, 3, Player2);
                 break;
             case "Queen":
-                AddPiece(type, true, 4, Player1);
-                AddPiece(type, false, 4, Player2);
+                // AddPiece(type, true, 4, Player1);
+                // AddPiece(type, false, 4, Player2);
                 break;
             case "Rook":
                 AddPiece(type, true, 0, Player1);
@@ -313,10 +302,10 @@ public class Board : MonoBehaviour
                 AddPiece(type, false, 7, Player2);
                 break;
             case "Knight":
-                AddPiece(type, true, 1, Player1);
-                AddPiece(type, true, 6, Player1);
-                AddPiece(type, false, 1, Player2);
-                AddPiece(type, false, 6, Player2);
+                // AddPiece(type, true, 1, Player1);
+                // AddPiece(type, true, 6, Player1);
+                // AddPiece(type, false, 1, Player2);
+                // AddPiece(type, false, 6, Player2);
                 break;
             case "Bishop":
                 AddPiece(type, true, 2, Player1);
@@ -378,6 +367,17 @@ public class Board : MonoBehaviour
     {
         int xIndex = pos.x;
         int yIndex = pos.y; // Invert y coordinate for the array
+
+        if (0 <= xIndex && xIndex < state.N && 0 <= yIndex && yIndex < state.N)
+        {
+            return tiles[yIndex, xIndex]; // Correct indexing for the array
+        }
+        return null; // Return null if out of bounds
+    }
+    public Tile GetTile(int x, int y) // overload
+    {
+        int xIndex = x;
+        int yIndex = y; // Invert y coordinate for the array
 
         if (0 <= xIndex && xIndex < state.N && 0 <= yIndex && yIndex < state.N)
         {

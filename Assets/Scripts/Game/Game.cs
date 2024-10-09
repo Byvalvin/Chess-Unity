@@ -350,7 +350,49 @@ public class GameState{
                     break;
             }
         }
-        return (!pieceAtpos || (pieceAtpos && !sameColourPieceAtPos && !pieceAtposDefended));
+
+        // also castle moves
+        int direction = pos.x-piece.Position.x;
+        bool leftSide=direction<0, castleMove = piece.Position.y==pos.y && Math.Abs(direction)==2,
+            canCastle = castleMove;
+        if(castleMove){
+            // determine the correct rook
+            PieceState theRook = null;
+            if(boardState.GetTile(leftSide?0:7, piece.Position.y).HasPieceState()
+            && boardState.GetTile(leftSide?0:7, piece.Position.y).pieceState is RookState rookState)
+                theRook = rookState;
+            if(theRook!=null){
+                /*
+                3)no pieces between king and rook in that direction
+                1)rooks first move
+                4)no opps attack space between king and rook in that dir
+                2)king/player to move not in check
+                */
+                // 1
+                canCastle = theRook.FirstMove;
+                //Debug.Log("castling 1"+canCastle);
+                // 2
+                canCastle = canCastle && !playerStates[piece.Colour?0:1].IsInCheck();
+                //Debug.Log("castling 2"+canCastle);
+                // 3
+                HashSet<Vector2Int> spacesBetween = Utility.GetIntermediateNonDiagonalLinePoints(theRook.Position, piece.Position);
+                foreach (Vector2Int space in spacesBetween)
+                    canCastle = canCastle && boardState.GetTile(space).HasPieceState()==false;
+                //Debug.Log("castling 3"+canCastle);
+                //4
+                foreach (PieceState opponentPiece in playerStates[piece.Colour?1:0].PieceStates)
+                {
+                    if(!canCastle) break;
+                    // better to intersect a smaller set into a larger one
+                    HashSet<Vector2Int> opPieceMoves = new HashSet<Vector2Int>(opponentPiece.ValidMoves);
+                    opPieceMoves.IntersectWith(spacesBetween);
+                    canCastle = canCastle && opPieceMoves.Count==0;
+                }
+                //Debug.Log("castling 4"+canCastle);
+
+            }
+        }
+        return ((!pieceAtpos || (pieceAtpos && !sameColourPieceAtPos && !pieceAtposDefended)) && !castleMove) || canCastle;
     }
     HashSet<Vector2Int> FilterKingMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
@@ -444,6 +486,28 @@ public class GameState{
                         
     }
 
+    public void Castle(PieceState king, PieceState rook)
+    {
+        bool correctTypes = king.Type=="King" && rook.Type=="Rook", sameTeam = king.Colour==rook.Colour, firstMoves = king.FirstMove==rook.FirstMove==true;
+        if(correctTypes && sameTeam && firstMoves)
+        {
+            // castling logic base on side
+            // no pieces between king and rook
+            // no opponent pieces attacking the space between king and rook
+            // king not in check
+            // king cannot move into check
+            
+            // king i
+            //White Castles
+            //top left 2
+            //top right 3
+            //Black Castles
+            //bot left 2
+            //bot right 3
+
+        }
+    }
+
     
     public Vector2Int ExecuteMove(Vector2Int targetPosition){
         // Check for capture
@@ -465,11 +529,31 @@ public class GameState{
             }
         }
 
+        // is a castleMove, already moved king now move correct rook
+        int direction = targetPosition.x-selectedPieceState.Position.x;
+        bool leftSide=direction<0, castleMove = selectedPieceState.Position.y==targetPosition.y && Math.Abs(direction)==2;
+
+        if(castleMove){
+            // determine the correct rook
+            PieceState theRook = null;
+            Vector2Int rookCastlePosition = default;
+            if(boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).HasPieceState()
+            && boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).pieceState is RookState rookState)
+            {
+                theRook = rookState;
+                rookCastlePosition = new Vector2Int(selectedPieceState.Position.x+ direction+(leftSide?1:-1), selectedPieceState.Position.y);
+                boardState.MovePiece(theRook.Position, rookCastlePosition);
+                theRook.Move(rookCastlePosition);
+            }
+        }
+
         // Move the piece
         boardState.MovePiece(selectedPieceState.Position, targetPosition);
         Vector2Int lastPosition = selectedPieceState.Position;
         selectedPieceState.Move(targetPosition);
         lastMovedPieceState = selectedPieceState; // Store the last moved piece
+
+
 
         //updates
         UpdateGameState();
