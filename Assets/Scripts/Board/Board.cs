@@ -181,10 +181,22 @@ public class BoardState
 
     public void Castle(PieceState king, PieceState rook)
     {
-        bool correctTypes = king.Type!="King" && rook.Type!="Rook", sameTeam = king.Colour==rook.Colour, firstMoves = king.FirstMove==rook.FirstMove==true;
+        bool correctTypes = king.Type=="King" && rook.Type=="Rook", sameTeam = king.Colour==rook.Colour, firstMoves = king.FirstMove==rook.FirstMove==true;
         if(correctTypes && sameTeam && firstMoves)
         {
             // castling logic base on side
+            // no pieces between king and rook
+            // no opponent pieces attacking the space between king and rook
+            // king not in check
+            // king cannot move into check
+            
+            // king i
+            //White Castles
+            //top left 2
+            //top right 3
+            //Black Castles
+            //bot left 2
+            //bot right 3
 
         }
     }
