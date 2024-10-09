@@ -61,6 +61,7 @@ public abstract class BotState : PlayerState
                     dupIndex = 0;
                     bestMovesMap.Clear();
                     bestMovesMap[dupIndex]=new Vector2Int[]{bestFrom,bestTo};
+                    dupIndex++;
                 }
                 else if(score==bestScore)
                 {
@@ -68,7 +69,7 @@ public abstract class BotState : PlayerState
                 }
             }
         }
-        if(dupIndex > 0)
+        if(dupIndex > 1)
         {
             return bestMovesMap[Random.Range(0,dupIndex)];
         }

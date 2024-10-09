@@ -115,49 +115,38 @@ public class BoardState
         }
     }
 
-    void AddPieceState(string type, bool colour, int x, PlayerState player)
-    {
+    void AddPieceState(string type, bool colour, int x, PlayerState player){
         int darkY = minPoint.y, lightY = maxPoint.y;
+        PieceState pieceState;
 
-        //GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
-        PieceState pieceState = null;
-        Vector2Int startPos = new Vector2Int(x, colour ? lightY : darkY);
-        switch (type)
-        {
-            case "King":
-                pieceState = new KingState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Queen":
-                pieceState = new QueenState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Rook":
-                pieceState = new RookState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Knight":
-                pieceState = new KnightState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Bishop":
-                pieceState = new BishopState(colour, startPos, minPoint, maxPoint);
-                break;
-            case "Pawn":
-                darkY++; lightY--;
-                pieceState = new PawnState(colour, new Vector2Int(x, colour ? lightY : darkY), minPoint, maxPoint);
-                break;
-            default:
-                Debug.Log("Unknown piece type: " + type);
-                break;
+        // Handle special case for Pawn
+        if (type == "Pawn"){
+            darkY++; lightY--;
+            pieceState = new PawnState(colour, new Vector2Int(x, colour ? lightY : darkY), minPoint, maxPoint);
+        }else{
+            // Use Type.GetType to get the type of the piece state dynamically
+            Type pieceStateType = Type.GetType(type + "State"); // Assumes the class names are in the format "KingState", "QueenState", etc.
+            if (pieceStateType == null){
+                Debug.LogError($"Could not find type: {type}State");
+                return;
+            }
+            Vector2Int startPos = new Vector2Int(x, colour ? lightY : darkY);
+
+            // Create an instance of the PieceState using reflection
+            pieceState = (PieceState)Activator.CreateInstance(pieceStateType, new object[] { colour, startPos, minPoint, maxPoint });
+            if (pieceState == null){
+                Debug.LogError($"Failed to create instance of type: {type}State");
+                return;
+            }
         }
-
 
         // Set piece to tile
         int tileY = colour ? lightY : darkY;
         tileStates[tileY, x].pieceState = pieceState; // Adjust for array index
-        //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.Type + " on tile " + x + " " + tileY);
 
         // Give piece to player
         player.AddPieceState(pieceState);
     }
-
 
 
 
@@ -217,7 +206,7 @@ public class Board : MonoBehaviour
         { 1, 1.25f },
     };
     float pieceScaleFactor = pieceScaleMap[sheetN]; // increase size of a piece also used to set collider of piece to reciprocal
-    static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
+    public static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
 
     public float TileSize
@@ -269,7 +258,7 @@ public class Board : MonoBehaviour
         Camera.main.orthographicSize = (state.N * tileSize) / 2; // Adjust size based on board dimensions
     }
 
-    private void LoadSprites()
+    public static Dictionary<string, Sprite> LoadSprites()
     {
         // Load all sprites from the Pieces.png
         Sprite[] allSprites = Resources.LoadAll<Sprite>($"Sprites/Pieces{sheetN}"); // Adjust path if needed
@@ -278,6 +267,7 @@ public class Board : MonoBehaviour
         {
             sprites[sprite.name] = sprite; // Map sprite names to the dictionary
         }
+        return sprites;
     }
 
 
@@ -340,34 +330,17 @@ public class Board : MonoBehaviour
         int darkY = state.MinPoint.y, lightY = state.MaxPoint.y;
 
         GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
-        Piece piece = null;
-        switch (type)
-        {
-            case "King":
-                piece = PieceObject.AddComponent<King>();
-                break;
-            case "Queen":
-                piece = PieceObject.AddComponent<Queen>();
-                break;
-            case "Rook":
-                piece = PieceObject.AddComponent<Rook>();
-                break;
-            case "Knight":
-                piece = PieceObject.AddComponent<Knight>();
-                break;
-            case "Bishop":
-                piece = PieceObject.AddComponent<Bishop>();
-                break;
-            case "Pawn":
-                darkY++; lightY--;
-                piece = PieceObject.AddComponent<Pawn>();
-                break;
-            default:
-                Debug.Log("Unknown piece type: " + type);
-                break;
+        // Convert the type string to a Type object
+        Type pieceType = Type.GetType(type);
+        Piece piece = PieceObject.AddComponent(pieceType) as Piece;
+        if (piece == null){
+            Debug.LogError($"Failed to add component of type: {type}");
+            return;
         }
 
-
+        if(type=="Pawn"){
+            darkY++; lightY--;
+        }
         int tileY = colour ? lightY : darkY;
         
         piece.State = state.TileStates[tileY, x].pieceState;

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using Newtonsoft.Json; // for saving and loading games
+using System.Linq; // Add this line for LINQ
 
 public class GameState{
-
     public event Action<PieceState> OnSelectedPieceChanged;
     private BoardState boardState;
     private PlayerState[] playerStates = new PlayerState[2];
@@ -621,58 +621,99 @@ public class Game : MonoBehaviour{
             HandleDragAndDrop();
     }
 
-    private void InitializeGame(){
-        InitializeGameState(InitializePlayerStates());
+    public void InitializeGame(string whitePlayerType, string blackPlayerType, string whitePlayerName, string blackPlayerName)
+    {
+        InitializePlayers(whitePlayerType, blackPlayerType, whitePlayerName, blackPlayerName);
+        // Initialize board after players are set
         InitializeBoard();
+        state.UpdateGameState(); // ready to start
     }
 
-    private void InitializeBoard(){
+    private void InitializeBoard()
+    {
         board = gameObject.AddComponent<Board>();
         board.State = state.CurrentBoardState;
         board.CreateBoard(players[0], players[1]);
         Debug.Log("Board created");
     }
 
-    private void InitializeGameState(PlayerState[] PlayerInitialStates){
-        PlayerState P1State = PlayerInitialStates[0], P2State = PlayerInitialStates[1];
-        state =  new GameState(P1State, P2State);
+    private void InitializeGameState(PlayerState P1State, PlayerState P2State)
+    {
+        state = new GameState(P1State, P2State);
         state.OnSelectedPieceChanged += UpdateSelectedPiece;
         if (P1State is BotState)
             (P1State as BotState).CurrentGame = this.state;
         if (P2State is BotState)
             (P2State as BotState).CurrentGame = this.state;
-        
-        InitializePlayers(P1State, P2State);
     }
-    private void InitializePlayers(PlayerState Player1InitialState, PlayerState Player2InitialState){
-        Player P1 = gameObject.AddComponent<Player>();
-        Player P2 = gameObject.AddComponent<Aggressor>();
+
+    private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName, string whitePlayerName, string blackPlayerName)
+    {
+        Debug.Log("here1 " + whitePlayerTypeName + " " + blackPlayerTypeName);
+
+
+        PlayerState P1State = CreatePlayerState(whitePlayerTypeName, whitePlayerName, true);
+        PlayerState P2State = CreatePlayerState(blackPlayerTypeName, blackPlayerName, false);
+        InitializeGameState(P1State, P2State);
+
+        // Dynamically add the components using the Type objects
+        // Convert the selected type names to Type objects
+        Type whitePlayerType = Type.GetType(whitePlayerTypeName);
+        Type blackPlayerType = Type.GetType(blackPlayerTypeName);
+        if (whitePlayerType == null || blackPlayerType == null){
+            Debug.LogError("Could not find player types!");
+            return;
+        }
+        Player P1 = gameObject.AddComponent(whitePlayerType) as Player,
+            P2 = gameObject.AddComponent(blackPlayerType) as Player;
+            /*
+        Debug.Log("PlayerPlayer stement" + P1+" "+(P1 is Player) + (P1 is Avenger));
+        Debug.Log("PlayerPlayer stement" + P2+" "+(P2 is Player) + (P2 is Avenger));
+        */
+
+        // Ensure that P1 and P2 are not null after adding components
+        if (P1 == null || P2 == null)
+        {
+            Debug.LogError("Failed to add player components!");
+            return;
+        }
+
+        P1.State = P1State;
+        P2.State = P2State;
+
         Debug.Log($"P1: {P1}, P2: {P2}");
-        P1.State=Player1InitialState; P2.State=Player2InitialState;
         players[0] = P1;
         players[1] = P2;
     }
 
-    private PlayerState[] InitializePlayerStates(){
-        string P1Name = "P1", P2Name = "P2";
-        bool P1Colour = true, P2Colour = false;
 
-        PlayerState P1State = new PlayerState(P1Name, P1Colour), P2State = new AggressorState(P2Name, P2Colour);
-        return new PlayerState[]{P1State, P2State};  
+    private PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite)
+    {
+        // Use reflection to instantiate the appropriate player state
+        var type = System.Reflection.Assembly.GetExecutingAssembly().GetTypes()
+            .FirstOrDefault(t => t.Name == $"{playerTypeName}State");
+        
+        if (type != null)
+        {
+            PlayerState playerState = (PlayerState)Activator.CreateInstance(type, playerName, isWhite);
+            //Debug.Log("Player stement" + playerState+" "+(playerState is AvengerState));
+            return playerState;
+        }
+        return null; // Handle case where type is not found
     }
 
     void Awake() {
         Debug.Log("Awake called");
-        InitializeGame();
+        //InitializeGame();
     }
 
     // Start is called before the first frame update
     void Start(){
-        state.UpdateGameState();
+        //state.UpdateGameState();
     }
     // Update is called once per frame
     void Update(){
-        HandleInput();
+        if(state!=null)HandleInput();
     }
 
     private void OnDestroy()
@@ -680,6 +721,4 @@ public class Game : MonoBehaviour{
         // Unsubscribe from event to prevent memory leaks
         state.OnSelectedPieceChanged -= UpdateSelectedPiece;
     }
-
-
 }
