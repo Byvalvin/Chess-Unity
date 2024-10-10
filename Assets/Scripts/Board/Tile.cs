@@ -76,6 +76,7 @@ public class Tile : MonoBehaviour
         set{
             if(state.Min<value && value<state.Max){
                 n=value;
+                //ScaleTile();
             }
         }
     }

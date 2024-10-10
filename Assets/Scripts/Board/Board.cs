@@ -254,7 +254,7 @@ public class Board : MonoBehaviour
 
     private void CenterCamera()
     {
-        Camera.main.transform.position = new Vector3((state.N - 1) * tileSize / 2, (state.N - 1) * tileSize / 2, -10);
+        Camera.main.transform.position = new Vector3((state.N - 1) * tileSize / 2, (state.N - 1) * tileSize / 2, -1);
         Camera.main.orthographic = true; // Ensure it's set to Orthographic
         Camera.main.orthographicSize = (state.N * tileSize) / 2; // Adjust size based on board dimensions
     }
