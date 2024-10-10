@@ -63,6 +63,7 @@ public class Tile : MonoBehaviour
 {
     private TileState state;
     private float n; // length of tile
+    [SerializeField] private Shader UnlitColorShader; // Assign this in the inspector, a shader to add colour to tiles
     private static Dictionary<bool, Material> tileMaterials = new Dictionary<bool, Material>();
     private Renderer tileRenderer; // Cached Renderer reference
 
@@ -91,7 +92,7 @@ public class Tile : MonoBehaviour
     {
         if (!tileMaterials.TryGetValue(state.Colour, out Material material))
         {
-            material = new Material(Shader.Find("Unlit/Color"));
+            material = new Material(UnlitColorShader);
             material.color = state.Colour ? Color.white : Color.black;
             tileMaterials[state.Colour] = material;
         }
@@ -100,6 +101,10 @@ public class Tile : MonoBehaviour
     }
 
     private void ScaleTile() => transform.localScale = new Vector3(n, n, 1); // Adjust scale for visual representation
+
+    void Awake(){
+        UnlitColorShader = Shader.Find("Unlit/Color");
+    }
 
     void Start()
     {
