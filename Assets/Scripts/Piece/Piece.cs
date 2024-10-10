@@ -33,11 +33,9 @@ public abstract class PieceState {
         validMoves = new HashSet<Vector2Int>(original.validMoves);
     }
     
-    public bool Captured
-    {
+    public bool Captured{
         get{return captured;}
-        set
-        {
+        set{
             captured=value;
             if(captured) Position=purgatory;
         }
@@ -47,8 +45,7 @@ public abstract class PieceState {
     public bool FirstMove{
         get=>firstMove;
     }
-    public Vector2Int Position
-    {
+    public Vector2Int Position{
         get{return currentPos;}
         set{
             currentPos=value;
@@ -56,13 +53,11 @@ public abstract class PieceState {
 
         }
     }
-    public string Type
-    {
+    public string Type{
         get{return type;}
         protected set{type=value;} 
     }
-    public bool Colour
-    {
+    public bool Colour{
         get{return colour;}
         set
         {
@@ -70,12 +65,10 @@ public abstract class PieceState {
             //myColour=colour? lightColour:darkColour;
         }
     }
-    public HashSet<Vector2Int> ValidMoves
-    {
+    public HashSet<Vector2Int> ValidMoves{
         get{return validMoves;}
         set{validMoves=value;}
     }
-
 
 
     public Vector2Int MinPoint{
@@ -143,9 +136,10 @@ public abstract class Piece : MonoBehaviour {
     public PieceState State{
         get=>state;
         set{
+            if (state != null) // Unsubscribe from old state
+                state.OnPositionChanged -= SetPosition;
             state=value;
             MyColour = state.Colour ? lightColour : darkColour; // set colour
-            //Position = state.Position;
             state.OnPositionChanged += SetPosition; // Subscribe to state changes
             SetPosition(); // Initial update
         }
@@ -210,10 +204,10 @@ public abstract class Piece : MonoBehaviour {
         HandleInput();
     }
 
-    private void OnDestroy()
-    {
+    private void OnDestroy(){
         // Unsubscribe from event to prevent memory leaks
-        state.OnPositionChanged -= SetPosition;
+        if (state != null)
+            state.OnPositionChanged -= SetPosition;
     }
 
 }

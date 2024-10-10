@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,13 +9,14 @@ Wall: Emphasizes solid defenses, making it difficult for opponents to penetrate 
 */
 public class DefenderState : BotState
 {
-    public DefenderState(string _playerName, bool _colour) : base(_playerName, _colour)
-    {
+    private const int KingThreatPenalty = 10;
+    private const int CaptureScoreMultiplier = 2;
+    private const int PieceProtectionReward = 5;
 
-    }
-    public DefenderState(BotState botState) : base(botState){}
+    public DefenderState(string playerName, bool colour) : base(playerName, colour) { }
+    public DefenderState(BotState botState) : base(botState) { }
 
-protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         int score = 0;
         PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
@@ -30,12 +30,12 @@ protected override int EvaluateMove(Vector2Int from, Vector2Int to)
         score -= KingThreatScore(clone);
 
         // 2. Piece Protection
-        score += EvaluatePieceSafety(from,to, movingPiece.Type, clone);
+        score += EvaluatePieceSafety(from, to, movingPiece.Type, clone);
 
         // 3. Formation Maintenance
         score += EvaluateFormation(clone);
 
-        // 4. Central Control (optional, can be less of a priority for a Defender)
+        // 4. Central Control (optional)
         score += CentralControlBonus(to, clone);
 
         // 5. Evaluate potential captures
@@ -43,13 +43,17 @@ protected override int EvaluateMove(Vector2Int from, Vector2Int to)
         {
             score += pieceValue[targetPiece.Type]; // Add score for capturing pieces
             int defended = PieceDefended(currentGame, targetPiece, to);
-            if(defended==0){
-                score*=2;
-            }else{
-                score-=20;
+            if (defended == 0)
+            {
+                score *= CaptureScoreMultiplier; // High value if undefended
+            }
+            else
+            {
+                score -= 20; // Penalty for capturing defended pieces
             }
         }
 
+        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {from} {to} {score}");
         return score;
     }
 
@@ -58,12 +62,12 @@ protected override int EvaluateMove(Vector2Int from, Vector2Int to)
         int threatScore = 0;
         Vector2Int kingPosition = GetKing().Position;
 
-        // Assess all possible threats to the king's position
-        foreach (var opponentPiece in gameState.PlayerStates[1 - TurnIndex].PieceStates) // Assume opponent is player 1 - TurnIndex
+        // Assess threats to the king's position
+        foreach (var opponentPiece in gameState.PlayerStates[1 - TurnIndex].PieceStates)
         {
             if (opponentPiece.ValidMoves.Contains(kingPosition))
             {
-                threatScore += 10; // High penalty for direct threats
+                threatScore += KingThreatPenalty; // High penalty for direct threats
             }
         }
 
@@ -78,9 +82,9 @@ protected override int EvaluateMove(Vector2Int from, Vector2Int to)
         // Check if moving to a position that protects key pieces
         foreach (var piece in gameState.PlayerStates[TurnIndex].PieceStates)
         {
-            if (pieceInFuture.ValidMoves.Contains( piece.Position) )
+            if (pieceInFuture.ValidMoves.Contains(piece.Position))
             {
-                protectionScore += 5; // Reward for protecting a piece
+                protectionScore += PieceProtectionReward; // Reward for protecting a piece
             }
         }
 
@@ -91,30 +95,23 @@ protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
         int formationScore = 0;
 
-        // Logic to assess piece formations
-        // For example, check if pawns are in a structure, or knights are supporting each other
-        // Implement similar checks as seen in the Alchemist bot
+        // Logic to assess piece formations (expand this as needed)
+        // Example: Check if pawns are in a solid structure
+        // Additional checks for knight or bishop support can be added here
 
         return formationScore;
     }
-
 }
+
 public class Defender : Bot
 {
     protected override void Awake()
     {
-        //state = new DefenderState();
-    }
-    
-    // Start is called before the first frame update
-    protected override void Start()
-    {
-        
+        // Initialize DefenderState if needed
+        // state = new DefenderState();
     }
 
-    // Update is called once per frame
-    protected override void Update()
-    {
-        
-    }
+    protected override void Start() { }
+
+    protected override void Update() { }
 }

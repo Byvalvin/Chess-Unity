@@ -141,37 +141,15 @@ public class Player : MonoBehaviour
     public void AddPiece(Piece piece) => pieces.Add(piece);
     public void RemovePiece(PieceState pieceState) {
         // Find the corresponding Piece
-        Piece correspondingPiece = null;
-        foreach (var piece in pieces)
-        {
-            if (piece.State == pieceState) // Assuming Piece has a State property
-            {
-                correspondingPiece = piece;
-                break; // Exit loop if found
-            }
-        }
-
-        // If the corresponding Piece was found, remove it
+        var correspondingPiece = pieces.Find(piece => piece.State == pieceState);
         if (correspondingPiece != null)
-        {
             pieces.Remove(correspondingPiece);
-        }
     }
     public void Capture(PieceState pieceState){
         // Find corresponding Piece and add to captured pieces
-        Piece correspondingPiece = null;
-        foreach (var piece in pieces)
-        {
-            if (piece.State == pieceState) // Assuming Piece has a State property
-            {
-                correspondingPiece = piece;
-                break; // Exit loop if found
-            }
-        }
+        var correspondingPiece = pieces.Find(piece => piece.State == pieceState);
         if (correspondingPiece != null)
-        {
             capturedPieces.Add(correspondingPiece);
-        }
     }
 
 

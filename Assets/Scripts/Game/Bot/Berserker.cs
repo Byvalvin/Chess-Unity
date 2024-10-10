@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,11 +11,13 @@ Aggressive, prioritizing captures.
 */
 public class BerserkerState : BotState
 {
-    public BerserkerState(string _playerName, bool _colour) : base(_playerName, _colour)
-    {
-        
-    }
-    public BerserkerState(BotState botState) : base(botState){}
+    private const int AggressiveCaptureBonus = 2;
+    private const int RiskPenalty = -5;
+    private const int RiskReward = 3;
+    private const int PunishmentReward = 5;
+
+    public BerserkerState(string playerName, bool colour) : base(playerName, colour) { }
+    public BerserkerState(BotState botState) : base(botState) { }
 
     protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
@@ -29,26 +30,28 @@ public class BerserkerState : BotState
         clone.MakeBotMove(from, to);
 
         // 1. Aggressive capture score
-        score += EvaluateAggressiveCapture(movingPiece, targetPiece);
+        score += EvaluateAggressiveCapture(targetPiece);
 
-        // 2. Risk exposure: Score higher if the move puts the player at risk
+        // 2. Risk exposure
         score += EvaluateRisk(from, to, movingPiece, clone);
 
-        // 3. Central Control: Encourage controlling the center
+        // 3. Central Control
         score += CentralControlBonus(to, clone);
 
-        // 4. Potential for capitalizing on opponent's mistakes
+        // 4. Potential for punishing opponent's mistakes
         score += EvaluatePunishment(clone);
 
+        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {from} {to} {score}");
+        
         return score;
     }
 
-    private int EvaluateAggressiveCapture(PieceState movingPiece, PieceState targetPiece)
+    private int EvaluateAggressiveCapture(PieceState targetPiece)
     {
-        // Higher score for capturing pieces, regardless of value
+        // Higher score for capturing pieces
         if (targetPiece != null)
         {
-            return pieceValue[targetPiece.Type] + 2; // Add a bonus for aggression
+            return pieceValue[targetPiece.Type] + AggressiveCaptureBonus;
         }
         return 0; // No capture
     }
@@ -62,14 +65,14 @@ public class BerserkerState : BotState
         {
             if (opponentPiece.ValidMoves.Contains(from))
             {
-                riskScore -= 5; // Penalty for moving into danger
+                riskScore += RiskPenalty; // Penalty for moving into danger
             }
         }
 
-        // Encourage bold moves that could lead to high rewards
+        // Reward for taking risks if the move captures a piece
         if (clone.GetTile(to).pieceState != null) // If capturing a piece
         {
-            riskScore += 3; // Reward for taking risks
+            riskScore += RiskReward; // Reward for taking risks
         }
 
         return riskScore;
@@ -88,31 +91,24 @@ public class BerserkerState : BotState
                 // If the opponent moves to a position where they can be captured
                 if (targetPiece != null && targetPiece.ValidMoves.Count == 1) // Simple blunder condition
                 {
-                    punishmentScore += pieceValue[targetPiece.Type] + 5; // Reward for capitalizing on mistakes
+                    punishmentScore += pieceValue[targetPiece.Type] + PunishmentReward; // Reward for capitalizing on mistakes
                 }
             }
         }
 
         return punishmentScore;
     }
-
 }
+
 public class Berserker : Bot
 {
     protected override void Awake()
     {
-        //state = new BerserkerState();
-    }
-    
-    // Start is called before the first frame update
-    protected override void Start()
-    {
-        
+        // Initialize BerserkerState if needed
+        // state = new BerserkerState();
     }
 
-    // Update is called once per frame
-    protected override void Update()
-    {
-        
-    }
+    protected override void Start() { }
+
+    protected override void Update() { }
 }

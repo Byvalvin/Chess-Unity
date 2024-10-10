@@ -5,19 +5,18 @@ using System.Reflection;
 
 public static class PlayerTypeUtility
 {
+    private static readonly Assembly _assembly = Assembly.GetExecutingAssembly();
+
     public static List<string> GetPlayerOptions()
     {
-        List<string> playerOptions = new List<string>();
-
-        // Get all types in the current assembly
-        Assembly assembly = Assembly.GetExecutingAssembly();
-
-        // Get all types that are subclasses of PlayerState (exclude BotState)
-        var playerTypes = assembly.GetTypes()
-            .Where(t => t.IsSubclassOf(typeof(PlayerState)) && t != typeof(BotState));
+        var playerOptions = new HashSet<string>(); // Using HashSet to avoid duplicates
 
         // Add PlayerState explicitly
         playerOptions.Add(nameof(PlayerState).Replace("State", "")); // Adding "PlayerState" for the human player
+
+        // Get all types that are subclasses of PlayerState (exclude BotState)
+        var playerTypes = _assembly.GetTypes()
+            .Where(t => t.IsSubclassOf(typeof(PlayerState)) && t != typeof(BotState));
 
         foreach (var playerType in playerTypes)
         {
@@ -26,6 +25,6 @@ public static class PlayerTypeUtility
             playerOptions.Add(optionName);
         }
 
-        return playerOptions;
+        return playerOptions.ToList(); // Convert HashSet back to List before returning
     }
 }

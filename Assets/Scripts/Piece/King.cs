@@ -27,7 +27,7 @@ public class KingState : PieceState
 
     protected override void SetValidMoves()
     {
-        validMoves.Clear(); // Clear previous moves
+        //validMoves.Clear(); // Clear previous moves
         HashSet<Vector2Int> moves = Utility.GetSurroundingPoints(currentPos);
         // add castling
         // conditions

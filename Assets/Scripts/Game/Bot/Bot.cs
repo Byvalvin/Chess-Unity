@@ -5,7 +5,7 @@ using UnityEngine;
 
 public abstract class BotState : PlayerState
 {
-    protected static Dictionary<string, int> pieceValue = new Dictionary<string, int>
+    protected static readonly Dictionary<string, int> pieceValue = new Dictionary<string, int>
     {
         { "Pawn", 1 },
         { "Knight", 3 },
@@ -14,6 +14,9 @@ public abstract class BotState : PlayerState
         { "Queen", 9 },
         { "King", int.MaxValue } // King is invaluable
     };
+    private const int SafeMovePenalty = 10;
+    private const int CentralControlBonusValue = 2;
+    private const int KingTileValue = 2;
 
 
     public BotState(string _playerName, bool _colour) : base(_playerName, _colour){}
@@ -37,52 +40,34 @@ public abstract class BotState : PlayerState
         Vector2Int moveFrom=completeMove[0], moveTo=completeMove[1];
         return new Vector2Int[]{moveFrom, moveTo};
     }
-    protected virtual Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap)
-    {
+    protected virtual Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap){
         Vector2Int bestFrom = default;
         Vector2Int bestTo = default;
-        int bestScore = int.MinValue; // -2 147 483 648
-        Dictionary<int, Vector2Int[]> bestMovesMap = new Dictionary<int, Vector2Int[]>();
-        int dupIndex = 0;
-        
+        int bestScore = int.MinValue;
 
-        foreach (var kvp in moveMap)
-        {
+        var bestMoves = new List<Vector2Int[]>();
+
+        foreach (var kvp in moveMap){
             Vector2Int from = kvp.Key;
-            foreach (var to in kvp.Value)
-            {
+            foreach (var to in kvp.Value){
                 int score = EvaluateMove(from, to);
-                if (score > bestScore)
-                {
+                if (score > bestScore){
                     bestScore = score;
                     bestFrom = from;
                     bestTo = to;
-
-                    dupIndex = 0;
-                    bestMovesMap.Clear();
-                    bestMovesMap[dupIndex]=new Vector2Int[]{bestFrom,bestTo};
-                    dupIndex++;
+                    bestMoves.Clear();
+                    bestMoves.Add(new[] { bestFrom, bestTo });
                 }
-                else if(score==bestScore)
-                {
-                    bestMovesMap[++dupIndex]=new Vector2Int[]{from,to};
-                }
+                else if (score == bestScore)
+                    bestMoves.Add(new[] { from, to });
+                
             }
         }
-        if(dupIndex > 1)
-        {
-            return bestMovesMap[Random.Range(0,dupIndex)];
-        }
-
-
-        return new Vector2Int[] { bestFrom, bestTo };
+        return bestMoves.Count > 1 ? bestMoves[Random.Range(0, bestMoves.Count)] : new Vector2Int[] { bestFrom, bestTo };
     }
     protected virtual int EvaluateMove(Vector2Int from, Vector2Int to)=>1; // placeholder assumes all moves are equal but diff bots will have diff scoring
 
-    protected bool InCenter(Vector2Int position){
-        HashSet<int> centerCoords = new HashSet<int>{3,4};
-        return centerCoords.Contains(position.x) && centerCoords.Contains(position.y);
-    }
+    protected bool InCenter(Vector2Int position)=> (3<=position.x&&position.x<=4 && 3<=position.y&&position.y<=4);
 
     // some commonon factors to consider
     protected int ArmyValue(GameState gameState, int playerIndex){
@@ -107,80 +92,94 @@ public abstract class BotState : PlayerState
 
     protected int EvaluatePieceSafety(Vector2Int from, Vector2Int to, string type, GameState gameState)
     {
-
-        int toNotSafe = 0, fromNotSafe = 0; // must move pieces under attack, dont go to places under attack
-        foreach (PieceState opponentPiece in gameState.PlayerStates[1-TurnIndex].PieceStates)
-            if(opponentPiece.ValidMoves.Contains(to))
-                toNotSafe-=10; // dont go there
-        foreach (PieceState opponentPiece in currentGame.PlayerStates[1-TurnIndex].PieceStates)
-            if(opponentPiece.ValidMoves.Contains(from))
-                fromNotSafe+=10; // dont stay here
-        
-
-        // Factor in piece value for safety evaluation
-        return (toNotSafe + fromNotSafe)*pieceValue[type]; // Higher penalty for more valuable pieces
+        int toNotSafe = EvaluateSafety(to, gameState, true);
+        int fromNotSafe = EvaluateSafety(from, gameState, false);
+        return (toNotSafe + fromNotSafe) * pieceValue[type];
     }
-
-    protected int AttackedKingTiles(GameState nextGame){
-        int before = currentGame.PlayerStates[1-TurnIndex].GetKing().ValidMoves.Count,
-            after = nextGame.PlayerStates[1-TurnIndex].GetKing().ValidMoves.Count,
-            difference = before - after;
-        return after==0 ? int.MaxValue/2 : difference > 0 ? 5*difference : 0;
-    }
-
-    protected int KingTiles(GameState gameState){
-        int tileValue = 2, tileCount = currentGame.PlayerStates[1-TurnIndex].GetKing().ValidMoves.Count;
-        return tileCount==0 ? int.MaxValue/2 : tileValue * (8-tileCount);
-    }
-
-    protected int PieceDefended(GameState gameState, PieceState pieceState, Vector2Int to){
-        int defended = 0;
-        foreach (PieceState piece in gameState.PlayerStates[pieceState.Colour?0:1].PieceStates)
+    private int EvaluateSafety(Vector2Int position, GameState gameState, bool isTarget)
+    {
+        int penalty = 0;
+        foreach (PieceState opponentPiece in gameState.PlayerStates[1 - TurnIndex].PieceStates)
         {
-            switch(piece.Type){
-                case "King":
-                    if(gameState.KingAttackedTiles(piece).Contains(to))
-                        defended++;
-                    break;
-                case "Knight":
-                    if(gameState.KnightAttackedTiles(piece).Contains(to))
-                        defended++;
-                    break;
-                case "Pawn":
-                    if(gameState.PawnAttackedTiles(piece).Contains(to))
-                        defended++;
-                    break;
-                default: // Queen, Rook, Bishop
-                    HashSet<Vector2Int> pointsBetweenAndEnds;
-                    switch(piece.Type){
-                        case "Bishop":
-                            pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(piece.Position, to, includeEnds:true);
-                            break;
-                        case "Rook":
-                            pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(piece.Position, to, includeEnds:true);
-                            break;
-                        case "Queen":
-                            pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(piece.Position, to, includeEnds:true);
-                            break;
-                        default:
-                            pointsBetweenAndEnds = new HashSet<Vector2Int>();
-                            break;
-                    }
-                    bool pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
-                    if(pointsBetweenAndEnds.Count > 2){ // if there is a defender then only do this check if there are tiles between the defender and defended
-                        pointsBetweenAndEnds.Remove(piece.Position); pointsBetweenAndEnds.Remove(to);
-                        foreach (Vector2Int point in pointsBetweenAndEnds){
-                            pieceAtposDefended = pieceAtposDefended && !gameState.GetTile(point).HasPieceState(); // if a single piece on path, path is blocked and piece cant be defended
-                            if(!pieceAtposDefended)
-                                break; // there is another piece blocking the defense, onto next candidate
-                        }
-                    }
-                    if(pieceAtposDefended)
-                        defended++;
-                    break;
-            }
+            if (opponentPiece.ValidMoves.Contains(position))
+                penalty -= SafeMovePenalty; // don't go to unsafe positions
         }
-        return defended;
+        return penalty;
+    }
+
+    protected int AttackedKingTiles(GameState nextGame)
+    {
+        int beforeCount = currentGame.PlayerStates[1 - TurnIndex].GetKing().ValidMoves.Count;
+        int afterCount = nextGame.PlayerStates[1 - TurnIndex].GetKing().ValidMoves.Count;
+        return afterCount == 0 ? int.MaxValue / 2 : Mathf.Max(0, (beforeCount - afterCount) * 5);
+    }
+
+    protected int KingTiles(GameState gameState)
+    {
+        int tileCount = currentGame.PlayerStates[1 - TurnIndex].GetKing().ValidMoves.Count;
+        return tileCount == 0 ? int.MaxValue / 2 : KingTileValue * (8 - tileCount);
+    }
+
+    protected int PieceDefended(GameState gameState, PieceState pieceState, Vector2Int to)
+    {
+        int defendedCount = 0;
+        foreach (PieceState allyPiece in gameState.PlayerStates[pieceState.Colour ? 0 : 1].PieceStates)
+        {
+            if (IsPieceDefending(allyPiece, pieceState, to, gameState))
+                defendedCount++;
+        }
+        return defendedCount;
+    }
+
+    private bool IsPieceDefending(PieceState allyPiece, PieceState pieceState, Vector2Int to, GameState gameState)
+    {
+        switch (allyPiece.Type)
+        {
+            case "King":
+                return gameState.KingAttackedTiles(allyPiece).Contains(to);
+            case "Knight":
+                return gameState.KnightAttackedTiles(allyPiece).Contains(to);
+            case "Pawn":
+                return gameState.PawnAttackedTiles(allyPiece).Contains(to);
+            default:
+                return IsLongRangePieceDefending(allyPiece, pieceState, to, gameState);
+        }
+    }
+
+    private bool IsLongRangePieceDefending(PieceState allyPiece, PieceState pieceState, Vector2Int to, GameState gameState)
+    {
+        HashSet<Vector2Int> pointsBetweenAndEnds;
+
+        switch (allyPiece.Type)
+        {
+            case "Bishop":
+                pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(allyPiece.Position, to, includeEnds: true);
+                break;
+            case "Rook":
+                pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(allyPiece.Position, to, includeEnds: true);
+                break;
+            case "Queen":
+                pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(allyPiece.Position, to, includeEnds: true);
+                break;
+            default:
+                return false;
+        }
+
+        return pointsBetweenAndEnds.Count > 2 && !HasBlockingPiece(pointsBetweenAndEnds, allyPiece, to, gameState);
+    }
+
+    private bool HasBlockingPiece(HashSet<Vector2Int> points, PieceState allyPiece, Vector2Int to, GameState gameState)
+    {
+        points.Remove(allyPiece.Position);
+        points.Remove(to);
+
+        foreach (Vector2Int point in points)
+        {
+            if (gameState.GetTile(point).HasPieceState())
+                return true; // Blocked
+        }
+
+        return false; // Not blocked
     }
 
 }

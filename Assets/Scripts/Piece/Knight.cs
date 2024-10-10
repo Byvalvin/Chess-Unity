@@ -25,7 +25,7 @@ public class KnightState : PieceState
 
     protected override void SetValidMoves()
     {
-        validMoves.Clear(); // Clear previous moves
+        //validMoves.Clear(); // Clear previous moves
         HashSet<Vector2Int> moves = new HashSet<Vector2Int>();
 
         // Possible knight moves (L-shaped)

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class BoardState
-{
+public class BoardState{
     public event Action<Vector2Int, Vector2Int> OnPieceMoved;
     private TileState[,] tileStates;
     
@@ -39,8 +38,7 @@ public class BoardState
 
     public BoardState Clone() => new BoardState(this); // Clone method
 
-    public void CreateBoardState(PlayerState player1, PlayerState player2)
-    {
+    public void CreateBoardState(PlayerState player1, PlayerState player2){
         // Create and Add Tiles
         tileStates = new TileState[N, N];
         minPoint = new Vector2Int(0, 0); maxPoint = new Vector2Int(N-1, N-1);
@@ -62,8 +60,7 @@ public class BoardState
         PopulateBoardState(player1, player2);
     }
 
-    private void PopulateBoardState(PlayerState player1, PlayerState player2)
-    {
+    private void PopulateBoardState(PlayerState player1, PlayerState player2){
         // string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
         string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" }; // orderd so the King is indeed the first piece in the Player's Pieces List
         foreach (string pieceType in pieceTypes)
@@ -72,10 +69,8 @@ public class BoardState
         }
     }
 
-    private void AddPieceStates(string type, PlayerState player1, PlayerState player2)
-    {
-        switch (type)
-        {
+    private void AddPieceStates(string type, PlayerState player1, PlayerState player2){
+        switch (type){
             case "King":
                 AddPieceState(type, true, 3, player1);
                 AddPieceState(type, false, 3, player2);
@@ -150,8 +145,7 @@ public class BoardState
 
 
 
-    public TileState GetTile(Vector2Int pos)
-    {
+    public TileState GetTile(Vector2Int pos){
         int xIndex = pos.x;
         int yIndex = pos.y; // Invert y coordinate for the array
 
@@ -161,8 +155,7 @@ public class BoardState
         return null; // Return null if out of bounds
     }
 
-    public TileState GetTile(int x, int y) // overload
-    {
+    public TileState GetTile(int x, int y){ // overload
         int xIndex = x;
         int yIndex = y; // Invert y coordinate for the array
 
@@ -172,18 +165,15 @@ public class BoardState
         return null; // Return null if out of bounds
     }
 
-    public void MovePiece(Vector2Int from, Vector2Int to)
-    {
+    public void MovePiece(Vector2Int from, Vector2Int to){
         TileState fromTile = GetTile(from);
         TileState toTile = GetTile(to);
 
-        if (fromTile != null && toTile != null)
-        {
+        if (fromTile != null && toTile != null){
             //Debug.Log($"Moving piece from {from} to {to}");
             toTile.pieceState = fromTile.pieceState;
             fromTile.pieceState = null;
         }
-
         OnPieceMoved?.Invoke(from, to); // for the board tiles too
     }
 
@@ -201,19 +191,14 @@ public class Board : MonoBehaviour
  
     // Load all sprites from the Pieces.png
     static int sheetN = 1; // the piece sheet we use
-    static Dictionary<int, float> pieceScaleMap = new Dictionary<int, float>
-    {
+    static Dictionary<int, float> pieceScaleMap = new Dictionary<int, float>{
         { 0, 1.25f },
         { 1, 1.25f },
     };
     float pieceScaleFactor = pieceScaleMap[sheetN]; // increase size of a piece also used to set collider of piece to reciprocal
     public static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
-
-    public float TileSize
-    {
-        get { return tileSize; }
-    }
+    public float TileSize => tileSize;
 
     public BoardState State{
         get=>state;
@@ -223,15 +208,12 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void CreateBoard(Player Player1, Player Player2)
-    {
+    public void CreateBoard(Player Player1, Player Player2){
         // Create and Add Tiles
         tiles = new Tile[state.N, state.N];
 
         for (int yi = 0; yi < state.N; yi++)
-        {
-            for (int xi = 0; xi < state.N; xi++)
-            {
+            for (int xi = 0; xi < state.N; xi++){
                 GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 Tile tile = tileObject.AddComponent<Tile>();
                 tile.State = state.TileStates[yi, xi];
@@ -243,7 +225,6 @@ public class Board : MonoBehaviour
                 tileObject.transform.position = new Vector3(xi * tileSize, yi * tileSize, 0);
                 tileObject.transform.localScale = new Vector3(tileSize, tileSize, 1); // Flatten for board look
             }
-        }
 
         // need tileSize for both player and bot moves
         Player1.State.TileSize = tileSize; Player2.State.TileSize = tileSize;
@@ -252,41 +233,33 @@ public class Board : MonoBehaviour
         PopulateBoard(Player1, Player2);
     }
 
-    private void CenterCamera()
-    {
+    private void CenterCamera(){
         Camera.main.transform.position = new Vector3((state.N - 1) * tileSize / 2, (state.N - 1) * tileSize / 2, -1);
         Camera.main.orthographic = true; // Ensure it's set to Orthographic
         Camera.main.orthographicSize = (state.N * tileSize) / 2; // Adjust size based on board dimensions
     }
 
-    public static Dictionary<string, Sprite> LoadSprites()
-    {
+    public static Dictionary<string, Sprite> LoadSprites(){
         // Load all sprites from the Pieces.png
         Sprite[] allSprites = Resources.LoadAll<Sprite>($"Sprites/Pieces{sheetN}"); // Adjust path if needed
         
         foreach (var sprite in allSprites)
-        {
             sprites[sprite.name] = sprite; // Map sprite names to the dictionary
-        }
         return sprites;
     }
 
 
 
-    private void PopulateBoard(Player Player1, Player Player2)
-    {
+    private void PopulateBoard(Player Player1, Player Player2){
         // string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
         string[] pieceTypes = { "King", "Queen", "Bishop", "Knight", "Rook",  "Pawn" }; // orderd so the King is indeed the first piece in the Player's Pieces List
-        foreach (string pieceType in pieceTypes)
-        {
+        foreach (string pieceType in pieceTypes){
             AddPieces(pieceType, Player1, Player2);
         }
     }
 
-    private void AddPieces(string type, Player Player1, Player Player2)
-    {
-        switch (type)
-        {
+    private void AddPieces(string type, Player Player1, Player Player2){
+        switch (type){
             case "King":
                 AddPiece(type, true, 3, Player1);
                 AddPiece(type, false, 3, Player2);
@@ -314,8 +287,7 @@ public class Board : MonoBehaviour
                 AddPiece(type, false, 5, Player2);
                 break;
             case "Pawn":
-                for (int xi = 0; xi < state.N; xi++)
-                {
+                for (int xi = 0; xi < state.N; xi++){
                     AddPiece(type, true, xi, Player1); // Light
                     AddPiece(type, false, xi, Player2); // Dark
                 }
@@ -326,8 +298,7 @@ public class Board : MonoBehaviour
         }
     }
 
-    void AddPiece(string type, bool colour, int x, Player Player)
-    {
+    void AddPiece(string type, bool colour, int x, Player Player){
         int darkY = state.MinPoint.y, lightY = state.MaxPoint.y;
 
         GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
@@ -363,8 +334,7 @@ public class Board : MonoBehaviour
     }
 
 
-    public Tile GetTile(Vector2Int pos)
-    {
+    public Tile GetTile(Vector2Int pos){
         int xIndex = pos.x;
         int yIndex = pos.y; // Invert y coordinate for the array
 
@@ -374,8 +344,7 @@ public class Board : MonoBehaviour
         }
         return null; // Return null if out of bounds
     }
-    public Tile GetTile(int x, int y) // overload
-    {
+    public Tile GetTile(int x, int y){  // overload
         int xIndex = x;
         int yIndex = y; // Invert y coordinate for the array
 
@@ -386,8 +355,7 @@ public class Board : MonoBehaviour
         return null; // Return null if out of bounds
     }
 
-    public void MovePiece(Vector2Int from, Vector2Int to)
-    {
+    public void MovePiece(Vector2Int from, Vector2Int to){
         Tile fromTile = GetTile(from);
         Tile toTile = GetTile(to);
 
@@ -401,23 +369,26 @@ public class Board : MonoBehaviour
 
 
     
-    void Awake()
-    {
+    void Awake(){
         // create Sprite dict
         if(sprites.Count==0)
             LoadSprites();
     }
   
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start(){
         CenterCamera();
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update(){
         // Additional logic if needed
     }
+
+    void OnDestroy() 
+    {
+        if(state!=null)state.OnPieceMoved -= MovePiece;
+    }
+
 }
 

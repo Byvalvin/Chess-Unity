@@ -1,23 +1,24 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /*
 Aggressor: Always looking to capture enemy pieces, favoring aggressive plays.
- Strong offensive moves, aiming for maximum damage.
- Knight: Uses direct and aggressive tactics to pressure opponents, favoring offensive play
+Strong offensive moves, aiming for maximum damage.
 */
 
 public class AggressorState : BotState
 {
-    static int aggressiveBoost = 5;
-    public AggressorState(string _playerName, bool _colour) : base(_playerName, _colour){}
-    public AggressorState(BotState botState) : base(botState){}
-    public override PlayerState Clone() => new AggressorState(this); 
+    private const int AggressiveBoost = 5;
+    private const int AheadAggressionBonus = 10;
+    private const int BehindCautionPenalty = -10;
+
+    public AggressorState(string playerName, bool colour) : base(playerName, colour) { }
+    public AggressorState(BotState botState) : base(botState) { }
     
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to) //Prioritize capturing pieces or making aggressive moves
+    public override PlayerState Clone() => new AggressorState(this);
+
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
     {
-       
         int score = 0;
         PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
         PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
@@ -25,99 +26,96 @@ public class AggressorState : BotState
         // Simulate the move
         GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
-                
-         // 1. Capture Bonus
-        if (targetPiece != null){
-            // If capturing, add the value of the captured piece
-            score += pieceValue[targetPiece.Type]+aggressiveBoost;
 
-            // but is it defended?
-            int nDefenders = PieceDefended(currentGame, targetPiece, to), nAttackers=1;
-            foreach (PieceState piece in currentGame.PlayerStates[TurnIndex].PieceStates)
-            {
-                if(piece.ValidMoves.Contains(to))
-                    nAttackers++;
-            }
-            score += aggressiveBoost*(nAttackers - nDefenders);
-            // // If the piece is highly defended, reduce the score significantly
-            // if (nDefenders > 4) 
-            // {
-            //     score -= 20; // Heavily penalize capturing a well-defended piece
-            // }
+        // 1. Capture Bonus
+        if (targetPiece != null)
+        {
+            score += EvaluateCapture(targetPiece, to);
         }
-        
+
         // 2. Central Control
         score += CentralControlBonus(to, clone);
 
         // 3. Mobility
-        // find a move that increases the number of valid moves a piece the most(to increase the chance to capture)
-        foreach (PieceState pieceState in clone.PlayerStates[TurnIndex].PieceStates)
-        {
-            score += pieceState.ValidMoves.Count;
-        }
+        score += EvaluateMobility(clone);
 
-        // 4. Piece Saftety
-        int risk = EvaluatePieceSafety(from, to, movingPiece.Type, clone);
-        score += risk;
+        // 4. Piece Safety
+        score += EvaluatePieceSafety(from, to, movingPiece.Type, clone);
 
-        // 5. Check the value of my pieces
-        score += 2*(ArmyValue(clone, TurnIndex) - ArmyValue(clone, 1-TurnIndex));
+        // 5. Army Value Comparison
+        score += 2 * (ArmyValue(clone, TurnIndex) - ArmyValue(clone, 1 - TurnIndex));
 
-        // 6. King attacks
-        int checkBonus = currentGame.PlayerStates[1-TurnIndex].GetKing().Position==to? 20:0;
-        score += KingTiles(clone) + checkBonus;
+        // 6. King Attacks
+        score += EvaluateKingThreat(to, clone);
 
-        // last. Adjust Aggressiveness
+        // Adjust Aggressiveness
         score = AdjustAggressiveness(score);
 
-        Debug.Log(movingPiece.Type+movingPiece.Colour + from + to + score);
-        return score; // Return the total score for the move
+        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {from} {to} {score}");
+        return score;
     }
 
-
-    private int AdjustAggressiveness(int score)
+    private int EvaluateCapture(PieceState targetPiece, Vector2Int to)
     {
-        int myArmyValue = ArmyValue(currentGame, TurnIndex);
-        int opponentArmyValue = ArmyValue(currentGame, 1-TurnIndex);
+        int score = pieceValue[targetPiece.Type] + AggressiveBoost;
 
-        if (myArmyValue > opponentArmyValue)
-            score += 10; // More aggressive if ahead
-        else if (myArmyValue < opponentArmyValue)
-            score -= 10; // More cautious if behind
+        int nDefenders = PieceDefended(currentGame, targetPiece, to);
+        int nAttackers = 1 + CountAttackers(to); // Including the moving piece
+        score += AggressiveBoost * (nAttackers - nDefenders);
 
         return score;
     }
 
-
-    PieceState FutureState(Vector2Int to, GameState gameState, bool isSelf=true){
-        foreach (PieceState piece in gameState.PlayerStates[isSelf? TurnIndex:1-TurnIndex].PieceStates){
-            if(piece.Position==to)
-                return piece;
+    private int CountAttackers(Vector2Int targetPosition)
+    {
+        int attackerCount = 0;
+        foreach (PieceState piece in currentGame.PlayerStates[TurnIndex].PieceStates)
+        {
+            if (piece.ValidMoves.Contains(targetPosition))
+                attackerCount++;
         }
-        return null;
+        return attackerCount;
     }
 
+    private int EvaluateMobility(GameState clone)
+    {
+        int mobilityScore = 0;
+        foreach (PieceState pieceState in clone.PlayerStates[TurnIndex].PieceStates)
+        {
+            mobilityScore += pieceState.ValidMoves.Count;
+        }
+        return mobilityScore;
+    }
 
+    private int EvaluateKingThreat(Vector2Int to, GameState clone)
+    {
+        int checkBonus = currentGame.PlayerStates[1 - TurnIndex].GetKing().Position == to ? 20 : 0;
+        return KingTiles(clone) + checkBonus;
+    }
 
+    private int AdjustAggressiveness(int score)
+    {
+        int myArmyValue = ArmyValue(currentGame, TurnIndex);
+        int opponentArmyValue = ArmyValue(currentGame, 1 - TurnIndex);
+
+        if (myArmyValue > opponentArmyValue)
+            return score + AheadAggressionBonus;
+        else if (myArmyValue < opponentArmyValue)
+            return score + BehindCautionPenalty;
+
+        return score;
+    }
 }
-
-
 
 public class Aggressor : Bot
 {
-    
     protected override void Awake()
     {
-        //state = new AggressorState();
-    }
-    
-    // Start is called before the first frame update
-    protected override void Start(){
-        
+        // Initialize AggressorState if needed
+        // state = new AggressorState();
     }
 
-    // Update is called once per frame
-    protected override void Update(){
-        
-    }
+    protected override void Start() { }
+
+    protected override void Update() { }
 }

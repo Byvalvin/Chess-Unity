@@ -35,10 +35,8 @@ public class GameState{
 
     public Vector2Int OriginalPosition => originalPosition;
 
-    public bool Checkmate{
-        get=>checkmate;
-    }
-
+    public bool Checkmate=>checkmate;
+    
     public GameState(PlayerState p1, PlayerState p2){
         playerStates[0]=p1; playerStates[1]=p2;
         boardState = new BoardState();
@@ -143,8 +141,7 @@ public class GameState{
                 // if there are multiple pieces in th epath, any can move
                 HashSet<Vector2Int> tBKaA_without_piecePos = new HashSet<Vector2Int>(tilesBetweenKingAndAttacker);
                 tBKaA_without_piecePos.Remove(piece.Position);
-                foreach (Vector2Int anotherPiecePosition in tBKaA_without_piecePos)
-                {
+                foreach (Vector2Int anotherPiecePosition in tBKaA_without_piecePos){
                     if(GetTile(anotherPiecePosition).HasPieceState()){
                         pinnedPiece = false;
                         break;
@@ -176,8 +173,7 @@ public class GameState{
     // JUST FOR POSITIONS THE OPPOSING PLAYER PIECES ARE ATTACKING, not necessarily defended positions(same as defended positons only for pawns)
     HashSet<Vector2Int> GetAllPlayerAttackMoves(PlayerState player){
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
-        foreach (PieceState piece in player.PieceStates)
-        {
+        foreach (PieceState piece in player.PieceStates){
             bool isPawn = piece.Type=="Pawn";
             if(isPawn)
                 allMoves.UnionWith(PawnAttackedTiles(piece)); // add the squares attacked by the Pawn, Pawn fwd moves not included here
@@ -213,8 +209,7 @@ public class GameState{
         common.IntersectWith(KingBlackMoves);
 
         // Remove common elements from both sets
-        foreach (var move in common)
-        {
+        foreach (var move in common){
             KingWhiteMoves.Remove(move);
             KingBlackMoves.Remove(move);
         }
@@ -222,20 +217,21 @@ public class GameState{
         playerStates[1].GetKing().ValidMoves = KingBlackMoves;
     }
     bool FilterPawnMove(PieceState piece, Vector2Int pos){
-        bool pieceAtpos = boardState.GetTile(pos).HasPieceState(),
-            sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour,
-            isDiag = Mathf.Abs(piece.Position.x - pos.x)==1,
-            isDoubleMove = Mathf.Abs(piece.Position.y - pos.y)==2; // also pawns cant jump pieces
-        HashSet<Vector2Int> tilesBetween = Utility.GetIntermediateLinePoints(piece.Position, pos);
+        var tile = boardState.GetTile(pos);
+        bool pieceAtPos = tile.HasPieceState();
+        bool sameColourPieceAtPos = pieceAtPos && tile.pieceState.Colour == piece.Colour;
+        bool isDiagonal = Mathf.Abs(piece.Position.x - pos.x) == 1;
+        bool isDoubleMove = Mathf.Abs(piece.Position.y - pos.y) == 2;
 
-        bool pieceBetween = false;
-        foreach (Vector2Int tilePos in tilesBetween){
-            pieceBetween = boardState.GetTile(tilePos).HasPieceState();
-            if(pieceBetween)
-                break;
-        }
-        return (pieceAtpos && !sameColourPieceAtPos && isDiag) || (!pieceAtpos && !isDiag && (!isDoubleMove || isDoubleMove && !pieceBetween));
+        if (isDoubleMove && pieceAtPos) return false; // Can't jump over pieces
+
+        HashSet<Vector2Int> tilesBetween = Utility.GetIntermediateLinePoints(piece.Position, pos);
+        bool pieceBetween = tilesBetween.Any(tilePos => boardState.GetTile(tilePos).HasPieceState());
+
+        return (pieceAtPos && !sameColourPieceAtPos && isDiagonal) ||
+            (!pieceAtPos && !isDiagonal && (!isDoubleMove || !pieceBetween));
     }
+
     HashSet<Vector2Int> FilterPawnMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> pawnMoves = new HashSet<Vector2Int>();
@@ -259,8 +255,7 @@ public class GameState{
         bool pieceAtpos = boardState.GetTile(pos).HasPieceState(),
             sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
         HashSet<Vector2Int> pointsBetween = Utility.GetIntermediatePoints(piece.Position, pos, Utility.MovementType.Diagonal);
-        foreach (Vector2Int apos in pointsBetween)
-        {
+        foreach (Vector2Int apos in pointsBetween){
             bool pieceAtApos = boardState.GetTile(apos).HasPieceState(),
                 sameColourPieceAtAPos = pieceAtApos && boardState.GetTile(apos).pieceState.Colour==piece.Colour;
             bool isAttackingKingTile = pieceAtApos && boardState.GetTile(apos).pieceState.Type=="King" && !sameColourPieceAtAPos;
@@ -477,35 +472,10 @@ public class GameState{
         Opposition(); // Update the opposition
 
         // Check if playerStates are in check
-        foreach (PlayerState player in playerStates)
-        {
+        foreach (PlayerState player in playerStates){
             UpdateCheckStatus(player); //Debug.Log($"After UpdateCheckStatus: {player.PlayerName} InCheck: {player.InCheck}, DoubleCheck: {player.DoubleCheck}");
             UpdateKingAttack(player.GetKing()); // Update King's moves based on opponent pieces
-        }
-
-                        
-    }
-
-    public void Castle(PieceState king, PieceState rook)
-    {
-        bool correctTypes = king.Type=="King" && rook.Type=="Rook", sameTeam = king.Colour==rook.Colour, firstMoves = king.FirstMove==rook.FirstMove==true;
-        if(correctTypes && sameTeam && firstMoves)
-        {
-            // castling logic base on side
-            // no pieces between king and rook
-            // no opponent pieces attacking the space between king and rook
-            // king not in check
-            // king cannot move into check
-            
-            // king i
-            //White Castles
-            //top left 2
-            //top right 3
-            //Black Castles
-            //bot left 2
-            //bot right 3
-
-        }
+        }                
     }
 
     
@@ -532,7 +502,6 @@ public class GameState{
         // is a castleMove, already moved king now move correct rook
         int direction = targetPosition.x-selectedPieceState.Position.x;
         bool leftSide=direction<0, castleMove = selectedPieceState.Position.y==targetPosition.y && Math.Abs(direction)==2;
-
         if(castleMove){
             // determine the correct rook
             PieceState theRook = null;
@@ -552,8 +521,6 @@ public class GameState{
         Vector2Int lastPosition = selectedPieceState.Position;
         selectedPieceState.Move(targetPosition);
         lastMovedPieceState = selectedPieceState; // Store the last moved piece
-
-
 
         //updates
         UpdateGameState();
@@ -637,7 +604,7 @@ public class Game : MonoBehaviour{
         foreach (Player player in players)
         {
             // Assuming you have access to a list of pieces
-            foreach (Piece piece in player.Pieces) // Adjust this as necessary
+            foreach (Piece piece in player.Pieces)
             {
                 if (piece.State == pieceState)
                 {
@@ -673,21 +640,15 @@ public class Game : MonoBehaviour{
         state.MakeBotMove(fromPosition, targetPosition);
     }
     void ReleasePiece(){
-
-        Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1]; // non-bot playerStates will use GUI so no need for from position
-        HashSet<Vector2Int> gameValidMoves = state.GetMovesAllowed(state.SelectedPieceState);
-        if(gameValidMoves.Contains(targetPosition)){
+        Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1];
+        if (state.GetMovesAllowed(state.SelectedPieceState).Contains(targetPosition))
             state.ExecuteMove(targetPosition);
-            
-            //lastMovedPiece = selectedPiece; // Store the last moved piece
-        }
-        else{
-            //selectedPiece.Position = state.OriginalPosition;
+        else
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
-        }
-        
+
+        // Clear selection
         state.SelectedPieceState = null;
-        selectedPiece = null; // Deselect piece
+        selectedPiece = null;
     }
     void HandleDragAndDrop(){
         if (selectedPiece != null){

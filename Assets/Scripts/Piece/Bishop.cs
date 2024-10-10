@@ -24,7 +24,7 @@ public class BishopState : PieceState
 
     protected override void SetValidMoves()
     {
-        validMoves.Clear(); // Clear previous moves
+        //validMoves.Clear(); // Clear previous moves
         HashSet<Vector2Int> moves = new HashSet<Vector2Int>();
 
         int x = currentPos.x;

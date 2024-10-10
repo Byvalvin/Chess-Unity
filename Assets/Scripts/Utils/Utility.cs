@@ -93,17 +93,12 @@ public static class Utility
     */
     public static HashSet<Vector2Int> GetIntermediatePoints(Vector2Int start, Vector2Int end, MovementType type)
     {
-        switch (type)
-        {
-            case MovementType.Diagonal:
-                return GetIntermediateDiagonalLinePoints(start, end);
-            case MovementType.NonDiagonal:
-                return GetIntermediateNonDiagonalLinePoints(start, end);
-            case MovementType.Any:
-                return GetIntermediateLinePoints(start, end);
-            default:
-                return new HashSet<Vector2Int>(); // Return an empty set for unsupported types
-        }
+        return type switch{
+            MovementType.Diagonal=> GetIntermediateDiagonalLinePoints(start, end),
+            MovementType.NonDiagonal=> GetIntermediateNonDiagonalLinePoints(start, end),
+            MovementType.Any=> GetIntermediateLinePoints(start, end),
+            _=> new HashSet<Vector2Int>() // Return an empty set for unsupported types
+        };
     }
 
     /*
@@ -123,9 +118,8 @@ public static class Utility
         int steps = Mathf.Abs(dx);
 
         for (int i = 1; i < steps; i++)
-        {
             points.Add(new Vector2Int(start.x + i * stepX, start.y + i * stepY));
-        }
+        
         if(includeEnds){
             points.Add(start);
             points.Add(end);
@@ -148,9 +142,8 @@ public static class Utility
         {
             int stepY = (dy > 0) ? 1 : -1;
             for (int i = 1; i < Mathf.Abs(dy); i++)
-            {
                 points.Add(new Vector2Int(start.x, start.y + i * stepY));
-            }
+            
             if(includeEnds){
                 points.Add(start);
                 points.Add(end);
@@ -161,9 +154,8 @@ public static class Utility
         {
             int stepX = (dx > 0) ? 1 : -1;
             for (int i = 1; i < Mathf.Abs(dx); i++)
-            {
                 points.Add(new Vector2Int(start.x + i * stepX, start.y));
-            }
+            
             if(includeEnds){
                 points.Add(start);
                 points.Add(end);
@@ -185,13 +177,9 @@ public static class Utility
         int dy = end.y - start.y;
 
         if (Mathf.Abs(dx) == Mathf.Abs(dy)) // Diagonal move
-        {
             points = GetIntermediateDiagonalLinePoints(start, end, includeEnds);
-        }
         else if (dx == 0 || dy == 0) // Vertical or horizontal move
-        {
             points = GetIntermediateNonDiagonalLinePoints(start, end, includeEnds);
-        }
 
         return points;
     }
@@ -210,9 +198,7 @@ public static class Utility
         };
 
         foreach (var offset in offsets)
-        {
             surroundingPoints.Add(center + offset);
-        }
 
         return surroundingPoints;
     }
@@ -229,12 +215,8 @@ public static class Utility
         int maxY = Mathf.Max(start.y, end.y);
 
         for (int x = minX; x <= maxX; x++)
-        {
             for (int y = minY; y <= maxY; y++)
-            {
                 points.Add(new Vector2Int(x, y));
-            }
-        }
 
         return points;
     }
@@ -248,12 +230,8 @@ public static class Utility
     {
         HashSet<T> result = new HashSet<T>();
         foreach (var item in set)
-        {
             if (predicate(item))
-            {
                 result.Add(item);
-            }
-        }
         return result;
     }
 

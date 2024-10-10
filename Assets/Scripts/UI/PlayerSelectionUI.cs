@@ -9,11 +9,8 @@ public class PlayerSelectionUI : MonoBehaviour
 {
     // Essentials
     private Canvas canvas;
-    private TMP_Dropdown whitePlayerDropdown;
-    private TMP_Dropdown blackPlayerDropdown;
-    private TMP_InputField whitePlayerNameInput;
-    private TMP_InputField blackPlayerNameInput;
-
+    private TMP_Dropdown whitePlayerDropdown, blackPlayerDropdown;
+    private TMP_InputField whitePlayerNameInput, blackPlayerNameInput;
     private Button startButton;
     private Game game;
 
@@ -84,55 +81,31 @@ public class PlayerSelectionUI : MonoBehaviour
         ArrangeUI();
     }
 
-    private void OnWhitePlayerTypeChanged(int index){
-        string selectedPlayerType = whitePlayerDropdown.options[index].text;
+    private void OnWhitePlayerTypeChanged(int index)=>UpdatePlayerName(whitePlayerDropdown, whitePlayerNameInput, blackPlayerDropdown, blackPlayerNameInput);
+    private void OnBlackPlayerTypeChanged(int index)=>UpdatePlayerName(blackPlayerDropdown, blackPlayerNameInput, whitePlayerDropdown, whitePlayerNameInput);
+    
+    private void UpdatePlayerName(TMP_Dropdown currentDropdown, TMP_InputField currentInput, TMP_Dropdown otherDropdown, TMP_InputField otherInput){
+        string selectedPlayerType = currentDropdown.options[currentDropdown.value].text;
+        currentInput.text = selectedPlayerType == "Player" ? currentInput.name : selectedPlayerType;
 
-        // Update the input field based on the selected player type
-        whitePlayerNameInput.text = selectedPlayerType == "Player"? "P1" : selectedPlayerType; // Set the name to the player type
-
-        // Check if player types are the same and update black player's name accordingly
-        if (selectedPlayerType == blackPlayerDropdown.options[blackPlayerDropdown.value].text){
-            // Same type selected
-            whitePlayerNameInput.text = $"{selectedPlayerType}1";
-            blackPlayerNameInput.text = $"{selectedPlayerType}2";
+        if (selectedPlayerType == otherDropdown.options[otherDropdown.value].text)
+        {
+            currentInput.text = $"{selectedPlayerType}1";
+            otherInput.text = $"{selectedPlayerType}2";
         }
-        else{
-            // Different types, remove any number suffix if present
-            blackPlayerNameInput.text = blackPlayerNameInput.text.Replace("1", "").Replace("2", "").Trim();
-        }
-    }
-
-    private void OnBlackPlayerTypeChanged(int index){
-        string selectedPlayerType = blackPlayerDropdown.options[index].text;
-
-        // Update the input field based on the selected player type
-        blackPlayerNameInput.text = selectedPlayerType == "Player"? "P2" : selectedPlayerType; // Set the name to the player type
-
-        // Check if player types are the same and update white player's name accordingly
-        if (selectedPlayerType == whitePlayerDropdown.options[whitePlayerDropdown.value].text){
-            // Same type selected
-            blackPlayerNameInput.text = $"{selectedPlayerType}2";
-            whitePlayerNameInput.text = $"{selectedPlayerType}1";
-        }
-        else{
-            // Different types, remove any number suffix if present
-            whitePlayerNameInput.text = whitePlayerNameInput.text.Replace("1", "").Replace("2", "").Trim();
+        else
+        {
+            otherInput.text = otherInput.text.Replace("1", "").Replace("2", "").Trim();
         }
     }
 
 
-    private TMP_Dropdown CreateDropdown(string name, Color backgroundColor)
-    {
+    private TMP_Dropdown CreateDropdown(string name, Color backgroundColor){
         GameObject dropdownObject = Instantiate(dropdownPrefab);
         dropdownObject.name = name;
         dropdownObject.transform.SetParent(canvas.transform, false);
 
         TMP_Dropdown dropdown = dropdownObject.GetComponent<TMP_Dropdown>();
-        if (dropdown == null){
-            Debug.LogError($"TMP_Dropdown component not found on the instantiated prefab: {name}!");
-            return null;
-        }
-
         dropdown.ClearOptions();
         List<string> playerOptions = PlayerTypeUtility.GetPlayerOptions();
         dropdown.AddOptions(playerOptions);
@@ -173,9 +146,7 @@ public class PlayerSelectionUI : MonoBehaviour
         buttonBackground.sprite = CreateRoundedSprite(); // Set the rounded sprite
 
         // Add event triggers for hover effects
-        EventTrigger eventTrigger = buttonObject.AddComponent<EventTrigger>();
-        eventTrigger.triggers.Add(CreateEventTriggerEntry(() => OnMouseEnter(button), EventTriggerType.PointerEnter));
-        eventTrigger.triggers.Add(CreateEventTriggerEntry(() => OnMouseExit(button), EventTriggerType.PointerExit));
+        AddEventTrigger(buttonObject, button);
 
         return button;
     }
@@ -190,6 +161,13 @@ public class PlayerSelectionUI : MonoBehaviour
 
         // Create a new sprite with rounded corners
         return Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+    }
+
+    private void AddEventTrigger(GameObject buttonObject, Button button)
+    {
+        var eventTrigger = buttonObject.AddComponent<EventTrigger>();
+        eventTrigger.triggers.Add(CreateEventTriggerEntry(() => OnMouseEnter(button), EventTriggerType.PointerEnter));
+        eventTrigger.triggers.Add(CreateEventTriggerEntry(() => OnMouseExit(button), EventTriggerType.PointerExit));
     }
 
     private EventTrigger.Entry CreateEventTriggerEntry(Action action, EventTriggerType eventType){
@@ -246,75 +224,43 @@ public class PlayerSelectionUI : MonoBehaviour
 
         // Check for TMP_InputField component
         TMP_InputField inputField = inputFieldObject.GetComponent<TMP_InputField>();
-        if (inputField == null){
-            Debug.LogError("TMP_InputField component not found on instantiated prefab.");
-            return null;
-        }
 
         // Set placeholder text
         if (inputField.placeholder is TextMeshProUGUI placeholder){
             placeholder.text = placeholderText;
         }
-        else{
-            Debug.LogError("Placeholder not found in TMP_InputField.");
-        }
 
         // Set background color
         Image backgroundImage = inputFieldObject.GetComponent<Image>();
-        if (backgroundImage != null) {
-            backgroundImage.color = fieldColour; // Set your desired background color here
-        } else {
-            Debug.LogError("Background image not found in TMP_InputField.");
-        }
+        backgroundImage.color = fieldColour; // Set your desired background color here
 
         return inputField;
     }
 
 
-
-    private void ArrangeUI(){
-        // Set the position for the image at the top center
-        RectTransform logoRect = canvas.transform.Find("GameLogo").GetComponent<RectTransform>();
-        logoRect.anchorMin = new Vector2(0.5f, 1);
-        logoRect.anchorMax = new Vector2(0.5f, 1);
+    private void ArrangeUI()
+    {
+        var logoRect = canvas.transform.Find("GameLogo").GetComponent<RectTransform>();
         logoRect.anchoredPosition = new Vector2(0, -100);
 
-        // Set the position for the input fields above the dropdowns
-        RectTransform whiteInputRect = whitePlayerNameInput.GetComponent<RectTransform>();
-        whiteInputRect.anchorMin = new Vector2(0.4f, 0.7f);
-        whiteInputRect.anchorMax = new Vector2(0.4f, 0.7f);
-        whiteInputRect.anchoredPosition = new Vector2(-60, -70);
+        SetPosition(whitePlayerNameInput, 0.4f, 0.7f, new Vector2(-60, -70));
+        SetPosition(blackPlayerNameInput, 0.6f, 0.7f, new Vector2(60, -70));
+        SetPosition(whitePlayerDropdown, 0.4f, 0.5f, new Vector2(-60, 0));
+        SetPosition(blackPlayerDropdown, 0.6f, 0.5f, new Vector2(60, 0));
+        SetPosition(startButton, 0.5f, 0.4f, new Vector2(0, -50));
+    }
 
-        RectTransform blackInputRect = blackPlayerNameInput.GetComponent<RectTransform>();
-        blackInputRect.anchorMin = new Vector2(0.6f, 0.7f);
-        blackInputRect.anchorMax = new Vector2(0.6f, 0.7f);
-        blackInputRect.anchoredPosition = new Vector2(60, -70);
-
-        // Set the position for the dropdowns below the input fields
-        RectTransform whiteDropdownRect = whitePlayerDropdown.GetComponent<RectTransform>();
-        whiteDropdownRect.anchorMin = new Vector2(0.4f, 0.5f);
-        whiteDropdownRect.anchorMax = new Vector2(0.4f, 0.5f);
-        whiteDropdownRect.anchoredPosition = new Vector2(-60, 0);
-
-        RectTransform blackDropdownRect = blackPlayerDropdown.GetComponent<RectTransform>();
-        blackDropdownRect.anchorMin = new Vector2(0.6f, 0.5f);
-        blackDropdownRect.anchorMax = new Vector2(0.6f, 0.5f);
-        blackDropdownRect.anchoredPosition = new Vector2(60, 0);
-
-        // Set the position for the button below the dropdowns
-        RectTransform buttonRect = startButton.GetComponent<RectTransform>();
-        buttonRect.anchorMin = new Vector2(0.5f, 0.4f);
-        buttonRect.anchorMax = new Vector2(0.5f, 0.4f);
-        buttonRect.anchoredPosition = new Vector2(0, -50);
+    private void SetPosition(Component component, float anchorX, float anchorY, Vector2 anchoredPosition)
+    {
+        var rectTransform = component.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(anchorX, anchorY);
+        rectTransform.anchorMax = new Vector2(anchorX, anchorY);
+        rectTransform.anchoredPosition = anchoredPosition;
     }
 
 
-    private void OnStartButtonClicked(){
-        if (whitePlayerDropdown.value < 0 || blackPlayerDropdown.value < 0)
-        {
-            Debug.LogError("Dropdown values are invalid.");
-            return;
-        }
+    private void OnStartButtonClicked()
+    {
         if (game == null)
         {
             Debug.LogError("Game component not found!");
@@ -324,17 +270,14 @@ public class PlayerSelectionUI : MonoBehaviour
         string whitePlayerType = whitePlayerDropdown.options[whitePlayerDropdown.value].text;
         string blackPlayerType = blackPlayerDropdown.options[blackPlayerDropdown.value].text;
 
-        // Get player names from input fields
-        string whitePlayerName = whitePlayerNameInput.text.Trim();
-        string blackPlayerName = blackPlayerNameInput.text.Trim();
-
-        if (string.IsNullOrEmpty(whitePlayerName)) whitePlayerName = "P1"; // Default name if empty
-        if (string.IsNullOrEmpty(blackPlayerName)) blackPlayerName = "P2"; // Default name if empty
+        string whitePlayerName = string.IsNullOrEmpty(whitePlayerNameInput.text.Trim()) ? "P1" : whitePlayerNameInput.text.Trim();
+        string blackPlayerName = string.IsNullOrEmpty(blackPlayerNameInput.text.Trim()) ? "P2" : blackPlayerNameInput.text.Trim();
 
         Debug.Log($"Selected White Player: {whitePlayerType} ({whitePlayerName}), Black Player: {blackPlayerType} ({blackPlayerName})");
 
         game.InitializeGame(whitePlayerType, blackPlayerType, whitePlayerName, blackPlayerName);
-        
+
+        // Clean up UI
         Destroy(canvas.gameObject);
     }
 

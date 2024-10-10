@@ -37,20 +37,21 @@ public class PawnState : PieceState
 
     protected override void SetValidMoves()
     {
-        validMoves.Clear(); // Clear previous moves
+        //validMoves.Clear(); // Clear previous moves
+        int forwardStep = colour ? -1 : 1;
         HashSet<Vector2Int> moves = new HashSet<Vector2Int>
         {
-            new Vector2Int(currentPos.x, currentPos.y + (colour ? -1 : 1)) // One space forward
+            new Vector2Int(currentPos.x, currentPos.y + forwardStep) // One space forward
         };
 
         if (firstMove)
         {
-            moves.Add(new Vector2Int(currentPos.x, currentPos.y + (colour ? -2 : 2))); // Two spaces forward
+            moves.Add(new Vector2Int(currentPos.x, currentPos.y + 2*forwardStep)); // Two spaces forward
         }
 
         // Diagonal captures
-        moves.Add(new Vector2Int(currentPos.x - 1, currentPos.y + (colour ? -1 : 1)));
-        moves.Add(new Vector2Int(currentPos.x + 1, currentPos.y + (colour ? -1 : 1)));
+        moves.Add(new Vector2Int(currentPos.x - 1, currentPos.y + forwardStep));
+        moves.Add(new Vector2Int(currentPos.x + 1, currentPos.y + forwardStep));
 
         validMoves = FindAll(moves);
     }
