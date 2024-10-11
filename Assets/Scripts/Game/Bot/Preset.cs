@@ -6,6 +6,15 @@ using System;
 
 public class PresetState : BotState
 {
+    private static readonly Dictionary<char, string> pieceTypeNotationMap = new Dictionary<char, string>
+    {
+        { 'K', "King" },
+        { 'Q', "Queen" },
+        { 'R', "Rook" },
+        { 'B', "Bishop" },
+        { 'N', "Knight" },
+        // Add other mappings if needed
+    };
     private int moveIndex = 0;
     private List<string> MoveList; // List to store move strings
 
@@ -85,12 +94,16 @@ public class PresetState : BotState
 
     private Vector2Int[] HandlePieceMove(string move)
     {
+        Debug.Log(move.Substring(1));
         Vector2Int targetPosition = ChessNotationToVector2Int(move.Substring(1));
-        string pieceChar = move[0].ToString();
+        char pieceChar = move[0];
+        Debug.Log(pieceChar + " " + pieceTypeNotationMap[pieceChar]);
 
         foreach (PieceState piece in PieceStates)
         {
-            if (piece.Type.StartsWith(pieceChar, StringComparison.OrdinalIgnoreCase) && piece.ValidMoves.Contains(targetPosition))
+            Debug.Log(pieceChar + " " + pieceTypeNotationMap[pieceChar] + " and " + piece.Type);
+            Debug.Log(piece.Position + "====" + targetPosition);
+            if (pieceTypeNotationMap[pieceChar]==piece.Type && piece.ValidMoves.Contains(targetPosition))
             {
                 return new[] { piece.Position, targetPosition };
             }
@@ -137,12 +150,22 @@ public class PresetState : BotState
     private Vector2Int[] HandleKingsideCastling()
     {
         // Implement kingside castling logic
+        Vector2Int castleFrom = new Vector2Int(3, Colour?7:0),
+                castleTo = new Vector2Int(1, Colour?7:0);
+        if(GetKing().Position==castleFrom && GetKing().ValidMoves.Contains(castleTo))
+            return new[]{castleFrom, castleTo};
+        
         return null; // Placeholder
     }
 
     private Vector2Int[] HandleQueensideCastling()
     {
         // Implement queenside castling logic
+        Vector2Int castleFrom = new Vector2Int(3, Colour?7:0),
+                castleTo = new Vector2Int(5, Colour?7:0);
+        if(GetKing().Position==castleFrom && GetKing().ValidMoves.Contains(castleTo))
+            return new[]{castleFrom, castleTo};
+
         return null; // Placeholder
     }
 
