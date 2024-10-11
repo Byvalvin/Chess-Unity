@@ -10,7 +10,7 @@ public class PlayerSelectionUI : MonoBehaviour
     // Essentials
     private Canvas canvas;
     private TMP_Dropdown whitePlayerDropdown, blackPlayerDropdown;
-    private TMP_InputField whitePlayerNameInput, blackPlayerNameInput;
+    private TMP_InputField whitePlayerNameInput, blackPlayerNameInput, filePathInput;
     private Button startButton;
     private Game game;
 
@@ -72,6 +72,8 @@ public class PlayerSelectionUI : MonoBehaviour
         // Create Player Name Input Fields
         whitePlayerNameInput = CreateInputField("WhitePlayerNameInput", "P1", whiteUIcolour);
         blackPlayerNameInput = CreateInputField("BlackPlayerNameInput", "P2", blackUIcolour);
+        // also for filepaths
+        filePathInput = CreateInputField("FilePathInputField", "Path to Moves.txt", Color.white);
 
         // Create Start Button
         startButton = CreateTMPButton("StartButton", "Start Game");
@@ -245,6 +247,7 @@ public class PlayerSelectionUI : MonoBehaviour
 
         SetPosition(whitePlayerNameInput, 0.4f, 0.7f, new Vector2(-60, -70));
         SetPosition(blackPlayerNameInput, 0.6f, 0.7f, new Vector2(60, -70));
+        SetPosition(filePathInput, 0.5f, 0.3f, new Vector2(0, -100)); // Adjust position
         SetPosition(whitePlayerDropdown, 0.4f, 0.5f, new Vector2(-60, 0));
         SetPosition(blackPlayerDropdown, 0.6f, 0.5f, new Vector2(60, 0));
         SetPosition(startButton, 0.5f, 0.4f, new Vector2(0, -50));
@@ -257,7 +260,19 @@ public class PlayerSelectionUI : MonoBehaviour
         rectTransform.anchorMax = new Vector2(anchorX, anchorY);
         rectTransform.anchoredPosition = anchoredPosition;
     }
+    private string ValidateFilePath(string filePath){
+        if (string.IsNullOrEmpty(filePath))
+            return "File path cannot be empty.";
+        
+        if (!System.IO.File.Exists(filePath))
+            return "The specified file does not exist.";
+        
 
+        if (!filePath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+            return "Please provide a valid .txt file.";
+        
+        return null; // No errors
+    }
 
     private void OnStartButtonClicked()
     {
@@ -273,9 +288,24 @@ public class PlayerSelectionUI : MonoBehaviour
         string whitePlayerName = string.IsNullOrEmpty(whitePlayerNameInput.text.Trim()) ? "P1" : whitePlayerNameInput.text.Trim();
         string blackPlayerName = string.IsNullOrEmpty(blackPlayerNameInput.text.Trim()) ? "P2" : blackPlayerNameInput.text.Trim();
 
+        string filePath = filePathInput.text.Trim();
+        bool isPresetWhite = whitePlayerType == "Preset";
+        bool isPresetBlack = blackPlayerType == "Preset";
+
+        // Validate file path if either player is a Preset
+        if (isPresetWhite || isPresetBlack)
+        {
+            string errorMessage = ValidateFilePath(filePath);
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                Debug.LogError(errorMessage);
+                return; // Stop execution if path is invalid
+            }
+        }
+
         Debug.Log($"Selected White Player: {whitePlayerType} ({whitePlayerName}), Black Player: {blackPlayerType} ({blackPlayerName})");
 
-        game.InitializeGame(whitePlayerType, blackPlayerType, whitePlayerName, blackPlayerName);
+        game.InitializeGame(whitePlayerType, blackPlayerType, whitePlayerName, blackPlayerName, filePath);
 
         // Clean up UI
         Destroy(canvas.gameObject);

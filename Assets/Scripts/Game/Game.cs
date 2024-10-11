@@ -481,7 +481,7 @@ public class GameState{
     
     public Vector2Int ExecuteMove(Vector2Int targetPosition){
         // Check for capture
-        if (isCapture(targetPosition)){
+        if (IsCapture(targetPosition)){
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
             playerStates[currentIndex].Capture(captured);
             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
@@ -531,7 +531,7 @@ public class GameState{
         return lastPosition;
     }
 
-    bool isCapture(Vector2Int targetPosition) => boardState.GetTile(targetPosition).HasPieceState();
+    public bool IsCapture(Vector2Int targetPosition) => boardState.GetTile(targetPosition).HasPieceState();
 }
 
 
@@ -672,9 +672,9 @@ public class Game : MonoBehaviour{
             HandleDragAndDrop();
     }
 
-    public void InitializeGame(string whitePlayerType, string blackPlayerType, string whitePlayerName, string blackPlayerName)
+    public void InitializeGame(string whitePlayerType, string blackPlayerType, string whitePlayerName, string blackPlayerName, string filePath)
     {
-        InitializePlayers(whitePlayerType, blackPlayerType, whitePlayerName, blackPlayerName);
+        InitializePlayers(whitePlayerType, blackPlayerType, whitePlayerName, blackPlayerName, filePath);
         // Initialize board after players are set
         InitializeBoard();
         state.UpdateGameState(); // ready to start
@@ -698,13 +698,13 @@ public class Game : MonoBehaviour{
             (P2State as BotState).CurrentGame = this.state;
     }
 
-    private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName, string whitePlayerName, string blackPlayerName)
+    private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName, string whitePlayerName, string blackPlayerName, string filePath)
     {
         Debug.Log("here1 " + whitePlayerTypeName + " " + blackPlayerTypeName);
 
 
-        PlayerState P1State = CreatePlayerState(whitePlayerTypeName, whitePlayerName, true);
-        PlayerState P2State = CreatePlayerState(blackPlayerTypeName, blackPlayerName, false);
+        PlayerState P1State = CreatePlayerState(whitePlayerTypeName, whitePlayerName, true, filePath);
+        PlayerState P2State = CreatePlayerState(blackPlayerTypeName, blackPlayerName, false, filePath);
         InitializeGameState(P1State, P2State);
 
         // Dynamically add the components using the Type objects
@@ -738,7 +738,7 @@ public class Game : MonoBehaviour{
     }
 
 
-    private PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite)
+    private PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite, string filePath)
     {
         // Use reflection to instantiate the appropriate player state
         var type = System.Reflection.Assembly.GetExecutingAssembly().GetTypes()
@@ -746,7 +746,10 @@ public class Game : MonoBehaviour{
         
         if (type != null)
         {
-            PlayerState playerState = (PlayerState)Activator.CreateInstance(type, playerName, isWhite);
+            PlayerState playerState = (playerTypeName=="Preset")? 
+                new PresetState(playerName, isWhite, filePath) 
+                : 
+                (PlayerState)Activator.CreateInstance(type, playerName, isWhite);
             //Debug.Log("Player stement" + playerState+" "+(playerState is AvengerState));
             return playerState;
         }
