@@ -515,6 +515,13 @@ public class GameState{
                 theRook.Move(rookCastlePosition);
             }
         }
+        
+        // promotion moves
+        bool isPromotion = selectedPieceState is PawnState && targetPosition.y==selectedPieceState.Colour?0:7; 
+        if(isPromotion){
+            // only handled move exxecution
+            
+        }
 
         // Move the piece
         boardState.MovePiece(selectedPieceState.Position, targetPosition);
@@ -642,7 +649,19 @@ public class Game : MonoBehaviour{
     void ReleasePiece(){
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1];
         if (state.GetMovesAllowed(state.SelectedPieceState).Contains(targetPosition))
-            state.ExecuteMove(targetPosition);
+            // promotion moves
+            bool isPromotion = selectedPieceState is PawnState && targetPosition.y==selectedPieceState.Colour?0:7; 
+            if(isPromotion){
+                // show promotion UI
+                string choice = "Queen"; // from selection UI
+                if(choice!=""){
+                    
+                }
+                
+            }else{
+                state.ExecuteMove(targetPosition);
+            }
+            
         else
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
 
