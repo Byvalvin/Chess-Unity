@@ -67,6 +67,7 @@ public class PresetState : BotState
         { 'B', "Bishop" },
         { 'N', "Knight" },
         // Add other mappings if needed
+        {'P', "Pawn"}, // will manual add P for explicit pawn notation for none forward pawn moves
     };
     private int moveIndex = 0;
     private List<string> MoveList; // List to store move strings
@@ -124,14 +125,119 @@ public class PresetState : BotState
             move = move.Substring(0, move.Length - 1);
         }
 
-        if (move.Length == 2) return HandlePawnMove(move);
+        if (move.Contains("=")) return HandlePromotionMove(move);
         if (move == "O-O" || move == "O-O-O") return HandleCastlingMove(move);
-        if (move.Length == 3) return HandlePieceMove(move);
-        if (move.Length == 4) return HandleCaptureOrSpecialMove(move);
+        if (move.Length == 2) return HandlePawnMove(move);
+        if (move.Length == 3) return HandleSimplePieceMove(move);
+        if (move.Length >= 4) return HandleSpecialMove(move);
         return null; // Invalid move
     }
 
-    private Vector2Int[] HandlePawnMove(string move)
+
+
+    private Vector2Int[] HandleSpecialMove(string move)
+    {
+        string processedMove = ProcessCapture(move);
+        processedMove=ExplicitPawnMove(processedMove);
+        if(processedMove.Length >= 6 && processedMove.Contains('-')) return HandleDisamiguationMove(processedMove);
+    
+        if (processedMove.Length == 3) return HandleSimplePieceMove(processedMove);
+        if (processedMove.Length == 4) return HandleComplexPieceMove(processedMove);
+        
+        return null; // No valid capture or special move found
+    }
+
+    private Vector2Int[] HandleDisamiguationMove(string move){ // further processing
+        string[] fromAndToInfo = move.Split('-');
+        string fromInfo = fromAndToInfo[0].Trim(), toInfo = fromAndToInfo[1].Trim();
+        char pieceChar = fromInfo[0];
+
+        Vector2Int startPosition = ChessNotationToVector2Int(lastNChars(fromInfo, 2)); // last two characters
+        Vector2Int targetPosition = ChessNotationToVector2Int(toInfo); 
+
+        foreach (PieceState piece in PieceStates){
+            if (pieceTypeNotationMap[pieceChar]==piece.Type && piece.ValidMoves.Contains(targetPosition) && piece.Position==startPosition)
+            {
+                Debug.Log("move is disamg"+ new[] { piece.Position, targetPosition });
+                return new[] { piece.Position, targetPosition };
+            }
+        }
+        return null; // No valid pawn move found
+
+        
+    }
+    private Vector2Int[] HandlePromotionMove(string move){
+        string[] fromAndToInfo = move.Split('=');
+        string fromInfo = fromAndToInfo[0].Trim(), toInfo = fromAndToInfo[1].Trim();
+        string processedMove = ProcessCapture(fromInfo);
+        
+        if(processedMove.Length==2) return HandlePawnMove(processedMove);
+        processedMove = ExplicitPawnMove(processedMove);
+        return HandleComplexPieceMove(processedMove);
+
+    }
+
+    string ProcessCapture(string move)=> move.Contains('x')? move.Replace("x","") : move;
+    string ExplicitPawnMove(string move)=>char.IsLower(move[0])? "P"+move : move;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private Vector2Int[] HandleCastlingMove(string move)
+    {
+        return move switch
+        {
+            "O-O"=>HandleKingsideCastling(),
+            "O-O-O"=>HandleQueensideCastling(),
+            _=>null
+        };
+
+    }
+    private Vector2Int[] HandleKingsideCastling(){
+        // Implement kingside castling logic
+        Vector2Int castleFrom = new Vector2Int(3, Colour?7:0),
+                castleTo = new Vector2Int(1, Colour?7:0);
+        if(GetKing().Position==castleFrom && GetKing().ValidMoves.Contains(castleTo))
+            return new[]{castleFrom, castleTo};
+        return null;
+    }
+    private Vector2Int[] HandleQueensideCastling(){
+        // Implement queenside castling logic
+        Vector2Int castleFrom = new Vector2Int(3, Colour?7:0),
+                castleTo = new Vector2Int(5, Colour?7:0);
+        if(GetKing().Position==castleFrom && GetKing().ValidMoves.Contains(castleTo))
+            return new[]{castleFrom, castleTo};
+        return null; 
+    }
+    private Vector2Int[] HandlePawnMove(string move) // 2 char string. fwd pawn move
     {
         Vector2Int targetPosition = ChessNotationToVector2Int(move);
         foreach (PieceState piece in PieceStates)
@@ -145,10 +251,9 @@ public class PresetState : BotState
         return null; // No valid pawn move found
     }
 
-    private Vector2Int[] HandlePieceMove(string move)
+    private Vector2Int[] HandleSimplePieceMove(string move) // 3 char string
     {
-        // need to habdle exd5 AND STUFF TOO FOR THREE PIECES OR MAKE A FOUR PIECE AND TURN exd5 to Ped5
-        Vector2Int targetPosition = ChessNotationToVector2Int(move.Substring(1));
+        Vector2Int targetPosition = ChessNotationToVector2Int(lastNChars(move,2)); // last 2 chars (starts from index 1 for 3 char string)
         char pieceChar = move[0];
         foreach (PieceState piece in PieceStates)
         {
@@ -159,76 +264,20 @@ public class PresetState : BotState
         }
         return null; // No valid piece move found
     }
-
-    private Vector2Int[] HandleCaptureOrSpecialMove(string move)
+    private Vector2Int[] HandleComplexPieceMove(string move) // 4 char string
     {
-        bool isCapture = move[1] == 'x';
-        // can process and delegat to two or three piece OR FOUR PIECE (Qac4 vs Qbc4(can even inlcue ed5 as Ped5) so not Qxc4),
-        /* so if move is castle
-                -> return castle moves
-            else
-            if move has - or movelength >=6 Nb1-c3 vs Nd1-c3 OR N1b1-c3 vs N2d1-c3
-                -> return disamguituion
-            if move has =
-                -> return promotion move
-            else
-                ->return process move(move reduced to 2,3 or 4 and handled)
-        */
-
-        // char pieceChar = move[0];
-        // Vector2Int targetPosition = ChessNotationToVector2Int(move.Substring(isCapture ? 2 : 1));
-
-        // foreach (PieceState piece in PieceStates)
-        // {
-        //     if (pieceTypeNotationMap[pieceChar]==piece.Type)
-        //     {
-        //         if (isCapture && piece.ValidMoves.Contains(targetPosition) && currentGame.IsCapture(targetPosition))
-        //         {
-        //             return new[] { piece.Position, targetPosition };
-        //         }
-        //         else if (!isCapture && piece.ValidMoves.Contains(targetPosition))
-        //         {
-        //             return new[] { piece.Position, targetPosition };
-        //         }
-        //     }
-        // }
-
-        return null; // No valid capture or special move found
-    }
-
-    private Vector2Int[] HandleCastlingMove(string move)
-    {
-        if (move == "O-O")
+        // need to habdle exd5 AND STUFF TOO FOR THREE PIECES OR MAKE A FOUR PIECE AND TURN exd5 to Ped5
+        int startX = 7 - (move[1]-'a');
+        Vector2Int targetPosition = ChessNotationToVector2Int(lastNChars(move,2)); // last two characters, (start from index 2 for 4 char string)
+        char pieceChar = move[0];
+        foreach (PieceState piece in PieceStates)
         {
-            return HandleKingsideCastling();
+            if (pieceTypeNotationMap[pieceChar]==piece.Type && piece.ValidMoves.Contains(targetPosition) && piece.Position.x==startX)
+            {
+                return new[] { piece.Position, targetPosition };
+            }
         }
-        else if (move == "O-O-O")
-        {
-            return HandleQueensideCastling();
-        }
-        return null; // Not a valid castling move
-    }
-
-    private Vector2Int[] HandleKingsideCastling()
-    {
-        // Implement kingside castling logic
-        Vector2Int castleFrom = new Vector2Int(3, Colour?7:0),
-                castleTo = new Vector2Int(1, Colour?7:0);
-        if(GetKing().Position==castleFrom && GetKing().ValidMoves.Contains(castleTo))
-            return new[]{castleFrom, castleTo};
-        
-        return null; // Placeholder
-    }
-
-    private Vector2Int[] HandleQueensideCastling()
-    {
-        // Implement queenside castling logic
-        Vector2Int castleFrom = new Vector2Int(3, Colour?7:0),
-                castleTo = new Vector2Int(5, Colour?7:0);
-        if(GetKing().Position==castleFrom && GetKing().ValidMoves.Contains(castleTo))
-            return new[]{castleFrom, castleTo};
-
-        return null; // Placeholder
+        return null; // No valid piece move found
     }
 
     private Vector2Int ChessNotationToVector2Int(string notation)
@@ -237,6 +286,7 @@ public class PresetState : BotState
         int y = 7 - (notation[1] - '1');
         return new Vector2Int(x, y);
     }
+    private string lastNChars(string inputString, int n) => inputString.Substring(inputString.Length-n);
 }
 
 
