@@ -3,7 +3,60 @@ using UnityEngine;
 using System.IO;
 using System;
 
+/*
+1. Basic Moves
+Pawns:
+Move: e4 (pawn moves to e4)
+Pieces:
+Knight moves: Nf3 (knight to f3)
+Bishop moves: Bc4 (bishop to c4)
 
+2. Captures
+Pawns:
+Capture: exd5 (pawn on e captures on d5)
+Pieces:
+Knight captures: Nxe5 (knight captures on e5)
+
+3. Check and Checkmate
+Check:
+Rf7+ (rook to f7 with check)
+Checkmate:
+Qh5# (queen to h5 checkmate)
+
+4. Castling
+Kingside Castling:
+O-O (king-side castling)
+Queenside Castling:
+O-O-O (queen-side castling)
+
+5. Promotion
+Promotion Example:
+e8=Q (pawn promotes to queen on e8)
+
+6. Disambiguation
+Two Knights on the Same File:
+Knight on b1 moves to c3: Nbc3
+Knight on b3 moves to c3: Nbc3
+
+7. Disambiguation with Rank and File
+If two knights are on different files:
+Knight on b1: N1b1-c3
+Knight on d1: N2d1-c3
+
+8. Ambiguous Moves
+If a queen can move from either a3 or b3 to c4:
+From a3: Qac4
+From b3: Qbc4
+
+9. Game Notation
+Complete Game Sample:
+e4 e5
+Nf3 Nc6
+Bb5 a6
+Ba4 Nf6
+O-O Be7
+This covers a variety of notation cases in chess, demonstrating the flexibility and detail available in the notation system!
+*/
 public class PresetState : BotState
 {
     private static readonly Dictionary<char, string> pieceTypeNotationMap = new Dictionary<char, string>
@@ -94,15 +147,11 @@ public class PresetState : BotState
 
     private Vector2Int[] HandlePieceMove(string move)
     {
-        Debug.Log(move.Substring(1));
+        // need to habdle exd5 AND STUFF TOO FOR THREE PIECES OR MAKE A FOUR PIECE AND TURN exd5 to Ped5
         Vector2Int targetPosition = ChessNotationToVector2Int(move.Substring(1));
         char pieceChar = move[0];
-        Debug.Log(pieceChar + " " + pieceTypeNotationMap[pieceChar]);
-
         foreach (PieceState piece in PieceStates)
         {
-            Debug.Log(pieceChar + " " + pieceTypeNotationMap[pieceChar] + " and " + piece.Type);
-            Debug.Log(piece.Position + "====" + targetPosition);
             if (pieceTypeNotationMap[pieceChar]==piece.Type && piece.ValidMoves.Contains(targetPosition))
             {
                 return new[] { piece.Position, targetPosition };
@@ -114,23 +163,36 @@ public class PresetState : BotState
     private Vector2Int[] HandleCaptureOrSpecialMove(string move)
     {
         bool isCapture = move[1] == 'x';
-        string pieceChar = move[0].ToString();
-        Vector2Int targetPosition = ChessNotationToVector2Int(move.Substring(isCapture ? 2 : 1));
+        // can process and delegat to two or three piece OR FOUR PIECE (Qac4 vs Qbc4(can even inlcue ed5 as Ped5) so not Qxc4),
+        /* so if move is castle
+                -> return castle moves
+            else
+            if move has - or movelength >=6 Nb1-c3 vs Nd1-c3 OR N1b1-c3 vs N2d1-c3
+                -> return disamguituion
+            if move has =
+                -> return promotion move
+            else
+                ->return process move(move reduced to 2,3 or 4 and handled)
+        */
 
-        foreach (PieceState piece in PieceStates)
-        {
-            if (piece.Type.StartsWith(pieceChar, StringComparison.OrdinalIgnoreCase))
-            {
-                if (isCapture && piece.ValidMoves.Contains(targetPosition) && currentGame.IsCapture(targetPosition))
-                {
-                    return new[] { piece.Position, targetPosition };
-                }
-                else if (!isCapture && piece.ValidMoves.Contains(targetPosition))
-                {
-                    return new[] { piece.Position, targetPosition };
-                }
-            }
-        }
+        // char pieceChar = move[0];
+        // Vector2Int targetPosition = ChessNotationToVector2Int(move.Substring(isCapture ? 2 : 1));
+
+        // foreach (PieceState piece in PieceStates)
+        // {
+        //     if (pieceTypeNotationMap[pieceChar]==piece.Type)
+        //     {
+        //         if (isCapture && piece.ValidMoves.Contains(targetPosition) && currentGame.IsCapture(targetPosition))
+        //         {
+        //             return new[] { piece.Position, targetPosition };
+        //         }
+        //         else if (!isCapture && piece.ValidMoves.Contains(targetPosition))
+        //         {
+        //             return new[] { piece.Position, targetPosition };
+        //         }
+        //     }
+        // }
+
         return null; // No valid capture or special move found
     }
 
