@@ -5,7 +5,7 @@ using System;
 
 public class PresetState : BotState
 {
-    private NotationParser presetNotationParser = new NotationParser(this);
+    static NotationParser presetNotationParser = null;
     
     private int moveIndex = 0;
     private List<string> MoveList; // List to store move strings
@@ -14,6 +14,7 @@ public class PresetState : BotState
     {
         MoveList = new List<string>();
         LoadMovesFromFile(filePath);
+        if(presetNotationParser==null) presetNotationParser = new NotationParser(this);
     }
 
     public PresetState(PresetState original) : base(original)
@@ -21,6 +22,7 @@ public class PresetState : BotState
         moveIndex = original.moveIndex;
         MoveList = new List<string>(original.MoveList);
     }
+    public override PlayerState Clone() => new PresetState(this);
 
     public override Vector2Int[] GetMove() // uses no evaluation
     {

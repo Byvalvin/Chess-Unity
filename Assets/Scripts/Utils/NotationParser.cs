@@ -168,17 +168,17 @@ public class NotationParser{
         }
         private Vector2Int[] HandleKingsideCastling(){
             // Implement kingside castling logic
-            Vector2Int castleFrom = new Vector2Int(3, Colour?7:0),
-                    castleTo = new Vector2Int(1, Colour?7:0);
-            if(GetKing().Position==castleFrom && GetKing().ValidMoves.Contains(castleTo))
+            Vector2Int castleFrom = new Vector2Int(3, parsingPlayer.Colour?7:0),
+                    castleTo = new Vector2Int(1, parsingPlayer.Colour?7:0);
+            if(parsingPlayer.GetKing().Position==castleFrom && parsingPlayer.GetKing().ValidMoves.Contains(castleTo))
                 return new[]{castleFrom, castleTo};
             return null;
         }
         private Vector2Int[] HandleQueensideCastling(){
             // Implement queenside castling logic
-            Vector2Int castleFrom = new Vector2Int(3, Colour?7:0),
-                    castleTo = new Vector2Int(5, Colour?7:0);
-            if(GetKing().Position==castleFrom && GetKing().ValidMoves.Contains(castleTo))
+            Vector2Int castleFrom = new Vector2Int(3, parsingPlayer.Colour?7:0),
+                    castleTo = new Vector2Int(5, parsingPlayer.Colour?7:0);
+            if(parsingPlayer.GetKing().Position==castleFrom && parsingPlayer.GetKing().ValidMoves.Contains(castleTo))
                 return new[]{castleFrom, castleTo};
             return null; 
         }

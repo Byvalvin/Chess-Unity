@@ -14,6 +14,8 @@ public class GameState{
     Vector2Int originalPosition;
     private bool checkmate = false;
 
+    private string promoteTo = "";
+
     public BoardState CurrentBoardState{
         get=>boardState;
         set=>boardState=value;
@@ -52,8 +54,8 @@ public class GameState{
         this.lastMovedPieceState = original.lastMovedPieceState?.Clone();
         this.originalPosition = original.originalPosition;
         this.checkmate = original.checkmate;
+        this.promoteTo = original.promoteTo;
     }
-
     public GameState Clone()=>new GameState(this);
 
     public void SwitchPlayer()=>currentIndex = (currentIndex + 1) % playerStates.Length;
@@ -457,18 +459,15 @@ public class GameState{
 
     public void UpdateGameState(){
         // Reset and filter valid moves for each piece
-        foreach (PlayerState player in playerStates){
+        foreach (PlayerState player in playerStates)
             foreach (PieceState piece in player.PieceStates){
                 piece.ResetValidMoves();
                 piece.ValidMoves = FilterMoves(piece);
 
                 // Reset en passant status after each move
                 if (piece is PawnState pawn)
-                    pawn.ResetEnPassant();
-
-                    
-            }
-        }
+                    pawn.ResetEnPassant();   
+            } 
         Opposition(); // Update the opposition
 
         // Check if playerStates are in check
@@ -507,8 +506,7 @@ public class GameState{
             PieceState theRook = null;
             Vector2Int rookCastlePosition = default;
             if(boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).HasPieceState()
-            && boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).pieceState is RookState rookState)
-            {
+            && boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).pieceState is RookState rookState){
                 theRook = rookState;
                 rookCastlePosition = new Vector2Int(selectedPieceState.Position.x+ direction+(leftSide?1:-1), selectedPieceState.Position.y);
                 boardState.MovePiece(theRook.Position, rookCastlePosition);
@@ -517,7 +515,7 @@ public class GameState{
         }
         
         // promotion moves
-        bool isPromotion = selectedPieceState is PawnState && targetPosition.y==selectedPieceState.Colour?0:7; 
+        bool isPromotion = selectedPieceState is PawnState && targetPosition.y==(selectedPieceState.Colour?0:7); 
         if(isPromotion){
             // only handled move exxecution
             
@@ -600,6 +598,30 @@ public class Game : MonoBehaviour{
 
     Piece selectedPiece;
 
+    public GameObject promotionUIPrefab; // Assign this in the inspector
+    private PromotionUI currentPromotionUI;
+
+    // Call this method when a pawn reaches the last rank
+    public void ShowPromotionOptions(Vector2 position)
+    {
+        if (currentPromotionUI != null)
+        {
+            Destroy(currentPromotionUI.gameObject); // Remove the previous UI if it exists
+        }
+
+        currentPromotionUI = Instantiate(promotionUIPrefab, position, Quaternion.identity, transform).GetComponent<PromotionUI>();
+
+        // Show the UI and handle the promotion callback
+        currentPromotionUI.Show(OnPromotionSelected);
+    }
+
+    private void OnPromotionSelected(string pieceType)
+    {
+        // Handle the promotion logic based on selected piece type
+        Debug.Log($"Promoted to: {pieceType}");
+        // You can call your ExecuteMove or any other logic here
+    }
+
     // Player GUI
     private void UpdateSelectedPiece(PieceState newPieceState)
     {
@@ -648,21 +670,20 @@ public class Game : MonoBehaviour{
     }
     void ReleasePiece(){
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1];
-        if (state.GetMovesAllowed(state.SelectedPieceState).Contains(targetPosition))
+        if (state.GetMovesAllowed(state.SelectedPieceState).Contains(targetPosition)){
             // promotion moves
-            bool isPromotion = selectedPieceState is PawnState && targetPosition.y==selectedPieceState.Colour?0:7; 
+            bool isPromotion = state.SelectedPieceState is PawnState && targetPosition.y==(state.SelectedPieceState.Colour?0:7); 
             if(isPromotion){
                 // show promotion UI
                 string choice = "Queen"; // from selection UI
                 if(choice!=""){
-                    
+                    state.ExecuteMove(targetPosition);
                 }
                 
-            }else{
+            }else
                 state.ExecuteMove(targetPosition);
-            }
             
-        else
+        }else
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
 
         // Clear selection
