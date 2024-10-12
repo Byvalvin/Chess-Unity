@@ -7,111 +7,152 @@ public class PromotionUI : MonoBehaviour
     private Canvas canvas;
     private GameObject panel;
 
-    private System.Action<string> onPromotionSelected;
+    private System.Action<Vector2Int, string> onPromotionSelected;
     // Define the types of pieces that can be promoted to
     string[] pieceTypes = { "Queen", "Rook", "Bishop", "Knight" }; // Customize as needed
+    Vector2Int promotionTilePosition;
     
     // Variable to scale the piece buttons down
     public float pieceScale = 1f; // Adjust this value to scale pieces down
 
-    public void Show(System.Action<string> promotionCallback, Color tileColor, Vector2 tileSize, Piece pawn, Vector2Int tilePosition)
+public void Show(System.Action<Vector2Int, string> promotionCallback, Color tileColor, Vector2 tileSize, Piece pawn, Vector2Int tilePosition)
+{
+    onPromotionSelected = promotionCallback;
+
+    promotionTilePosition = tilePosition;
+
+    // Create the Canvas
+    canvas = new GameObject("PromotionCanvas").AddComponent<Canvas>();
+    canvas.renderMode = RenderMode.WorldSpace; // Set to WorldSpace
+    canvas.worldCamera = Camera.main; // Ensure the canvas uses the main camera
+
+    // Create the Panel
+    panel = new GameObject("PromotionPanel");
+    panel.transform.SetParent(canvas.transform);
+
+    RectTransform panelRect = panel.AddComponent<RectTransform>();
+    panelRect.sizeDelta = new Vector2(tileSize.x, tileSize.y * (pieceTypes.Length));
+
+    // Calculate the world position of the tile
+    Vector3 worldPosition = GetWorldPositionFromBoard(tilePosition);
+
+    // Determine the position based on tilePosition.y
+    if (tilePosition.y == 0)
     {
-        onPromotionSelected = promotionCallback;
+        // Pawn is at the bottom of the board, position panel above and go up
+        panelRect.position = new Vector3(worldPosition.x, worldPosition.y + (panelRect.sizeDelta.y - tileSize.y) / 2, 0);
+    }
+    else if (tilePosition.y == 7)
+    {
+        // Pawn is at the top of the board, position panel below and go down
+        panelRect.position = new Vector3(worldPosition.x, worldPosition.y - (panelRect.sizeDelta.y - tileSize.y) / 2, 0);
+    }
 
-        bool isWhitePlayer = pawn.State.Colour;
+    // Add a background image to the panel
+    Image panelImage = panel.AddComponent<Image>();
+    panelImage.color = tileColor; // Semi-transparent background
 
-        // Create the Canvas
-        canvas = new GameObject("PromotionCanvas").AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace; // Set to WorldSpace
-        canvas.worldCamera = Camera.main; // Ensure the canvas uses the main camera
-        canvas.GetComponent<RectTransform>().sizeDelta = new Vector2(1920, 1080); // Set a size for the canvas
-
-        // Calculate the world position of the tile
-        Vector3 worldPosition = GetWorldPositionFromBoard(tilePosition);
-
-        // Create the Panel
-        panel = new GameObject("PromotionPanel");
-        panel.transform.SetParent(canvas.transform);
-
-        RectTransform panelRect = panel.AddComponent<RectTransform>();
-        panelRect.sizeDelta = new Vector2(tileSize.x, tileSize.y * (pieceTypes.Length + 1)); // Adjust for 4 buttons + close button
-
-        // Position the panel above the specified tile
-        panel.transform.position = worldPosition; // Adjust height as necessary
-
-        // Add a background image to the panel (optional)
-        Image panelImage = panel.AddComponent<Image>();
-        //panelImage.color = new Color(0, 0, 0, 0.7f); // Semi-transparent background
-        panelImage.color = tileColor; // Semi-transparent background
-
-        // Create buttons dynamically
+    // Create and configure the close button based on position
+    if (tilePosition.y == 0)
+    {
+        // Create the close button first, at the top
+        CreateCloseButton(tileSize, true);
         for (int i = 0; i < pieceTypes.Length; i++)
         {
             CreateButton(pieceTypes[i], tileColor, pawn.MyColour, tileSize, i);
         }
-
-        // Create and configure the close button
-        CreateCloseButton(tileSize);
-
-        panel.SetActive(true);
     }
-
-    private void CreateButton(string pieceType, Color tileColor, Color pieceColor, Vector2 tileSize, int index)
+    else if (tilePosition.y == 7)
     {
-        // Create a button GameObject
-        GameObject buttonObject = new GameObject(pieceType + "Button");
-        buttonObject.transform.SetParent(panel.transform);
-
-        Button button = buttonObject.AddComponent<Button>();
-        RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = tileSize * pieceScale; // Scale the button size
-        rectTransform.anchoredPosition = new Vector2(0, -tileSize.y * index * pieceScale); // Stack vertically with scaling
-
-        // Create the button background image
-        Image buttonImage = buttonObject.AddComponent<Image>();
-        buttonImage.color = pieceColor;
-
-        // Set the piece image from Board.sprites
-        Sprite pieceSprite = Board.sprites[pieceType]; // Access the sprite directly from the dictionary
-        buttonImage.sprite = pieceSprite;
-        buttonImage.preserveAspect = true; // Keep the aspect ratio
-
-        // Scale the button down
-        //buttonObject.transform.localScale = Vector3.one * pieceScale;
-
-        // Add click listener
-        button.onClick.AddListener(() => SelectPiece(pieceType));
+        for (int i = 0; i < pieceTypes.Length; i++)
+        {
+            CreateButton(pieceTypes[i], tileColor, pawn.MyColour, tileSize, i);
+        }
+        // Create the close button last, at the bottom
+        CreateCloseButton(tileSize, false);
     }
 
-    private void CreateCloseButton(Vector2 tileSize)
+
+    panel.SetActive(true);
+}
+
+
+
+
+private void CreateButton(string pieceType, Color tileColor, Color pieceColor, Vector2 tileSize, int index)
+{
+    GameObject buttonObject = new GameObject(pieceType + "Button");
+    buttonObject.transform.SetParent(panel.transform);
+
+    Button button = buttonObject.AddComponent<Button>();
+    RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
+    rectTransform.sizeDelta = tileSize * pieceScale; // Scale the button size
+
+    // Stack buttons downwards from the top of the panel
+    rectTransform.anchoredPosition = new Vector2(0, -(tileSize.y * pieceScale * index) + ((panel.GetComponent<RectTransform>().sizeDelta.y-tileSize.y) / 2)); 
+
+    Image buttonImage = buttonObject.AddComponent<Image>();
+    buttonImage.color = pieceColor;
+
+    Sprite pieceSprite = Board.sprites[pieceType]; // Access the sprite directly from the dictionary
+    buttonImage.sprite = pieceSprite;
+    buttonImage.preserveAspect = true; // Keep the aspect ratio
+
+    button.onClick.AddListener(() => SelectPiece(pieceType));
+}
+
+
+
+private void CreateCloseButton(Vector2 tileSize, bool isTop)
+{
+    // Create a close button GameObject
+    GameObject closeButtonObject = new GameObject("CloseButton");
+    closeButtonObject.transform.SetParent(panel.transform);
+
+    Button closeButton = closeButtonObject.AddComponent<Button>();
+    RectTransform rectTransform = closeButtonObject.AddComponent<RectTransform>();
+
+    // Reduce the button size
+    rectTransform.sizeDelta = new Vector2(tileSize.x * pieceScale * 1f, tileSize.y * pieceScale * 1f); // Reduced size
+
+    // Set position based on whether it's at the top or bottom
+    if (isTop)
     {
-        // Create a close button GameObject
-        GameObject closeButtonObject = new GameObject("CloseButton");
-        closeButtonObject.transform.SetParent(panel.transform);
-
-        Button closeButton = closeButtonObject.AddComponent<Button>();
-        RectTransform rectTransform = closeButtonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(tileSize.x * pieceScale, tileSize.y * pieceScale); // Match tile size with scaling
-        rectTransform.anchoredPosition = new Vector2(0, -tileSize.y * pieceTypes.Length * pieceScale); // Position below the other buttons
-
-        // Create the button background image
-        Image closeButtonImage = closeButtonObject.AddComponent<Image>();
-        closeButtonImage.color = Color.red; // Close button color
-
-        // Optionally add text to the close button using TextMeshPro
-        GameObject closeTextObject = new GameObject("CloseText");
-        closeTextObject.transform.SetParent(closeButtonObject.transform);
-        TextMeshProUGUI closeText = closeTextObject.AddComponent<TextMeshProUGUI>();
-        closeText.text = "x";
-        closeText.alignment = TextAlignmentOptions.Center;
-        closeText.color = Color.white;
-        RectTransform closeTextRect = closeTextObject.GetComponent<RectTransform>();
-        closeTextRect.sizeDelta = new Vector2(tileSize.x * pieceScale, tileSize.y * pieceScale);
-        closeTextRect.anchoredPosition = Vector2.zero; // Center text
-
-        // Add click listener to close the panel
-        closeButton.onClick.AddListener(ClosePanel);
+        rectTransform.anchorMin = new Vector2(0.5f, 1); // Anchor to the top center
+        rectTransform.anchorMax = new Vector2(0.5f, 1); // Anchor to the top center
+        rectTransform.pivot = new Vector2(0.5f, 1); // Pivot to the top
+        rectTransform.anchoredPosition = new Vector2(0, rectTransform.sizeDelta.y); // Center it below the top, with offset
     }
+    else
+    {
+        rectTransform.anchorMin = new Vector2(0.5f, 0); // Anchor to the bottom center
+        rectTransform.anchorMax = new Vector2(0.5f, 0); // Anchor to the bottom center
+        rectTransform.pivot = new Vector2(0.5f, 0); // Pivot to the bottom
+        rectTransform.anchoredPosition = new Vector2(0, -rectTransform.sizeDelta.y); // Center it above the bottom, with offset
+    }
+
+    // Create the button background image
+    Image closeButtonImage = closeButtonObject.AddComponent<Image>();
+    closeButtonImage.color = Color.red; // Close button color
+
+    // Optionally add text to the close button using TextMeshPro
+    GameObject closeTextObject = new GameObject("CloseText");
+    closeTextObject.transform.SetParent(closeButtonObject.transform);
+    TextMeshProUGUI closeText = closeTextObject.AddComponent<TextMeshProUGUI>();
+    closeText.text = "x";
+    closeText.alignment = TextAlignmentOptions.Center;
+    closeText.color = Color.white;
+    closeText.fontSize = 2; // Adjusted font size
+    RectTransform closeTextRect = closeTextObject.GetComponent<RectTransform>();
+    closeTextRect.sizeDelta = rectTransform.sizeDelta; // Match text size to button size
+    closeTextRect.anchoredPosition = Vector2.zero; // Center text
+
+    // Add click listener to close the panel
+    closeButton.onClick.AddListener(ClosePanel);
+}
+
+
+
 
     
     private Vector3 GetWorldPositionFromBoard(Vector2Int tilePosition)
@@ -124,7 +165,7 @@ public class PromotionUI : MonoBehaviour
 
     private void SelectPiece(string pieceType)
     {
-        onPromotionSelected?.Invoke(pieceType);
+        onPromotionSelected?.Invoke(promotionTilePosition, pieceType);
         ClosePanel();
     }
 

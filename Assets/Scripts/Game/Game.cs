@@ -623,10 +623,15 @@ public class Game : MonoBehaviour{
         promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece, promotionTile.State.Position);
     }
 
-    private void OnPromotionSelected(string pieceType)
+    private void OnPromotionSelected(Vector2Int targetPosition, string pieceType)
     {
         // Update the promoteTo variable in GameState
         state.PromoteTo = pieceType;
+        if(state.PromoteTo!=""){
+            state.ExecuteMove(targetPosition);
+        }else{
+            state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
+        }
     }
 
     // Player GUI
@@ -683,7 +688,7 @@ public class Game : MonoBehaviour{
             if(isPromotion){
                 // show promotion UI
                 // Show promotion UI and wait for user input
-            ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour);
+                ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour);
                 
             }else
                 state.ExecuteMove(targetPosition);
