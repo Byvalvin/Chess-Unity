@@ -154,7 +154,7 @@ private void CreateCloseButton(Vector2 tileSize, Color tileColor, bool isTop)
     closeTextRect.anchoredPosition = Vector2.zero; // Center text
 
     // Add click listener to close the panel
-    closeButton.onClick.AddListener(ClosePanel);
+    closeButton.onClick.AddListener(NoSelectPiece);
 }
 
     private Vector3 GetWorldPositionFromBoard(Vector2Int tilePosition){
@@ -167,6 +167,10 @@ private void CreateCloseButton(Vector2 tileSize, Color tileColor, bool isTop)
     private void SelectPiece(string pieceType){
         Debug.Log("selecting "+pieceType+promotionTilePosition);
         onPromotionSelected?.Invoke(promotionTilePosition, pieceType);
+        ClosePanel();
+    }
+    private void NoSelectPiece(){
+        onPromotionSelected?.Invoke(promotionTilePosition, ""); // no slection
         ClosePanel();
     }
 
