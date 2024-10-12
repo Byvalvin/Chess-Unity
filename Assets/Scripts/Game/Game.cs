@@ -532,7 +532,8 @@ public class GameState{
             if(promoteTo!=""){
                 Debug.Log(promoteTo + " is choice");
                 // create the piecestate
-
+                PieceState replacementState = Objects.CreatePieceState(promoteTo, selectedPieceState.Colour, targetPosition, selectedPieceState.MinPoint, selectedPieceState.MaxPoint);
+                Debug.Log(replacementState+" is my replacement");
 
                 // call to game to create piece(for ui)
                 // set proper params, loaction, colour, etc
