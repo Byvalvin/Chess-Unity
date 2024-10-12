@@ -38,8 +38,15 @@ public class GameState{
     public Vector2Int OriginalPosition => originalPosition;
 
     public bool Checkmate=>checkmate;
-    public string PromoteTo { get; set; } // This will hold the type of piece the player has chosen to promote to
-    
+   
+    public string PromoteTo {// This will hold the type of piece the player has chosen to promote to
+    get => promoteTo; 
+    set
+    {
+        promoteTo = value;
+        // OnPromotionChanged?.Invoke(promoteTo); // Example of notifying when it changes
+    }
+}
     public GameState(PlayerState p1, PlayerState p2){
         playerStates[0]=p1; playerStates[1]=p2;
         boardState = new BoardState();
@@ -500,6 +507,7 @@ public class GameState{
         }
 
         // is a castleMove, already moved king now move correct rook
+        Debug.Log(targetPosition + (selectedPieceState==null?"ya its nul": selectedPieceState.Type));
         int direction = targetPosition.x-selectedPieceState.Position.x;
         bool leftSide=direction<0, castleMove = selectedPieceState.Position.y==targetPosition.y && Math.Abs(direction)==2;
         if(castleMove){
@@ -516,6 +524,7 @@ public class GameState{
         }
         
         // promotion moves
+        Debug.Log("preomitint to "+promoteTo);
         bool isPromotion = selectedPieceState is PawnState && targetPosition.y==(selectedPieceState.Colour?0:7); 
         if(isPromotion){
             // only handled move exxecution
@@ -610,6 +619,8 @@ public class Game : MonoBehaviour{
     private Player[] players = new Player[2]; // only 2 playerStates for a chess game
 
     Piece selectedPiece;
+    private bool isPromotionInProgress = false;
+
 
     // Call this method when a pawn reaches the last rank
     public void ShowPromotionOptions(Vector2Int promotionTileLocation, bool isWhitePlayer)
@@ -632,6 +643,8 @@ public class Game : MonoBehaviour{
         }else{
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
         }
+        // Reset the promotion state
+        isPromotionInProgress = false; // Reset after promotion is handled
     }
 
     // Player GUI
@@ -688,6 +701,7 @@ public class Game : MonoBehaviour{
             if(isPromotion){
                 // show promotion UI
                 // Show promotion UI and wait for user input
+                isPromotionInProgress = true; // Set the promotion state to true
                 ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour);
                 
             }else
@@ -696,9 +710,11 @@ public class Game : MonoBehaviour{
         }else
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
 
-        // Clear selection
-        state.SelectedPieceState = null;
-        selectedPiece = null;
+        // Clear selection (this can be moved to OnPromotionSelected if needed)
+        if (!isPromotionInProgress) {
+            state.SelectedPieceState = null;
+            selectedPiece = null;
+        }
     }
     void HandleDragAndDrop(){
         if (selectedPiece != null){
@@ -719,7 +735,8 @@ public class Game : MonoBehaviour{
         if (Utility.MouseDown()) // Left mouse button
             SelectPiece();
         else if (selectedPiece != null)
-            HandleDragAndDrop();
+            if(!isPromotionInProgress)
+                HandleDragAndDrop();
     }
 
     public void InitializeGame(string whitePlayerType, string blackPlayerType, string whitePlayerName, string blackPlayerName, string filePath)

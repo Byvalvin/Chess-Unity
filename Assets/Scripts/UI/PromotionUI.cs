@@ -21,11 +21,16 @@ public void Show(System.Action<Vector2Int, string> promotionCallback, Color tile
 
     promotionTilePosition = tilePosition;
 
-    // Create the Canvas
-    canvas = new GameObject("PromotionCanvas").AddComponent<Canvas>();
-    canvas.renderMode = RenderMode.WorldSpace; // Set to WorldSpace
-    canvas.worldCamera = Camera.main; // Ensure the canvas uses the main camera
-
+    // Create the Canvas if it doesn't exist
+    if (FindObjectOfType<Canvas>() == null){
+        canvas = new GameObject("PromotionCanvas").AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace; 
+        canvas.worldCamera = Camera.main; 
+        canvas.gameObject.AddComponent<CanvasScaler>(); // Optional: Add scaler for responsiveness
+        canvas.gameObject.AddComponent<GraphicRaycaster>(); // Needed for raycasting
+    }else{
+        canvas = FindObjectOfType<Canvas>(); // Use existing canvas if present
+    }
     // Create the Panel
     panel = new GameObject("PromotionPanel");
     panel.transform.SetParent(canvas.transform);
@@ -56,7 +61,7 @@ public void Show(System.Action<Vector2Int, string> promotionCallback, Color tile
     if (tilePosition.y == 0)
     {
         // Create the close button first, at the top
-        CreateCloseButton(tileSize, true);
+        CreateCloseButton(tileSize, tileColor, true);
         for (int i = 0; i < pieceTypes.Length; i++)
         {
             CreateButton(pieceTypes[i], tileColor, pawn.MyColour, tileSize, i);
@@ -69,13 +74,12 @@ public void Show(System.Action<Vector2Int, string> promotionCallback, Color tile
             CreateButton(pieceTypes[i], tileColor, pawn.MyColour, tileSize, i);
         }
         // Create the close button last, at the bottom
-        CreateCloseButton(tileSize, false);
+        CreateCloseButton(tileSize, tileColor, false);
     }
 
 
     panel.SetActive(true);
 }
-
 
 
 
@@ -101,9 +105,7 @@ private void CreateButton(string pieceType, Color tileColor, Color pieceColor, V
     button.onClick.AddListener(() => SelectPiece(pieceType));
 }
 
-
-
-private void CreateCloseButton(Vector2 tileSize, bool isTop)
+private void CreateCloseButton(Vector2 tileSize, Color tileColor, bool isTop)
 {
     // Create a close button GameObject
     GameObject closeButtonObject = new GameObject("CloseButton");
@@ -111,20 +113,16 @@ private void CreateCloseButton(Vector2 tileSize, bool isTop)
 
     Button closeButton = closeButtonObject.AddComponent<Button>();
     RectTransform rectTransform = closeButtonObject.AddComponent<RectTransform>();
-
     // Reduce the button size
     rectTransform.sizeDelta = new Vector2(tileSize.x * pieceScale * 1f, tileSize.y * pieceScale * 1f); // Reduced size
 
     // Set position based on whether it's at the top or bottom
-    if (isTop)
-    {
+    if (isTop){
         rectTransform.anchorMin = new Vector2(0.5f, 1); // Anchor to the top center
         rectTransform.anchorMax = new Vector2(0.5f, 1); // Anchor to the top center
         rectTransform.pivot = new Vector2(0.5f, 1); // Pivot to the top
         rectTransform.anchoredPosition = new Vector2(0, rectTransform.sizeDelta.y); // Center it below the top, with offset
-    }
-    else
-    {
+    }else{
         rectTransform.anchorMin = new Vector2(0.5f, 0); // Anchor to the bottom center
         rectTransform.anchorMax = new Vector2(0.5f, 0); // Anchor to the bottom center
         rectTransform.pivot = new Vector2(0.5f, 0); // Pivot to the bottom
@@ -133,16 +131,24 @@ private void CreateCloseButton(Vector2 tileSize, bool isTop)
 
     // Create the button background image
     Image closeButtonImage = closeButtonObject.AddComponent<Image>();
-    closeButtonImage.color = Color.red; // Close button color
+    closeButtonImage.color = tileColor; // Close button color
 
     // Optionally add text to the close button using TextMeshPro
     GameObject closeTextObject = new GameObject("CloseText");
     closeTextObject.transform.SetParent(closeButtonObject.transform);
+
     TextMeshProUGUI closeText = closeTextObject.AddComponent<TextMeshProUGUI>();
-    closeText.text = "x";
+    // closeText.font = yourBoldFontAsset; // Replace with your actual font asset reference
     closeText.alignment = TextAlignmentOptions.Center;
-    closeText.color = Color.white;
-    closeText.fontSize = 2; // Adjusted font size
+    closeText.color = Color.grey;
+    closeText.fontSize = 1.5f; // Adjusted font size
+    closeText.text = "<b>x</b>"; // Make the text bold using rich text tags
+    /*
+    closeText.text = "x";
+    closeText.fontStyle = FontStyles.Bold; // Set to bold
+    */
+    
+
     RectTransform closeTextRect = closeTextObject.GetComponent<RectTransform>();
     closeTextRect.sizeDelta = rectTransform.sizeDelta; // Match text size to button size
     closeTextRect.anchoredPosition = Vector2.zero; // Center text
@@ -151,26 +157,20 @@ private void CreateCloseButton(Vector2 tileSize, bool isTop)
     closeButton.onClick.AddListener(ClosePanel);
 }
 
-
-
-
-    
-    private Vector3 GetWorldPositionFromBoard(Vector2Int tilePosition)
-    {
+    private Vector3 GetWorldPositionFromBoard(Vector2Int tilePosition){
         // Assuming each tile is 1 unit in world space
         float tileSize = 5.0f; // Set this to your actual tile size
         return new Vector3(tilePosition.x * tileSize, tilePosition.y * tileSize, 0);
     }
 
 
-    private void SelectPiece(string pieceType)
-    {
+    private void SelectPiece(string pieceType){
+        Debug.Log("selecting "+pieceType+promotionTilePosition);
         onPromotionSelected?.Invoke(promotionTilePosition, pieceType);
         ClosePanel();
     }
 
-    private void ClosePanel()
-    {
+    private void ClosePanel(){
         Destroy(canvas.gameObject); // Destroy the entire canvas and its contents
     }
 }
