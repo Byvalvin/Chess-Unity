@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class TileState
 {
-    private Vector2 position;
+    private Vector2Int position;
     private bool colour; // Assuming 'true' is white and 'false' is black
     private float min, max, minx, miny, maxx, maxy;
 
     public PieceState pieceState;
 
-    public Vector2 Position
+    public Vector2Int Position
     {
         get => position;
         set => position = value;
@@ -63,6 +63,7 @@ public class Tile : MonoBehaviour
 {
     private TileState state;
     private float n; // length of tile
+    private Color myColour;
     [SerializeField] private Shader UnlitColorShader; // Assign this in the inspector, a shader to add colour to tiles
     private static Dictionary<bool, Material> tileMaterials = new Dictionary<bool, Material>();
     private Renderer tileRenderer; // Cached Renderer reference
@@ -72,7 +73,10 @@ public class Tile : MonoBehaviour
     public TileState State
     {
         get => state;
-        set => state = value;
+        set {
+            state = value;
+            myColour = state.Colour ? Color.white : Color.black;
+        }
     }
     
     public float N
@@ -88,12 +92,14 @@ public class Tile : MonoBehaviour
         }
     }
 
+    public Color MyColour => myColour;
+
     private void RenderTileColour()
     {
         if (!tileMaterials.TryGetValue(state.Colour, out Material material))
         {
             material = new Material(UnlitColorShader);
-            material.color = state.Colour ? Color.white : Color.black;
+            material.color = myColour;
             tileMaterials[state.Colour] = material;
         }
 

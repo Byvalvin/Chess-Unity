@@ -35,7 +35,6 @@ public class BoardState{
             for (int xi = 0; xi < N; xi++)
                 tileStates[yi, xi] = original.tileStates[yi, xi]?.Clone(); // Clone each tile
     }
-
     public BoardState Clone() => new BoardState(this); // Clone method
 
     public void CreateBoardState(PlayerState player1, PlayerState player2){
@@ -144,7 +143,6 @@ public class BoardState{
     }
 
 
-
     public TileState GetTile(Vector2Int pos){
         int xIndex = pos.x;
         int yIndex = pos.y; // Invert y coordinate for the array
@@ -154,7 +152,6 @@ public class BoardState{
         
         return null; // Return null if out of bounds
     }
-
     public TileState GetTile(int x, int y){ // overload
         int xIndex = x;
         int yIndex = y; // Invert y coordinate for the array
@@ -179,7 +176,6 @@ public class BoardState{
 
     // Piece Movement Logic
     public bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
-
 }
 
 public class Board : MonoBehaviour
@@ -247,8 +243,6 @@ public class Board : MonoBehaviour
             sprites[sprite.name] = sprite; // Map sprite names to the dictionary
         return sprites;
     }
-
-
 
     private void PopulateBoard(Player Player1, Player Player2){
         // string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
@@ -366,8 +360,6 @@ public class Board : MonoBehaviour
             fromTile.piece = null;
         }
     }
-
-
     
     void Awake(){
         // create Sprite dict

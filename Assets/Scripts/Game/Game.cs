@@ -38,6 +38,7 @@ public class GameState{
     public Vector2Int OriginalPosition => originalPosition;
 
     public bool Checkmate=>checkmate;
+    public string PromoteTo { get; set; } // This will hold the type of piece the player has chosen to promote to
     
     public GameState(PlayerState p1, PlayerState p2){
         playerStates[0]=p1; playerStates[1]=p2;
@@ -518,6 +519,18 @@ public class GameState{
         bool isPromotion = selectedPieceState is PawnState && targetPosition.y==(selectedPieceState.Colour?0:7); 
         if(isPromotion){
             // only handled move exxecution
+            if(promoteTo!=""){
+                Debug.Log(promoteTo + " is choice");
+                // create the piecestate
+                // call to game to create piece(for ui)
+                // set proper params, loaction, colour, etc
+                // remove pawn from playerstate piecestates and player pieces-> heavenOrhell location
+                // set piecestate to piece
+                // add piecestate and piece to playerstate and player
+                
+            }else{
+                Debug.LogError("want to promote but cant");
+            }
             
         }
 
@@ -598,28 +611,22 @@ public class Game : MonoBehaviour{
 
     Piece selectedPiece;
 
-    public GameObject promotionUIPrefab; // Assign this in the inspector
-    private PromotionUI currentPromotionUI;
-
     // Call this method when a pawn reaches the last rank
-    public void ShowPromotionOptions(Vector2 position)
+    public void ShowPromotionOptions(Vector2Int promotionTileLocation, bool isWhitePlayer)
     {
-        if (currentPromotionUI != null)
-        {
-            Destroy(currentPromotionUI.gameObject); // Remove the previous UI if it exists
-        }
+        // Determine tile color and size
+        Tile promotionTile = board.GetTile(promotionTileLocation);
+        
 
-        currentPromotionUI = Instantiate(promotionUIPrefab, position, Quaternion.identity, transform).GetComponent<PromotionUI>();
-
-        // Show the UI and handle the promotion callback
-        currentPromotionUI.Show(OnPromotionSelected);
+        // Show the promotion UI
+        PromotionUI promotionUI = gameObject.AddComponent<PromotionUI>(); // Add the PromotionUI component to the Game object
+        promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece, promotionTile.State.Position);
     }
 
     private void OnPromotionSelected(string pieceType)
     {
-        // Handle the promotion logic based on selected piece type
-        Debug.Log($"Promoted to: {pieceType}");
-        // You can call your ExecuteMove or any other logic here
+        // Update the promoteTo variable in GameState
+        state.PromoteTo = pieceType;
     }
 
     // Player GUI
@@ -675,10 +682,8 @@ public class Game : MonoBehaviour{
             bool isPromotion = state.SelectedPieceState is PawnState && targetPosition.y==(state.SelectedPieceState.Colour?0:7); 
             if(isPromotion){
                 // show promotion UI
-                string choice = "Queen"; // from selection UI
-                if(choice!=""){
-                    state.ExecuteMove(targetPosition);
-                }
+                // Show promotion UI and wait for user input
+            ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour);
                 
             }else
                 state.ExecuteMove(targetPosition);
