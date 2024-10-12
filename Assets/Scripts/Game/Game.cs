@@ -5,6 +5,7 @@ using System;
 using Newtonsoft.Json; // for saving and loading games
 using System.Linq; // Add this line for LINQ
 
+
 public class GameState{
     public event Action<PieceState> OnSelectedPieceChanged;
     private BoardState boardState;
@@ -531,6 +532,8 @@ public class GameState{
             if(promoteTo!=""){
                 Debug.Log(promoteTo + " is choice");
                 // create the piecestate
+
+
                 // call to game to create piece(for ui)
                 // set proper params, loaction, colour, etc
                 // remove pawn from playerstate piecestates and player pieces-> heavenOrhell location
@@ -702,8 +705,7 @@ public class Game : MonoBehaviour{
                 // show promotion UI
                 // Show promotion UI and wait for user input
                 isPromotionInProgress = true; // Set the promotion state to true
-                ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour);
-                
+                ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour);  
             }else
                 state.ExecuteMove(targetPosition);
             
@@ -735,7 +737,7 @@ public class Game : MonoBehaviour{
         if (Utility.MouseDown()) // Left mouse button
             SelectPiece();
         else if (selectedPiece != null)
-            if(!isPromotionInProgress)
+            if(!isPromotionInProgress) // can use drag and drop while promoting
                 HandleDragAndDrop();
     }
 
@@ -768,10 +770,10 @@ public class Game : MonoBehaviour{
     private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName, string whitePlayerName, string blackPlayerName, string filePath)
     {
         Debug.Log("here1 " + whitePlayerTypeName + " " + blackPlayerTypeName);
+        
 
-
-        PlayerState P1State = CreatePlayerState(whitePlayerTypeName, whitePlayerName, true, filePath);
-        PlayerState P2State = CreatePlayerState(blackPlayerTypeName, blackPlayerName, false, filePath);
+        PlayerState P1State = Objects.CreatePlayerState(whitePlayerTypeName, whitePlayerName, true, filePath);
+        PlayerState P2State = Objects.CreatePlayerState(blackPlayerTypeName, blackPlayerName, false, filePath);
         InitializeGameState(P1State, P2State);
 
         // Dynamically add the components using the Type objects
@@ -805,23 +807,6 @@ public class Game : MonoBehaviour{
     }
 
 
-    private PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite, string filePath)
-    {
-        // Use reflection to instantiate the appropriate player state
-        var type = System.Reflection.Assembly.GetExecutingAssembly().GetTypes()
-            .FirstOrDefault(t => t.Name == $"{playerTypeName}State");
-        
-        if (type != null)
-        {
-            PlayerState playerState = (playerTypeName=="Preset")? 
-                new PresetState(playerName, isWhite, filePath) 
-                : 
-                (PlayerState)Activator.CreateInstance(type, playerName, isWhite);
-            //Debug.Log("Player stement" + playerState+" "+(playerState is AvengerState));
-            return playerState;
-        }
-        return null; // Handle case where type is not found
-    }
 
     void Awake() {
         Debug.Log("Awake called");

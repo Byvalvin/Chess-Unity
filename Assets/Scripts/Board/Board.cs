@@ -118,20 +118,9 @@ public class BoardState{
             darkY++; lightY--;
             pieceState = new PawnState(colour, new Vector2Int(x, colour ? lightY : darkY), minPoint, maxPoint);
         }else{
-            // Use Type.GetType to get the type of the piece state dynamically
-            Type pieceStateType = Type.GetType(type + "State"); // Assumes the class names are in the format "KingState", "QueenState", etc.
-            if (pieceStateType == null){
-                Debug.LogError($"Could not find type: {type}State");
-                return;
-            }
             Vector2Int startPos = new Vector2Int(x, colour ? lightY : darkY);
-
-            // Create an instance of the PieceState using reflection
-            pieceState = (PieceState)Activator.CreateInstance(pieceStateType, new object[] { colour, startPos, minPoint, maxPoint });
-            if (pieceState == null){
-                Debug.LogError($"Failed to create instance of type: {type}State");
-                return;
-            }
+            pieceState = Objects.CreatePieceState(type, colour, startPos, minPoint, maxPoint);
+            // Use Type.GetType to get the type of the piece state dynamically
         }
 
         // Set piece to tile
