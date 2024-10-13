@@ -15,7 +15,7 @@ public class PromotionUI : MonoBehaviour
     // Variable to scale the piece buttons down
     public float pieceScale = 1f; // Adjust this value to scale pieces down
 
-public void Show(System.Action<Vector2Int, string> promotionCallback, Color tileColor, Vector2 tileSize, Piece pawn, Vector2Int tilePosition)
+public void Show(System.Action<Vector2Int, string> promotionCallback, Color tileColor, Vector2 tileSize, Color pawnColor, Vector2Int tilePosition)
 {
     onPromotionSelected = promotionCallback;
 
@@ -64,14 +64,14 @@ public void Show(System.Action<Vector2Int, string> promotionCallback, Color tile
         CreateCloseButton(tileSize, tileColor, true);
         for (int i = 0; i < pieceTypes.Length; i++)
         {
-            CreateButton(pieceTypes[i], tileColor, pawn.MyColour, tileSize, i);
+            CreateButton(pieceTypes[i], tileColor, pawnColor, tileSize, i);
         }
     }
     else if (tilePosition.y == 7)
     {
         for (int i = 0; i < pieceTypes.Length; i++)
         {
-            CreateButton(pieceTypes[i], tileColor, pawn.MyColour, tileSize, i);
+            CreateButton(pieceTypes[i], tileColor, pawnColor, tileSize, i);
         }
         // Create the close button last, at the bottom
         CreateCloseButton(tileSize, tileColor, false);

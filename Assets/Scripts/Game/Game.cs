@@ -16,6 +16,7 @@ public class GameState{
     private bool checkmate = false;
 
     private string promoteTo = "";
+    private PawnState promotedPawnState = null;
 
     public BoardState CurrentBoardState{
         get=>boardState;
@@ -41,13 +42,25 @@ public class GameState{
     public bool Checkmate=>checkmate;
    
     public string PromoteTo {// This will hold the type of piece the player has chosen to promote to
-    get => promoteTo; 
-    set
-    {
-        promoteTo = value;
-        // OnPromotionChanged?.Invoke(promoteTo); // Example of notifying when it changes
+        get => promoteTo; 
+        set
+        {
+            promoteTo = value;
+            // OnPromotionChanged?.Invoke(promoteTo); // Example of notifying when it changes
+        }
+        
     }
-}
+
+    public PawnState PromotedPawnState{
+        get=>promotedPawnState;
+        set{
+            promotedPawnState=value;
+            // OnSelectedPieceChanged?.Invoke(selectedPieceState);
+            // if(selectedPieceState!=null)
+            //     originalPosition = selectedPieceState.Position; // Store original position
+        }
+    }
+
     public GameState(PlayerState p1, PlayerState p2){
         playerStates[0]=p1; playerStates[1]=p2;
         boardState = new BoardState();
@@ -488,6 +501,8 @@ public class GameState{
 
     
     public Vector2Int ExecuteMove(Vector2Int targetPosition){
+        Vector2Int lastPosition = default; // needed for bots
+
         // Check for capture
         if (IsCapture(targetPosition)){
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
@@ -496,38 +511,8 @@ public class GameState{
             captured.Captured = true;
         }
 
-        // Handle en passant
-        if (lastMovedPieceState is PawnState lastPawn && lastPawn.CanBeCapturedEnPassant && SelectedPieceState is PawnState) {
-            Vector2Int enPassantTarget = lastPawn.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
-            if (targetPosition == enPassantTarget) {
-                PieceState captured = boardState.GetTile(lastPawn.Position).pieceState;
-                playerStates[currentIndex].Capture(captured);
-                playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
-                captured.Captured = true;
-            }
-        }
-
-        // is a castleMove, already moved king now move correct rook
-        int direction = targetPosition.x-selectedPieceState.Position.x;
-        bool leftSide=direction<0, castleMove = selectedPieceState.Position.y==targetPosition.y && Math.Abs(direction)==2;
-        if(castleMove){
-            // determine the correct rook
-            PieceState theRook = null;
-            Vector2Int rookCastlePosition = default;
-            if(boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).HasPieceState()
-            && boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).pieceState is RookState rookState){
-                theRook = rookState;
-                rookCastlePosition = new Vector2Int(selectedPieceState.Position.x+ direction+(leftSide?1:-1), selectedPieceState.Position.y);
-                boardState.MovePiece(theRook.Position, rookCastlePosition);
-                theRook.Move(rookCastlePosition);
-            }
-        }
-        // record lastPiece data
-        Vector2Int lastPosition = selectedPieceState.Position;
-        lastMovedPieceState = selectedPieceState; // Store the last moved piece
-        
         // promotion moves
-        bool isPromotion = selectedPieceState is PawnState && targetPosition.y==(selectedPieceState.Colour?0:7); 
+        bool isPromotion = promotedPawnState!=null && promotedPawnState is PawnState && targetPosition.y==(promotedPawnState.Colour?0:7); 
         if(isPromotion){
             // only handled move exxecution
             if(!string.IsNullOrEmpty(promoteTo)){
@@ -536,25 +521,61 @@ public class GameState{
                 // create the piecestate
                 PieceState replacementState = Objects.CreatePieceState(
                     promoteTo, 
-                    selectedPieceState.Colour, 
+                    promotedPawnState.Colour, 
                     targetPosition, 
-                    selectedPieceState.MinPoint, 
-                    selectedPieceState.MaxPoint
+                    promotedPawnState.MinPoint, 
+                    promotedPawnState.MaxPoint
                 );
                 playerStates[currentIndex].AddPieceState(replacementState);
                 // call to game to create piece(for ui)-> set piecestate to piece, add piecestate and piece to playerstate and player
-                boardState.MovePiece(selectedPieceState.Position, targetPosition, true);
+                boardState.MovePiece(promotedPawnState.Position, targetPosition, true);
                 OnPiecePromoted?.Invoke(replacementState); // Trigger the promotion event
                 // remove pawn from playerstate piecestates and player pieces-> heavenOrhell location
                 
             }else{
                 Debug.LogError("want to promote but cant");
             }
+            // record lastPiece data
+            lastPosition = promotedPawnState.Position;
+            lastMovedPieceState = promotedPawnState; // Store the last moved piece
+            promoteTo=""; promotedPawnState=null; // reset
             
         }else{
-             // Move the piece
+            // Handle en passant
+            if (lastMovedPieceState is PawnState lastPawn && lastPawn.CanBeCapturedEnPassant && SelectedPieceState is PawnState) {
+                Vector2Int enPassantTarget = lastPawn.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
+                if (targetPosition == enPassantTarget) {
+                    PieceState captured = boardState.GetTile(lastPawn.Position).pieceState;
+                    playerStates[currentIndex].Capture(captured);
+                    playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
+                    captured.Captured = true;
+                }
+            }
+
+            // is a castleMove, already moved king now move correct rook
+            int direction = targetPosition.x-selectedPieceState.Position.x;
+            bool leftSide=direction<0, castleMove = selectedPieceState.Position.y==targetPosition.y && Math.Abs(direction)==2;
+            if(castleMove){
+                // determine the correct rook
+                PieceState theRook = null;
+                Vector2Int rookCastlePosition = default;
+                if(boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).HasPieceState()
+                && boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).pieceState is RookState rookState){
+                    theRook = rookState;
+                    rookCastlePosition = new Vector2Int(selectedPieceState.Position.x+ direction+(leftSide?1:-1), selectedPieceState.Position.y);
+                    boardState.MovePiece(theRook.Position, rookCastlePosition);
+                    theRook.Move(rookCastlePosition);
+                }
+            }
+            // record lastPiece data
+            lastPosition = selectedPieceState.Position;
+            lastMovedPieceState = selectedPieceState; // Store the last moved piece
+            
+                
+            // Move the piece
             boardState.MovePiece(selectedPieceState.Position, targetPosition);
             selectedPieceState.Move(targetPosition);
+
         }
 
         //updates
@@ -639,7 +660,7 @@ public class Game : MonoBehaviour{
 
         // Show the promotion UI
         PromotionUI promotionUI = gameObject.AddComponent<PromotionUI>(); // Add the PromotionUI component to the Game object
-        promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece, promotionTile.State.Position);
+        promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece.MyColour, promotionTile.State.Position);
     }
 
     private void OnPromotionSelected(Vector2Int targetPosition, string pieceType)
@@ -649,6 +670,8 @@ public class Game : MonoBehaviour{
         if(state.PromoteTo!=""){
             state.ExecuteMove(targetPosition);
         }else{
+            state.SelectedPieceState = state.PromotedPawnState;
+            state.PromotedPawnState = null;
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
         }
         // Reset the promotion state
@@ -665,12 +688,8 @@ public class Game : MonoBehaviour{
         PlayerState currentPlayerState = state.PlayerStates[state.PlayerIndex];
 
         // Remove the pawn from PlayerState
-        currentPlayerState.RemovePieceState(state.SelectedPieceState);
-        PieceState pawnState = state.GetTile(new Vector2Int(replacementState.Position.x,replacementState.Position.y+1)).pieceState;
-        if(pawnState is PawnState pawn)pawn.Promoted = true;
-        
-        state.SelectedPieceState = null;
-        selectedPiece = null;
+        currentPlayerState.RemovePieceState(state.PromotedPawnState);
+        state.PromotedPawnState.Promoted = true;
 
         // Create the new Piece and add it to the player's pieces
         string pieceTypeName = replacementState.GetType().Name.Replace("State",""); // Get the type name from the PieceState
@@ -737,9 +756,11 @@ public class Game : MonoBehaviour{
             // promotion moves
             bool isPromotion = state.SelectedPieceState is PawnState && targetPosition.y==(state.SelectedPieceState.Colour?0:7); 
             if(isPromotion){
+
                 // show promotion UI
                 // Show promotion UI and wait for user input
                 isPromotionInProgress = true; // Set the promotion state to true
+                state.PromotedPawnState = state.SelectedPieceState as PawnState;
                 ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour); 
             }else
                 state.ExecuteMove(targetPosition);
@@ -748,10 +769,10 @@ public class Game : MonoBehaviour{
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
 
         // Clear selection (this can be moved to OnPromotionSelected if needed)
-        if (!isPromotionInProgress) {
-            state.SelectedPieceState = null;
-            selectedPiece = null;
-        }
+
+        state.SelectedPieceState = null;
+        selectedPiece = null;
+        
         //Debug.Log(state.SelectedPieceState.Position + "is my pos 3");
     }
     void HandleDragAndDrop(){
