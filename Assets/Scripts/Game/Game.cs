@@ -543,7 +543,7 @@ public class GameState{
                 );
                 playerStates[currentIndex].AddPieceState(replacementState);
                 // call to game to create piece(for ui)-> set piecestate to piece, add piecestate and piece to playerstate and player
-
+                boardState.MovePiece(selectedPieceState.Position, targetPosition, true);
                 OnPiecePromoted?.Invoke(replacementState); // Trigger the promotion event
                 // remove pawn from playerstate piecestates and player pieces-> heavenOrhell location
                 
@@ -668,7 +668,6 @@ public class Game : MonoBehaviour{
         currentPlayerState.RemovePieceState(state.SelectedPieceState);
         PieceState pawnState = state.GetTile(new Vector2Int(replacementState.Position.x,replacementState.Position.y+1)).pieceState;
         if(pawnState is PawnState pawn)pawn.Promoted = true;
-        board.State.MovePiece(new Vector2Int(replacementState.Position.x,replacementState.Position.y+1), pawnState.Position, true);
         
         state.SelectedPieceState = null;
         selectedPiece = null;
