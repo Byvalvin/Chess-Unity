@@ -28,6 +28,7 @@ public class PawnState : PieceState
     {
         canBeCapturedEnPassant = original.canBeCapturedEnPassant;
         enPassantCounter = original.enPassantCounter;
+        promoted = original.promoted;
     }
     
     public override bool CanMove(Vector2Int to)

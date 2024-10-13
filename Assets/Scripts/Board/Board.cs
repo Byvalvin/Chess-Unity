@@ -156,11 +156,9 @@ public class BoardState{
         TileState toTile = GetTile(to);
 
         if (fromTile != null && (toTile != null || remove)){
-            Debug.Log($"Moving piece from {from} to {to} in state");
+            //Debug.Log($"Moving piece from {from} to {to} in state");
             if(!remove)toTile.pieceState = fromTile.pieceState;
             fromTile.pieceState = null;
-        }else{
-            Debug.Log($"tile null");
         }
         OnPieceMoved?.Invoke(from, to, remove); // for the board tiles too
     }
@@ -334,7 +332,6 @@ public class Board : MonoBehaviour
     public void MovePiece(Vector2Int from, Vector2Int to, bool remove=false){
         Tile fromTile = GetTile(from);
         Tile toTile = GetTile(to);
-
         if (fromTile != null && (toTile != null || remove))
         {
             Debug.Log($"Moving piece from {from} to {to}");

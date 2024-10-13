@@ -50,7 +50,6 @@ public abstract class PieceState {
         set{
             currentPos=value;
             OnPositionChanged?.Invoke();
-
         }
     }
     public string Type{
@@ -206,8 +205,9 @@ public abstract class Piece : MonoBehaviour {
 
     private void OnDestroy(){
         // Unsubscribe from event to prevent memory leaks
-        if (state != null)
+        if (state != null){
             state.OnPositionChanged -= SetPosition;
+        }
     }
 
 }
