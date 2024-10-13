@@ -7,7 +7,7 @@ using System.Linq; // Add this line for LINQ
 
 
 public class GameState{
-    public event Action<PieceState> OnSelectedPieceChanged;
+    public event Action<PieceState> OnSelectedPieceChanged, OnPiecePromoted;
     private BoardState boardState;
     private PlayerState[] playerStates = new PlayerState[2];
     private int currentIndex = 0;
@@ -468,10 +468,20 @@ public class GameState{
 
     public void UpdateGameState(){
         // Reset and filter valid moves for each piece
+        int bcount = 0;
         foreach (PlayerState player in playerStates)
             foreach (PieceState piece in player.PieceStates){
                 piece.ResetValidMoves();
                 piece.ValidMoves = FilterMoves(piece);
+                
+                if(piece is BishopState && player.Colour){
+                    Debug.Log("I am bishop! "+bcount);
+                    foreach (var item in piece.ValidMoves)
+                    {
+                        Debug.Log(item+ " for " + bcount);
+                    }
+                    bcount++;
+                }
 
                 // Reset en passant status after each move
                 if (piece is PawnState pawn)
@@ -523,35 +533,47 @@ public class GameState{
                 theRook.Move(rookCastlePosition);
             }
         }
+        // record lastPiece data
+        Vector2Int lastPosition = selectedPieceState.Position;
+        lastMovedPieceState = selectedPieceState; // Store the last moved piece
         
         // promotion moves
         Debug.Log("preomitint to "+promoteTo);
         bool isPromotion = selectedPieceState is PawnState && targetPosition.y==(selectedPieceState.Colour?0:7); 
         if(isPromotion){
             // only handled move exxecution
-            if(promoteTo!=""){
+            if(!string.IsNullOrEmpty(promoteTo)){
                 Debug.Log(promoteTo + " is choice");
-                // create the piecestate
-                PieceState replacementState = Objects.CreatePieceState(promoteTo, selectedPieceState.Colour, targetPosition, selectedPieceState.MinPoint, selectedPieceState.MaxPoint);
-                Debug.Log(replacementState+" is my replacement");
-
-                // call to game to create piece(for ui)
                 // set proper params, loaction, colour, etc
+                // create the piecestate
+                PieceState replacementState = Objects.CreatePieceState(
+                    promoteTo, 
+                    selectedPieceState.Colour, 
+                    targetPosition, 
+                    selectedPieceState.MinPoint, 
+                    selectedPieceState.MaxPoint
+                );
+                Debug.Log(replacementState+" is my replacement");
+                playerStates[currentIndex].AddPieceState(replacementState);
+                // call to game to create piece(for ui)-> set piecestate to piece, add piecestate and piece to playerstate and player
+                boardState.MovePiece(selectedPieceState.Position, PieceState.heavenOrhell, remove:true);
+                OnPiecePromoted?.Invoke(replacementState); // Trigger the promotion event
+                
                 // remove pawn from playerstate piecestates and player pieces-> heavenOrhell location
-                // set piecestate to piece
-                // add piecestate and piece to playerstate and player
+                
+                
                 
             }else{
                 Debug.LogError("want to promote but cant");
             }
             
+        }else{
+             // Move the piece
+            boardState.MovePiece(selectedPieceState.Position, targetPosition);
+            selectedPieceState.Move(targetPosition);
         }
 
-        // Move the piece
-        boardState.MovePiece(selectedPieceState.Position, targetPosition);
-        Vector2Int lastPosition = selectedPieceState.Position;
-        selectedPieceState.Move(targetPosition);
-        lastMovedPieceState = selectedPieceState; // Store the last moved piece
+
 
         //updates
         UpdateGameState();
@@ -647,6 +669,8 @@ public class Game : MonoBehaviour{
         }else{
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
         }
+        Debug.Log(state.SelectedPieceState.Position + "is my pos");
+        
         // Reset the promotion state
         isPromotionInProgress = false; // Reset after promotion is handled
     }
@@ -656,6 +680,32 @@ public class Game : MonoBehaviour{
     {
         // Find the corresponding Piece based on the PieceState
         selectedPiece = FindPieceFromState(newPieceState);
+    }
+    private void HandlePiecePromotion(PieceState replacementState){
+        PlayerState currentPlayerState = state.PlayerStates[state.PlayerIndex];
+
+        // Remove the pawn from PlayerState
+        if(state.SelectedPieceState is PawnState pawn)pawn.Promoted =true;
+        currentPlayerState.RemovePieceState(state.SelectedPieceState);
+
+        // Create the new Piece and add it to the player's pieces
+        string pieceTypeName = replacementState.GetType().Name.Replace("State",""); // Get the type name from the PieceState
+        Piece newPiece = Objects.CreatePiece(
+            $"{pieceTypeName}{(currentPlayerState.Colour ? "W" : "B")}",
+            pieceTypeName,
+            replacementState, 
+            currentPlayerState.TileSize, 
+            replacementState.Position.x, 
+            replacementState.Position.y, 
+            board.PieceScaleFactor
+        );
+        
+        if (newPiece != null){
+            Player currentPlayer = players[state.PlayerIndex]; // Get the current player
+            currentPlayer.AddPiece(newPiece); 
+        }else
+            Debug.LogError("Failed to create the new piece during promotion.");
+        
     }
     private Piece FindPieceFromState(PieceState pieceState)
     {
@@ -706,7 +756,8 @@ public class Game : MonoBehaviour{
                 // show promotion UI
                 // Show promotion UI and wait for user input
                 isPromotionInProgress = true; // Set the promotion state to true
-                ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour);  
+                ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour); 
+                Debug.Log(state.SelectedPieceState.Position + "is my pos 2");
             }else
                 state.ExecuteMove(targetPosition);
             
@@ -718,6 +769,7 @@ public class Game : MonoBehaviour{
             state.SelectedPieceState = null;
             selectedPiece = null;
         }
+        //Debug.Log(state.SelectedPieceState.Position + "is my pos 3");
     }
     void HandleDragAndDrop(){
         if (selectedPiece != null){
@@ -761,7 +813,11 @@ public class Game : MonoBehaviour{
     private void InitializeGameState(PlayerState P1State, PlayerState P2State)
     {
         state = new GameState(P1State, P2State);
+
+        // subcriptions
         state.OnSelectedPieceChanged += UpdateSelectedPiece;
+        state.OnPiecePromoted += HandlePiecePromotion; // Subscribe to promotion events
+
         if (P1State is BotState)
             (P1State as BotState).CurrentGame = this.state;
         if (P2State is BotState)
@@ -771,7 +827,6 @@ public class Game : MonoBehaviour{
     private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName, string whitePlayerName, string blackPlayerName, string filePath)
     {
         Debug.Log("here1 " + whitePlayerTypeName + " " + blackPlayerTypeName);
-        
 
         PlayerState P1State = Objects.CreatePlayerState(whitePlayerTypeName, whitePlayerName, true, filePath);
         PlayerState P2State = Objects.CreatePlayerState(blackPlayerTypeName, blackPlayerName, false, filePath);
@@ -826,6 +881,9 @@ public class Game : MonoBehaviour{
     private void OnDestroy()
     {
         // Unsubscribe from event to prevent memory leaks
-        if(state!=null)state.OnSelectedPieceChanged -= UpdateSelectedPiece;
+        if(state!=null){
+            state.OnSelectedPieceChanged -= UpdateSelectedPiece;
+            state.OnPiecePromoted -= HandlePiecePromotion; // Unsubscribe to avoid memory leaks
+        }
     }
 }

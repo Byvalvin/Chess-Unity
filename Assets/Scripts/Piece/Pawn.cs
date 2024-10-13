@@ -4,14 +4,22 @@ using UnityEngine;
 
 public class PawnState : PieceState
 {
-    private bool canBeCapturedEnPassant;
+    private bool canBeCapturedEnPassant, promoted;
     private int enPassantCounter;
     public bool CanBeCapturedEnPassant => canBeCapturedEnPassant;
+    public bool Promoted {
+        get=>promoted;
+        set{
+            promoted=value;
+            if(promoted)Position=heavenOrhell;
+        }
+    }
 
     public PawnState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint) : base(_colour, _currentPos,  _minPoint, _maxPoint)
     {
         this.type = "Pawn";
         this.canBeCapturedEnPassant = false;
+        this.promoted = false;
         this.enPassantCounter = 0;
     }
 

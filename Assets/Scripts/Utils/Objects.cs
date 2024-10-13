@@ -42,4 +42,27 @@ public static class Objects
         return pieceState;
     }
 
+    public static Piece CreatePiece(string objectName, string pieceTypeName, PieceState pieceState, float tileSize, int x, int y, float pieceScaleFactor){
+        GameObject PieceObject = new GameObject(objectName);
+        // Convert the type string to a Type object
+        Type pieceType = Type.GetType(pieceTypeName);
+        Piece piece = PieceObject.AddComponent(pieceType) as Piece;
+        if (piece == null){
+            Debug.LogError($"Failed to add component of type: {pieceTypeName}");
+            return null;
+        }
+        
+        piece.State = pieceState;
+        piece.TileSize = tileSize;
+        piece.PieceSprite = Board.sprites[$"{pieceTypeName}"];
+        piece.PieceColliderSize = 1/pieceScaleFactor;
+
+        // Set UI
+        PieceObject.transform.position = new Vector3(x * tileSize, y * tileSize, 0);
+        PieceObject.transform.localScale = new Vector3(tileSize * pieceScaleFactor, tileSize * pieceScaleFactor, 1); // Adjust based on sprite size
+
+        return piece;
+
+    }
+
 }
