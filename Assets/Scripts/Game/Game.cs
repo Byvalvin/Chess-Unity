@@ -53,12 +53,7 @@ public class GameState{
 
     public PawnState PromotedPawnState{
         get=>promotedPawnState;
-        set{
-            promotedPawnState=value;
-            // OnSelectedPieceChanged?.Invoke(selectedPieceState);
-            // if(selectedPieceState!=null)
-            //     originalPosition = selectedPieceState.Position; // Store original position
-        }
+        set=>promotedPawnState=value;
     }
 
     public GameState(PlayerState p1, PlayerState p2){
@@ -77,6 +72,7 @@ public class GameState{
         this.originalPosition = original.originalPosition;
         this.checkmate = original.checkmate;
         this.promoteTo = original.promoteTo;
+        this.promotedPawnState = original.promotedPawnState;
     }
     public GameState Clone()=>new GameState(this);
 
@@ -767,13 +763,10 @@ public class Game : MonoBehaviour{
             
         }else
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
-
-        // Clear selection (this can be moved to OnPromotionSelected if needed)
-
+            
         state.SelectedPieceState = null;
         selectedPiece = null;
         
-        //Debug.Log(state.SelectedPieceState.Position + "is my pos 3");
     }
     void HandleDragAndDrop(){
         if (selectedPiece != null){
