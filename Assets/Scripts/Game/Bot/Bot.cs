@@ -195,7 +195,7 @@ public abstract class BotState : PlayerState
                 return false;
         }
 
-        return pointsBetweenAndEnds.Count > 2 && !HasBlockingPiece(pointsBetweenAndEnds, allyPiece, to, gameState);
+        return pointsBetweenAndEnds.Count >= 2 && !HasBlockingPiece(pointsBetweenAndEnds, allyPiece, to, gameState);
     }
 
     private bool HasBlockingPiece(HashSet<Vector2Int> points, PieceState allyPiece, Vector2Int to, GameState gameState)
@@ -205,6 +205,7 @@ public abstract class BotState : PlayerState
 
         foreach (Vector2Int point in points)
         {
+            if (!gameState.CurrentBoardState.InBounds(point)) continue; // Skip out of bounds
             if (gameState.GetTile(point).HasPieceState())
                 return true; // Blocked
         }
