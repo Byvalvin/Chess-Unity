@@ -13,7 +13,7 @@ public abstract class PieceState {
     protected static Vector2Int minPoint, maxPoint;
     public HashSet<Vector2Int> validMoves = new HashSet<Vector2Int>();
     public bool captured = false;
-    public static Vector2Int purgatory = new Vector2Int(-100,-100); // captured pieces go to purgatory
+    public static Vector2Int purgatory = new Vector2Int(-100,-100), heavenOrhell = new Vector2Int(100, 100); // captured pieces go to purgatory
     public bool firstMove = true;
 
 
@@ -50,7 +50,6 @@ public abstract class PieceState {
         set{
             currentPos=value;
             OnPositionChanged?.Invoke();
-
         }
     }
     public string Type{
@@ -206,8 +205,9 @@ public abstract class Piece : MonoBehaviour {
 
     private void OnDestroy(){
         // Unsubscribe from event to prevent memory leaks
-        if (state != null)
+        if (state != null){
             state.OnPositionChanged -= SetPosition;
+        }
     }
 
 }

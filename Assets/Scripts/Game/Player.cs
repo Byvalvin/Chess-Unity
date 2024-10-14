@@ -4,8 +4,7 @@ using UnityEngine;
 using System;
 
 
-public class PlayerState
-{
+public class PlayerState{
     public event Action<PieceState> OnPieceRemoved, OnPieceCaptured;
     private string playerName;
     private bool colour = true; //assume white
@@ -29,8 +28,7 @@ public class PlayerState
         }
     }
     protected int TurnIndex => turnIndex;
-    public float TileSize
-    {
+    public float TileSize{
         get=>tileSize;
         set=>tileSize=value;
     }
@@ -50,22 +48,18 @@ public class PlayerState
         playerName = _playerName; Colour=_colour;
     }
 
-    public PlayerState(PlayerState original)
-    {
+    public PlayerState(PlayerState original){
         this.playerName = original.playerName;
         this.colour = original.colour;
         this.turnIndex = original.turnIndex;
         this.tileSize = original.tileSize;
         this.pieces = new List<PieceState>();
         foreach (var piece in original.pieces)
-        {
             pieces.Add(piece.Clone()); // Assuming PieceState has a Clone method
-        }
         this.captured = new List<PieceState>();
         foreach (var piece in original.captured)
-        {
             captured.Add(piece.Clone());
-        }
+        
 
         this.inCheck = original.inCheck;
         this.doubleCheck = original.doubleCheck;
@@ -75,10 +69,7 @@ public class PlayerState
     public virtual PlayerState Clone() => new PlayerState(this); 
 
     public PieceState GetKing() => PieceStates[0];
-    public bool IsInCheck(){
-        return doubleCheck || InCheck;
-    }
-
+    public bool IsInCheck()=>doubleCheck || InCheck;
     public void AddPieceState(PieceState piece) => pieces.Add(piece);
     public void RemovePieceState(PieceState piece) {
         pieces.Remove(piece);
@@ -91,8 +82,7 @@ public class PlayerState
     }
 
 
-    public virtual Vector2Int[] GetMove()
-    {
+    public virtual Vector2Int[] GetMove(){
         Vector2Int[] fromTo = new Vector2Int[2];
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Vector2Int targetPosition = Utility.RoundVector2(mousePosition / tileSize);
@@ -109,24 +99,18 @@ public class PlayerState
 
 }
 
-public class Player : MonoBehaviour
-{
+public class Player : MonoBehaviour{
    protected PlayerState state;
    protected List<Piece> pieces = new List<Piece>(), capturedPieces = new List<Piece>();
 
    public PlayerState State{
        get=>state;
        set{
-
-           if (state != null)
-            {
-                // Unsubscribe from previous state events
+           if (state != null){// Unsubscribe from previous state events
                 state.OnPieceRemoved -= RemovePiece;
                 state.OnPieceCaptured -= Capture;
             }
-            
             state = value;
-
             // Subscribe to events of the new state
             state.OnPieceRemoved += RemovePiece;
             state.OnPieceCaptured += Capture;
@@ -152,23 +136,13 @@ public class Player : MonoBehaviour
             capturedPieces.Add(correspondingPiece);
     }
 
-
     // GUI
-    protected virtual void Awake()
-    {
-     //state = new PlayerState();   
-    }
+    protected virtual void Awake(){}
 
     // Start is called before the first frame update
-    protected virtual void Start()
-    {
-        
-    }
+    protected virtual void Start(){}
 
     // Update is called once per frame
-    protected virtual void Update()
-    {
-        
-    }
+    protected virtual void Update() {   }
 }
 

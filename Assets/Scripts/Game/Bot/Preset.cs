@@ -29,6 +29,10 @@ public class PresetState : BotState
         if (moveIndex < MoveList.Count)
         {
             string moveString = MoveList[moveIndex]; // Get the next move string
+
+            // set promotion choice for promotion
+            bool isPromotion = moveString.Contains('=');
+            if(isPromotion) PromoteTo=NotationParser.pieceTypeNotationMap[moveString[moveString.Length-1]];
             moveIndex++;
             return ParseMove(moveString); // Parse it into Vector2Int[]
         }

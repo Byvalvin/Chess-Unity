@@ -14,9 +14,10 @@ public class OracleState : BotState
     {
 
     }
-    public OracleState(BotState botState) : base(botState){}
+    public OracleState(OracleState original) : base(original){}
+    public override PlayerState Clone() => new OracleState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
     }

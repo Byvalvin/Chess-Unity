@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 
 public class BoardState{
-    public event Action<Vector2Int, Vector2Int> OnPieceMoved;
+    public event Action<Vector2Int, Vector2Int, bool> OnPieceMoved;
     private TileState[,] tileStates;
     
     private static Vector2Int minPoint, maxPoint;
@@ -35,7 +35,6 @@ public class BoardState{
             for (int xi = 0; xi < N; xi++)
                 tileStates[yi, xi] = original.tileStates[yi, xi]?.Clone(); // Clone each tile
     }
-
     public BoardState Clone() => new BoardState(this); // Clone method
 
     public void CreateBoardState(PlayerState player1, PlayerState player2){
@@ -45,14 +44,7 @@ public class BoardState{
 
         for (int yi = 0; yi < N; yi++){
             for (int xi = 0; xi < N; xi++){
-                TileState tileState = new TileState();
-
-                tileState.Colour = (yi + xi) % 2 == 1; // Alternate colours
-                tileState.Min = minPoint.x; tileState.Max = maxPoint.x;
-                tileState.Position = new Vector2Int(xi, yi); // Note the order here
-
-                tileStates[yi, xi] = tileState;
-
+                tileStates[yi, xi] = new TileState((yi + xi) % 2 == 1, minPoint.x, maxPoint.x, new Vector2Int(xi, yi)); //Alt colours
             }
         }
         
@@ -119,20 +111,8 @@ public class BoardState{
             darkY++; lightY--;
             pieceState = new PawnState(colour, new Vector2Int(x, colour ? lightY : darkY), minPoint, maxPoint);
         }else{
-            // Use Type.GetType to get the type of the piece state dynamically
-            Type pieceStateType = Type.GetType(type + "State"); // Assumes the class names are in the format "KingState", "QueenState", etc.
-            if (pieceStateType == null){
-                Debug.LogError($"Could not find type: {type}State");
-                return;
-            }
             Vector2Int startPos = new Vector2Int(x, colour ? lightY : darkY);
-
-            // Create an instance of the PieceState using reflection
-            pieceState = (PieceState)Activator.CreateInstance(pieceStateType, new object[] { colour, startPos, minPoint, maxPoint });
-            if (pieceState == null){
-                Debug.LogError($"Failed to create instance of type: {type}State");
-                return;
-            }
+            pieceState = Objects.CreatePieceState(type, colour, startPos, minPoint, maxPoint);
         }
 
         // Set piece to tile
@@ -144,7 +124,6 @@ public class BoardState{
     }
 
 
-
     public TileState GetTile(Vector2Int pos){
         int xIndex = pos.x;
         int yIndex = pos.y; // Invert y coordinate for the array
@@ -154,7 +133,6 @@ public class BoardState{
         
         return null; // Return null if out of bounds
     }
-
     public TileState GetTile(int x, int y){ // overload
         int xIndex = x;
         int yIndex = y; // Invert y coordinate for the array
@@ -165,21 +143,20 @@ public class BoardState{
         return null; // Return null if out of bounds
     }
 
-    public void MovePiece(Vector2Int from, Vector2Int to){
+    public void MovePiece(Vector2Int from, Vector2Int to, bool remove=false){
         TileState fromTile = GetTile(from);
         TileState toTile = GetTile(to);
 
-        if (fromTile != null && toTile != null){
-            //Debug.Log($"Moving piece from {from} to {to}");
-            toTile.pieceState = fromTile.pieceState;
+        if (fromTile != null && (toTile != null || remove)){
+            //Debug.Log($"Moving piece from {from} to {to} in state");
+            if(!remove)toTile.pieceState = fromTile.pieceState;
             fromTile.pieceState = null;
         }
-        OnPieceMoved?.Invoke(from, to); // for the board tiles too
+        OnPieceMoved?.Invoke(from, to, remove); // for the board tiles too
     }
 
     // Piece Movement Logic
     public bool InBounds(Vector2Int pos)=>Utility.InBounds(minPoint, maxPoint, pos);
-
 }
 
 public class Board : MonoBehaviour
@@ -207,6 +184,7 @@ public class Board : MonoBehaviour
             state.OnPieceMoved += MovePiece;
         }
     }
+    public float PieceScaleFactor => pieceScaleFactor;
 
     public void CreateBoard(Player Player1, Player Player2){
         // Create and Add Tiles
@@ -214,16 +192,7 @@ public class Board : MonoBehaviour
 
         for (int yi = 0; yi < state.N; yi++)
             for (int xi = 0; xi < state.N; xi++){
-                GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                Tile tile = tileObject.AddComponent<Tile>();
-                tile.State = state.TileStates[yi, xi];
-                tile.N = tileSize;
-
-                tiles[yi, xi] = tile;
-
-                // Position the tile in the scene
-                tileObject.transform.position = new Vector3(xi * tileSize, yi * tileSize, 0);
-                tileObject.transform.localScale = new Vector3(tileSize, tileSize, 1); // Flatten for board look
+                tiles[yi, xi] = Objects.CreateTile(xi,yi,tileSize,state.TileStates[yi, xi]);
             }
 
         // need tileSize for both player and bot moves
@@ -247,8 +216,6 @@ public class Board : MonoBehaviour
             sprites[sprite.name] = sprite; // Map sprite names to the dictionary
         return sprites;
     }
-
-
 
     private void PopulateBoard(Player Player1, Player Player2){
         // string[] pieceTypes = { "Pawn", "Bishop", "Knight", "Rook", "Queen", "King" };
@@ -300,34 +267,23 @@ public class Board : MonoBehaviour
 
     void AddPiece(string type, bool colour, int x, Player Player){
         int darkY = state.MinPoint.y, lightY = state.MaxPoint.y;
-
-        GameObject PieceObject = new GameObject(type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""));
-        // Convert the type string to a Type object
-        Type pieceType = Type.GetType(type);
-        Piece piece = PieceObject.AddComponent(pieceType) as Piece;
-        if (piece == null){
-            Debug.LogError($"Failed to add component of type: {type}");
-            return;
-        }
-
         if(type=="Pawn"){
             darkY++; lightY--;
         }
         int tileY = colour ? lightY : darkY;
-        
-        piece.State = state.TileStates[tileY, x].pieceState;
-        piece.TileSize = tileSize;
-        piece.PieceSprite = sprites[$"{type}"];
-        piece.PieceColliderSize = 1 / pieceScaleFactor;
+        PieceState correspondingPieceState = state.TileStates[tileY, x].pieceState;
+        Piece piece = Objects.CreatePiece(
+            type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""),
+            type, 
+            correspondingPieceState, 
+            tileSize, 
+            pieceScaleFactor
+        );
 
         // Set piece to tile
         tiles[tileY, x].piece = piece; // Adjust for array index
         //Debug.Log(piece);
         //Debug.Log(tiles[tileY, x].piece + " "+ tiles[tileY, x].piece.State.Type + " on tile " + x + " " + tileY);
-
-        // Set UI
-        PieceObject.transform.position = new Vector3(x * tileSize, tileY * tileSize, 0);
-        PieceObject.transform.localScale = new Vector3(tileSize * pieceScaleFactor, tileSize * pieceScaleFactor, 1); // Adjust based on sprite size
 
         // Give piece to player
         Player.AddPiece(piece);
@@ -355,19 +311,16 @@ public class Board : MonoBehaviour
         return null; // Return null if out of bounds
     }
 
-    public void MovePiece(Vector2Int from, Vector2Int to){
+    public void MovePiece(Vector2Int from, Vector2Int to, bool remove=false){
         Tile fromTile = GetTile(from);
         Tile toTile = GetTile(to);
-
-        if (fromTile != null && toTile != null)
+        if (fromTile != null && (toTile != null || remove))
         {
             Debug.Log($"Moving piece from {from} to {to}");
-            toTile.piece = fromTile.piece;
+            if(!remove)toTile.piece = fromTile.piece;
             fromTile.piece = null;
         }
     }
-
-
     
     void Awake(){
         // create Sprite dict

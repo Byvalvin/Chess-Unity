@@ -13,9 +13,10 @@ public class ScholarState : BotState
     {
 
     }
-    public ScholarState(BotState botState) : base(botState){}
+    public ScholarState(ScholarState original) : base(original){}
+    public override PlayerState Clone() => new ScholarState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
     }

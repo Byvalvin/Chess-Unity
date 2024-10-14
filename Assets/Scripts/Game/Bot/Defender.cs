@@ -14,16 +14,17 @@ public class DefenderState : BotState
     private const int PieceProtectionReward = 5;
 
     public DefenderState(string playerName, bool colour) : base(playerName, colour) { }
-    public DefenderState(BotState botState) : base(botState) { }
+    public DefenderState(DefenderState original) : base(original) { }
+    public override PlayerState Clone() => new DefenderState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         int score = 0;
         PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
         PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
 
         // Simulate the move
-        GameState clone = currentGame.Clone();
+        //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
         // 1. Evaluate King Safety

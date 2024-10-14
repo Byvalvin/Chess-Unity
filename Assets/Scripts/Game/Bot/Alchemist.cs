@@ -13,16 +13,17 @@ public class AlchemistState : BotState
     private const int CentralControlMultiplier = 2;
 
     public AlchemistState(string playerName, bool colour) : base(playerName, colour) { }
-    public AlchemistState(BotState botState) : base(botState) { }
+    public AlchemistState(AlchemistState original) : base(original) { }
+    public override PlayerState Clone() => new AlchemistState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         int score = 0;
         PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
         PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
 
         // Simulate the move
-        GameState clone = currentGame.Clone();
+        //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
         // 1. Capture Bonus

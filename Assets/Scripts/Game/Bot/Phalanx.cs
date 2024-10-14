@@ -13,9 +13,10 @@ public class PhalanxState : BotState
     {
 
     }
-    public PhalanxState(BotState botState) : base(botState){}
+    public PhalanxState(PhalanxState original) : base(original){}
+    public override PlayerState Clone() => new PhalanxState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
     }

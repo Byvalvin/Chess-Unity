@@ -12,8 +12,10 @@ Assassin: Targets weak or exposed pieces, eliminating threats quickly.
 public class ShadowState : BotState
 {
     public ShadowState(string _playerName, bool _colour) : base(_playerName, _colour){}
+    public ShadowState(ShadowState original) : base(original){}
+    public override PlayerState Clone() => new ShadowState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         // Implement ambush logic
         int score = 0;

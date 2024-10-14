@@ -5,8 +5,12 @@ using System;
 using Newtonsoft.Json; // for saving and loading games
 using System.Linq; // Add this line for LINQ
 
+
+/*
+man. Still project has thought me much to say the least. None the less the value of understand objects, like when they are the same reference, when they are different, when to clone when to just assign, building objects, separation of state from display, botting and how best to approach it, unity deployment, c#, inheritence, virtual and override, abstract classes, interfaces, the utility of utilities, chess notations, Unity UI (is the worst part of unity but is powerful if you know), why GameObject.Find() is bad, dynamics, static variables, singletons, the importance of structuring a project, UML dIAGREAMS AND SUCH. Asset management for Prefabs, stprites and so on. Different type of types!! i could go on but i'll stop here.
+*/
 public class GameState{
-    public event Action<PieceState> OnSelectedPieceChanged;
+    public event Action<PieceState> OnSelectedPieceChanged, OnPiecePromoted;
     private BoardState boardState;
     private PlayerState[] playerStates = new PlayerState[2];
     private int currentIndex = 0;
@@ -15,6 +19,7 @@ public class GameState{
     private bool checkmate = false;
 
     private string promoteTo = "";
+    private PawnState promotedPawnState = null;
 
     public BoardState CurrentBoardState{
         get=>boardState;
@@ -38,7 +43,22 @@ public class GameState{
     public Vector2Int OriginalPosition => originalPosition;
 
     public bool Checkmate=>checkmate;
-    
+   
+    public string PromoteTo {// This will hold the type of piece the player has chosen to promote to
+        get => promoteTo; 
+        set
+        {
+            promoteTo = value;
+            // OnPromotionChanged?.Invoke(promoteTo); // Example of notifying when it changes
+        }
+        
+    }
+
+    public PawnState PromotedPawnState{
+        get=>promotedPawnState;
+        set=>promotedPawnState=value;
+    }
+
     public GameState(PlayerState p1, PlayerState p2){
         playerStates[0]=p1; playerStates[1]=p2;
         boardState = new BoardState();
@@ -88,9 +108,13 @@ public class GameState{
                 }
             }
         }
+
+        if(GetAllPlayerMoves(playerStates[0]).Count==0 && GetAllPlayerMoves(playerStates[1]).Count==0){
+            Debug.Log($"GAME OVER: DRAW");
+        }
+
         return false;
     }
-
     void End(){checkmate=true;}
 
     // for Bots
@@ -98,6 +122,12 @@ public class GameState{
         // Ensure the piece being moved is valid
         PieceState pieceToMove = boardState.GetTile(from).pieceState;
         selectedPieceState = pieceToMove;
+
+        
+        if(IsPromotion(selectedPieceState, to)){
+            promotedPawnState=selectedPieceState as PawnState; // to replace
+            promoteTo=(playerStates[currentIndex] as BotState).PromoteTo; // to know what bot wants to promore to 
+        }
         if (selectedPieceState != null && selectedPieceState.Colour == playerStates[currentIndex].Colour) {
             ExecuteMove(to);
         }
@@ -297,100 +327,109 @@ public class GameState{
                 queenMoves.Add(move);
         return queenMoves;
     }
-    bool FilterKingMove(PieceState piece, Vector2Int pos){
-        bool pieceAtpos = boardState.GetTile(pos).HasPieceState(),
-            sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
-        bool pieceAtposDefended = false; // King cant capture a defended piece
-        if(pieceAtpos && !sameColourPieceAtPos){ // check if that piece is defended
-            foreach (PieceState opposingPiece in playerStates[piece.Colour?1:0].PieceStates){
-                if(opposingPiece.Position != pos) {//make sure piece isnt "defending" itself lol
-                    switch(opposingPiece.Type){
-                        case "King":
-                            pieceAtposDefended = KingAttackedTiles(opposingPiece).Contains(pos);
-                            break;
-                        case "Knight":
-                            pieceAtposDefended = KnightAttackedTiles(opposingPiece).Contains(pos);
-                            break;
-                        case "Pawn":
-                            pieceAtposDefended = PawnAttackedTiles(opposingPiece).Contains(pos);
-                            break;
-                        default: // Queen, Rook, Bishop
-                            HashSet<Vector2Int> pointsBetweenAndEnds;
-                            switch(opposingPiece.Type){
-                                case "Bishop":
-                                    pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(opposingPiece.Position, pos, includeEnds:true);
-                                    break;
-                                case "Rook":
-                                    pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(opposingPiece.Position, pos, includeEnds:true);
-                                    break;
-                                case "Queen":
-                                    pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos, includeEnds:true);
-                                    break;
-                                default:
-                                    pointsBetweenAndEnds = new HashSet<Vector2Int>();
-                                    break;
-                            }
-                            
-                            pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
-                            if(pointsBetweenAndEnds.Count > 2){ // if there is a defender then only do this check if there are tiles between the defender and defended
-                                pointsBetweenAndEnds.Remove(opposingPiece.Position); pointsBetweenAndEnds.Remove(pos);
-                                foreach (Vector2Int point in pointsBetweenAndEnds){
-                                    pieceAtposDefended = pieceAtposDefended && !boardState.GetTile(point).HasPieceState(); // if a single piece on path, path is blocked and piece cant be defended
-                                    if(!pieceAtposDefended)
-                                        break; // there is another piece blocking the defense, onto next candidate
-                                }
-                            }
-                            break;
-                    }         
-                }
-                if(pieceAtposDefended) // piece is defended by one other piece already so can stop
+
+    private bool IsPieceDefended(Vector2Int pos, PieceState piece) {
+        foreach (PieceState opposingPiece in playerStates[piece.Colour ? 1 : 0].PieceStates) {
+            if (!boardState.InBounds(opposingPiece.Position)) continue; // Skip out of bounds
+
+            if (opposingPiece.Position == pos) continue; // Skip itself
+
+            bool isDefending = false;
+            switch (opposingPiece.Type) {
+                case "King":
+                    isDefending = KingAttackedTiles(opposingPiece).Contains(pos);
+                    break;
+                case "Knight":
+                    isDefending = KnightAttackedTiles(opposingPiece).Contains(pos);
+                    break;
+                case "Pawn":
+                    isDefending = PawnAttackedTiles(opposingPiece).Contains(pos);
+                    break;
+                default: // Queen, Rook, Bishop
+                    isDefending = IsPieceDefendedBySlidingPiece(opposingPiece, pos);
                     break;
             }
+
+            if (isDefending) return true; // Found a defender
         }
+        return false; // No defenders found
+    }
 
-        // also castle moves
-        int direction = pos.x-piece.Position.x;
-        bool leftSide=direction<0, castleMove = piece.Position.y==pos.y && Math.Abs(direction)==2,
-            canCastle = castleMove;
-        if(castleMove){
-            // determine the correct rook
-            PieceState theRook = null;
-            if(boardState.GetTile(leftSide?0:7, piece.Position.y).HasPieceState()
-            && boardState.GetTile(leftSide?0:7, piece.Position.y).pieceState is RookState rookState)
-                theRook = rookState;
-            if(theRook!=null){
-                /*
-                3)no pieces between king and rook in that direction
-                1)rooks first move
-                4)no opps attack space between king and rook in that dir
-                2)king/player to move not in check
-                */
-                // 1
-                canCastle = theRook.FirstMove;
-                //Debug.Log("castling 1"+canCastle);
-                // 2
-                canCastle = canCastle && !playerStates[piece.Colour?0:1].IsInCheck();
-                //Debug.Log("castling 2"+canCastle);
-                // 3
-                HashSet<Vector2Int> spacesBetween = Utility.GetIntermediateNonDiagonalLinePoints(theRook.Position, piece.Position);
-                foreach (Vector2Int space in spacesBetween)
-                    canCastle = canCastle && boardState.GetTile(space).HasPieceState()==false;
-                //Debug.Log("castling 3"+canCastle);
-                //4
-                foreach (PieceState opponentPiece in playerStates[piece.Colour?1:0].PieceStates)
-                {
-                    if(!canCastle) break;
-                    // better to intersect a smaller set into a larger one
-                    HashSet<Vector2Int> opPieceMoves = new HashSet<Vector2Int>(opponentPiece.ValidMoves);
-                    opPieceMoves.IntersectWith(spacesBetween);
-                    canCastle = canCastle && opPieceMoves.Count==0;
-                }
-                //Debug.Log("castling 4"+canCastle);
+    private bool IsPieceDefendedBySlidingPiece(PieceState opposingPiece, Vector2Int targetPos) {
+        HashSet<Vector2Int> pointsBetweenAndEnds;
+        switch (opposingPiece.Type) {
+            case "Bishop":
+                pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(opposingPiece.Position, targetPos, includeEnds: true);
+                break;
+            case "Rook":
+                pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(opposingPiece.Position, targetPos, includeEnds: true);
+                break;
+            case "Queen":
+                pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, targetPos, includeEnds: true);
+                break;
+            default:
+                return false; // Not a defending piece
+        }
+        if(pointsBetweenAndEnds.Count==0) return false; // there is no path
 
+        // Check if the path is clear, there is the edge case where there are no point between but the piece is still defended, this will ignore the for loop and return true
+        pointsBetweenAndEnds.Remove(opposingPiece.Position);
+        pointsBetweenAndEnds.Remove(targetPos);
+        foreach (Vector2Int point in pointsBetweenAndEnds) {
+            if (boardState.GetTile(point).HasPieceState()) {
+                return false; // Path is blocked
             }
         }
-        return ((!pieceAtpos || (pieceAtpos && !sameColourPieceAtPos && !pieceAtposDefended)) && !castleMove) || canCastle;
+        return true; // There are defending points
     }
+
+    private bool CanCastle(PieceState piece, Vector2Int pos, int direction) {
+        bool leftSide = direction < 0;
+       
+
+        // Determine the correct rook
+        PieceState theRook = boardState.GetTile(leftSide ? 0 : 7, piece.Position.y).pieceState as RookState;
+        if (theRook == null || !theRook.FirstMove || playerStates[piece.Colour ? 0 : 1].IsInCheck()) {
+            return false; // Rook not available or other conditions not met
+        }
+
+        // Check spaces between king and rook
+        HashSet<Vector2Int> spacesBetween = Utility.GetIntermediateNonDiagonalLinePoints(theRook.Position, piece.Position);
+        foreach (Vector2Int space in spacesBetween) {
+            if (boardState.GetTile(space).HasPieceState()) return false; // Path blocked
+        }
+
+        // Check opponent's attack on the spaces
+        foreach (PieceState opponentPiece in playerStates[piece.Colour ? 1 : 0].PieceStates) {
+            HashSet<Vector2Int> opPieceMoves = new HashSet<Vector2Int>(opponentPiece.ValidMoves);
+            opPieceMoves.IntersectWith(spacesBetween);
+            if (opPieceMoves.Count > 0) return false; // Opponent can attack the spaces
+        }
+
+        return true; // All castling conditions met
+    }
+    
+
+    bool FilterKingMove(PieceState piece, Vector2Int pos) {
+        bool pieceAtpos = boardState.GetTile(pos).HasPieceState();
+        bool sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
+        bool pieceAtposDefended = false; // King can't capture a defended piece
+
+        // Check if there's an opponent's piece at the target position
+        if (pieceAtpos && !sameColourPieceAtPos) 
+            pieceAtposDefended = IsPieceDefended(pos, piece);
+        
+        // Check for castling
+        int direction = pos.x - piece.Position.x;
+        bool castleMove = piece.Position.y == pos.y && Math.Abs(direction) == 2, canCastle = CanCastle(piece, pos, direction);
+        // The move is valid if:
+        // 1. There is no piece at the target position (no capturing) and not a castling move,
+        // 2. There is an opponent's piece that is not defended and not a castling move, 
+        // 3. The move is a valid castling move.
+        return canCastle || (!castleMove && (!pieceAtpos  || (pieceAtpos && !sameColourPieceAtPos && !pieceAtposDefended)));
+    }
+
+
     HashSet<Vector2Int> FilterKingMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
@@ -463,7 +502,6 @@ public class GameState{
             foreach (PieceState piece in player.PieceStates){
                 piece.ResetValidMoves();
                 piece.ValidMoves = FilterMoves(piece);
-
                 // Reset en passant status after each move
                 if (piece is PawnState pawn)
                     pawn.ResetEnPassant();   
@@ -479,6 +517,8 @@ public class GameState{
 
     
     public Vector2Int ExecuteMove(Vector2Int targetPosition){
+        Vector2Int lastPosition = default; // needed for bots
+
         // Check for capture
         if (IsCapture(targetPosition)){
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
@@ -487,45 +527,81 @@ public class GameState{
             captured.Captured = true;
         }
 
-        // Handle en passant
-        if (lastMovedPieceState is PawnState lastPawn && lastPawn.CanBeCapturedEnPassant && SelectedPieceState is PawnState) {
-            Vector2Int enPassantTarget = lastPawn.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
-            if (targetPosition == enPassantTarget) {
-                PieceState captured = boardState.GetTile(lastPawn.Position).pieceState;
-                playerStates[currentIndex].Capture(captured);
-                playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
-                captured.Captured = true;
-            }
-        }
-
-        // is a castleMove, already moved king now move correct rook
-        int direction = targetPosition.x-selectedPieceState.Position.x;
-        bool leftSide=direction<0, castleMove = selectedPieceState.Position.y==targetPosition.y && Math.Abs(direction)==2;
-        if(castleMove){
-            // determine the correct rook
-            PieceState theRook = null;
-            Vector2Int rookCastlePosition = default;
-            if(boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).HasPieceState()
-            && boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).pieceState is RookState rookState){
-                theRook = rookState;
-                rookCastlePosition = new Vector2Int(selectedPieceState.Position.x+ direction+(leftSide?1:-1), selectedPieceState.Position.y);
-                boardState.MovePiece(theRook.Position, rookCastlePosition);
-                theRook.Move(rookCastlePosition);
-            }
-        }
-        
         // promotion moves
-        bool isPromotion = selectedPieceState is PawnState && targetPosition.y==(selectedPieceState.Colour?0:7); 
-        if(isPromotion){
+        if(IsPromotion(targetPosition)){
             // only handled move exxecution
-            
-        }
+            if(!string.IsNullOrEmpty(promoteTo)){
+                //Debug.Log(promoteTo + " is choice");
+                // set proper params, loaction, colour, etc
+                // create the piecestate
+                PieceState replacementState = Objects.CreatePieceState(
+                    promoteTo, 
+                    promotedPawnState.Colour, 
+                    targetPosition, 
+                    promotedPawnState.MinPoint, 
+                    promotedPawnState.MaxPoint
+                );
+                
+                // Remove the pawnstate
+                boardState.MovePiece(promotedPawnState.Position, targetPosition, true); // remove from tile/board
+                PlayerState currentPlayerState = playerStates[currentIndex]; // remove from playerstate
+                currentPlayerState.RemovePieceState(promotedPawnState);
+                promotedPawnState.Promoted = true;
+                if(currentPlayerState is BotState botState) // reset promotion choice if bot move
+                    botState.PromoteTo = "";
 
-        // Move the piece
-        boardState.MovePiece(selectedPieceState.Position, targetPosition);
-        Vector2Int lastPosition = selectedPieceState.Position;
-        selectedPieceState.Move(targetPosition);
-        lastMovedPieceState = selectedPieceState; // Store the last moved piece
+                // Add replacementstate
+                GetTile(replacementState.Position).pieceState = replacementState; // set for tile/board
+                playerStates[currentIndex].AddPieceState(replacementState); // set for player
+
+                // call to game to create piece(for ui)-> set piecestate to piece, add piece to player
+                OnPiecePromoted?.Invoke(replacementState); // Trigger the promotion event
+                
+            }else{
+                Debug.LogError("want to promote but cant");
+            }
+            // record lastPiece data
+            lastPosition = promotedPawnState.Position;
+            lastMovedPieceState = promotedPawnState; // Store the last moved piece
+            promoteTo=""; promotedPawnState=null; // reset
+            
+        }else{
+            // Handle en passant
+            if (lastMovedPieceState is PawnState lastPawn && lastPawn.CanBeCapturedEnPassant && SelectedPieceState is PawnState) {
+                Vector2Int enPassantTarget = lastPawn.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
+                if (targetPosition == enPassantTarget) {
+                    PieceState captured = boardState.GetTile(lastPawn.Position).pieceState;
+                    playerStates[currentIndex].Capture(captured);
+                    playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
+                    captured.Captured = true;
+                }
+            }
+
+            // is a castleMove, already moved king now move correct rook
+            int direction = targetPosition.x-selectedPieceState.Position.x;
+            bool leftSide=direction<0, castleMove = selectedPieceState.Position.y==targetPosition.y && Math.Abs(direction)==2;
+            if(castleMove){
+                // determine the correct rook
+                PieceState theRook = null;
+                Vector2Int rookCastlePosition = default;
+                if(boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).HasPieceState()
+                && boardState.GetTile(leftSide?0:7, selectedPieceState.Position.y).pieceState is RookState rookState){
+                    theRook = rookState;
+                    rookCastlePosition = new Vector2Int(selectedPieceState.Position.x+ direction+(leftSide?1:-1), selectedPieceState.Position.y);
+                    boardState.MovePiece(theRook.Position, rookCastlePosition);
+                    theRook.Move(rookCastlePosition);
+                }
+            }
+            // record lastPiece data
+            lastPosition = selectedPieceState.Position;
+            lastMovedPieceState = selectedPieceState; // Store the last moved piece
+            
+                
+            // Move the piece
+            boardState.MovePiece(selectedPieceState.Position, targetPosition);
+            selectedPieceState.Move(targetPosition);
+
+        }
 
         //updates
         UpdateGameState();
@@ -537,6 +613,8 @@ public class GameState{
     }
 
     public bool IsCapture(Vector2Int targetPosition) => boardState.GetTile(targetPosition).HasPieceState();
+    public bool IsPromotion(Vector2Int targetPosition)=>promotedPawnState!=null && promotedPawnState is PawnState && targetPosition.y==(promotedPawnState.Colour?0:7);
+    public static bool IsPromotion(PieceState pieceState, Vector2Int targetPosition)=>pieceState is PawnState && targetPosition.y==(pieceState.Colour?0:7);
 }
 
 
@@ -597,36 +675,63 @@ public class Game : MonoBehaviour{
     private Player[] players = new Player[2]; // only 2 playerStates for a chess game
 
     Piece selectedPiece;
+    private bool isPromotionInProgress = false;
 
-    public GameObject promotionUIPrefab; // Assign this in the inspector
-    private PromotionUI currentPromotionUI;
 
     // Call this method when a pawn reaches the last rank
-    public void ShowPromotionOptions(Vector2 position)
+    public void ShowPromotionOptions(Vector2Int promotionTileLocation, bool isWhitePlayer)
     {
-        if (currentPromotionUI != null)
-        {
-            Destroy(currentPromotionUI.gameObject); // Remove the previous UI if it exists
-        }
+        // Determine tile color and size
+        Tile promotionTile = board.GetTile(promotionTileLocation);
+        
 
-        currentPromotionUI = Instantiate(promotionUIPrefab, position, Quaternion.identity, transform).GetComponent<PromotionUI>();
-
-        // Show the UI and handle the promotion callback
-        currentPromotionUI.Show(OnPromotionSelected);
+        // Show the promotion UI
+        PromotionUI promotionUI = gameObject.AddComponent<PromotionUI>(); // Add the PromotionUI component to the Game object
+        promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece.MyColour, promotionTile.State.Position);
     }
 
-    private void OnPromotionSelected(string pieceType)
-    {
-        // Handle the promotion logic based on selected piece type
-        Debug.Log($"Promoted to: {pieceType}");
-        // You can call your ExecuteMove or any other logic here
+    private void OnPromotionSelected(Vector2Int targetPosition, string pieceType){
+        // Update the promoteTo variable in GameState
+        state.PromoteTo = pieceType;
+        if(state.PromoteTo!=""){
+            state.ExecuteMove(targetPosition);
+        }else{
+            state.SelectedPieceState = state.PromotedPawnState;
+            state.PromotedPawnState = null;
+            state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
+        }
+        // Reset the promotion state
+        isPromotionInProgress = false; // Reset after promotion is handled
     }
 
     // Player GUI
-    private void UpdateSelectedPiece(PieceState newPieceState)
-    {
+    private void UpdateSelectedPiece(PieceState newPieceState){
         // Find the corresponding Piece based on the PieceState
         selectedPiece = FindPieceFromState(newPieceState);
+    }
+    private void HandlePiecePromotion(PieceState replacementState){
+        PlayerState currentPlayerState = state.PlayerStates[state.PlayerIndex];
+
+        // Create the new Piece and add it to the player's pieces
+        string pieceTypeName = replacementState.GetType().Name.Replace("State",""); // Get the type name from the PieceState
+        Piece newPiece = Objects.CreatePiece(
+            $"{pieceTypeName}{(currentPlayerState.Colour ? "W" : "B")}p",
+            pieceTypeName,
+            replacementState, 
+            currentPlayerState.TileSize,
+            board.PieceScaleFactor
+        );
+
+        if(currentPlayerState is BotState botState){
+           // Debug.Log(replacementState+"is what was evenetually promoted "+botState.PromoteTo+" to see if it was reset or not"+ "position of replacement "+replacementState.Position);
+        }
+        
+        if (newPiece != null){
+            Player currentPlayer = players[state.PlayerIndex]; // Get the current player
+            currentPlayer.AddPiece(newPiece); 
+        }else
+            Debug.LogError("Failed to create the new piece during promotion.");
+        
     }
     private Piece FindPieceFromState(PieceState pieceState)
     {
@@ -672,23 +777,21 @@ public class Game : MonoBehaviour{
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1];
         if (state.GetMovesAllowed(state.SelectedPieceState).Contains(targetPosition)){
             // promotion moves
-            bool isPromotion = state.SelectedPieceState is PawnState && targetPosition.y==(state.SelectedPieceState.Colour?0:7); 
-            if(isPromotion){
+            if(GameState.IsPromotion(state.SelectedPieceState, targetPosition)){
                 // show promotion UI
-                string choice = "Queen"; // from selection UI
-                if(choice!=""){
-                    state.ExecuteMove(targetPosition);
-                }
-                
+                // Show promotion UI and wait for user input
+                isPromotionInProgress = true; // Set the promotion state to true
+                state.PromotedPawnState = state.SelectedPieceState as PawnState;
+                ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour); 
             }else
                 state.ExecuteMove(targetPosition);
             
         }else
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
-
-        // Clear selection
+            
         state.SelectedPieceState = null;
         selectedPiece = null;
+        
     }
     void HandleDragAndDrop(){
         if (selectedPiece != null){
@@ -709,7 +812,8 @@ public class Game : MonoBehaviour{
         if (Utility.MouseDown()) // Left mouse button
             SelectPiece();
         else if (selectedPiece != null)
-            HandleDragAndDrop();
+            if(!isPromotionInProgress) // can use drag and drop while promoting
+                HandleDragAndDrop();
     }
 
     public void InitializeGame(string whitePlayerType, string blackPlayerType, string whitePlayerName, string blackPlayerName, string filePath)
@@ -731,20 +835,20 @@ public class Game : MonoBehaviour{
     private void InitializeGameState(PlayerState P1State, PlayerState P2State)
     {
         state = new GameState(P1State, P2State);
+
+        // subcriptions
         state.OnSelectedPieceChanged += UpdateSelectedPiece;
+        state.OnPiecePromoted += HandlePiecePromotion; // Subscribe to promotion events
+
         if (P1State is BotState)
             (P1State as BotState).CurrentGame = this.state;
         if (P2State is BotState)
             (P2State as BotState).CurrentGame = this.state;
     }
 
-    private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName, string whitePlayerName, string blackPlayerName, string filePath)
-    {
-        Debug.Log("here1 " + whitePlayerTypeName + " " + blackPlayerTypeName);
-
-
-        PlayerState P1State = CreatePlayerState(whitePlayerTypeName, whitePlayerName, true, filePath);
-        PlayerState P2State = CreatePlayerState(blackPlayerTypeName, blackPlayerName, false, filePath);
+    private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName, string whitePlayerName, string blackPlayerName, string filePath){
+        PlayerState P1State = Objects.CreatePlayerState(whitePlayerTypeName, whitePlayerName, true, filePath);
+        PlayerState P2State = Objects.CreatePlayerState(blackPlayerTypeName, blackPlayerName, false, filePath);
         InitializeGameState(P1State, P2State);
 
         // Dynamically add the components using the Type objects
@@ -778,23 +882,6 @@ public class Game : MonoBehaviour{
     }
 
 
-    private PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite, string filePath)
-    {
-        // Use reflection to instantiate the appropriate player state
-        var type = System.Reflection.Assembly.GetExecutingAssembly().GetTypes()
-            .FirstOrDefault(t => t.Name == $"{playerTypeName}State");
-        
-        if (type != null)
-        {
-            PlayerState playerState = (playerTypeName=="Preset")? 
-                new PresetState(playerName, isWhite, filePath) 
-                : 
-                (PlayerState)Activator.CreateInstance(type, playerName, isWhite);
-            //Debug.Log("Player stement" + playerState+" "+(playerState is AvengerState));
-            return playerState;
-        }
-        return null; // Handle case where type is not found
-    }
 
     void Awake() {
         Debug.Log("Awake called");
@@ -813,6 +900,9 @@ public class Game : MonoBehaviour{
     private void OnDestroy()
     {
         // Unsubscribe from event to prevent memory leaks
-        if(state!=null)state.OnSelectedPieceChanged -= UpdateSelectedPiece;
+        if(state!=null){
+            state.OnSelectedPieceChanged -= UpdateSelectedPiece;
+            state.OnPiecePromoted -= HandlePiecePromotion; // Unsubscribe to avoid memory leaks
+        }
     }
 }
