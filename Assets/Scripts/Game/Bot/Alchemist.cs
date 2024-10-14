@@ -43,9 +43,6 @@ public class AlchemistState : BotState
 
         // 6. Check for threats to the king
         score += AttackedKingTiles(clone);
-
-        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {from} {to} {score}");
-
         return score;
     }
 

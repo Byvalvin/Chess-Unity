@@ -73,11 +73,17 @@ public abstract class BotState : PlayerState{
         int bestScore = int.MinValue;
 
         var bestMoves = new List<Vector2Int[]>();
+        Vector2Int[] best = null; 
+
+        PieceState movingPiece;
 
         foreach (var kvp in moveMap){
             Vector2Int from = kvp.Key;
             foreach (var to in kvp.Value){
+                movingPiece = currentGame.GetTile(from).pieceState;
                 int score = GameState.IsPromotion(currentGame.GetTile(from).pieceState, to)? EvaluatePromotionMove(from, to) : EvaluateMove(from, to, currentGame.Clone());
+                Debug.Log($"score eval: {movingPiece.Type} {movingPiece.Colour} {from} -> {to}: {score}");
+
                 if (score > bestScore){
                     bestScore = score;
                     bestFrom = from;
@@ -89,7 +95,10 @@ public abstract class BotState : PlayerState{
                     bestMoves.Add(new[] { from, to }); 
             }
         }
-        return bestMoves.Count > 1 ? bestMoves[Random.Range(0, bestMoves.Count)] : new Vector2Int[] { bestFrom, bestTo };
+        best = bestMoves.Count > 1 ? bestMoves[Random.Range(0, bestMoves.Count)] : new Vector2Int[] { bestFrom, bestTo };
+        movingPiece = currentGame.GetTile(best[0]).pieceState;
+        Debug.Log($"BEST MOVE: {movingPiece.Type} {movingPiece.Colour} {best[0]} {best[1]} {bestScore}");
+        return best;
     }
     protected virtual int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)=>1; // placeholder assumes all moves are equal but diff bots will have diff scoring
 

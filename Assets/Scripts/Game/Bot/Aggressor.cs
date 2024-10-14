@@ -50,8 +50,6 @@ public class AggressorState : BotState
 
         // Adjust Aggressiveness
         score = AdjustAggressiveness(score);
-
-        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {from} {to} {score}");
         return score;
     }
 

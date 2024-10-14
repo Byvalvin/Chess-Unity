@@ -48,9 +48,6 @@ public class BerserkerState : BotState
 
         // 4. Potential for punishing opponent's mistakes
         score += EvaluatePunishment(clone);
-
- 
-        Debug.Log($"{movingPieceType} {movingPieceColour} {from} {to} {score}");
         
         return score;
     }

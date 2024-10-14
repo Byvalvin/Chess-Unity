@@ -8,16 +8,13 @@ public class PromotionUI : MonoBehaviour
     private GameObject panel;
 
     private System.Action<Vector2Int, string> onPromotionSelected;
-    // Define the types of pieces that can be promoted to
-    string[] pieceTypes = { "Queen", "Rook", "Bishop", "Knight" }; // Customize as needed
     Vector2Int promotionTilePosition;
     
-    // Variable to scale the piece buttons down
-    public float pieceScale = 1f; // Adjust this value to scale pieces down
+    public float pieceScale = 1f; // Variable to scale the piece buttons down. Adjust this value to scale pieces down
+    string[] pieceTypes = { "Queen", "Rook", "Bishop", "Knight" }; // Define the types of pieces that can be promoted to. Customize as needed
 
     public void Show(System.Action<Vector2Int, string> promotionCallback, Color tileColor, Vector2 tileSize, Color pawnColor, Vector2Int tilePosition){
         onPromotionSelected = promotionCallback;
-
         promotionTilePosition = tilePosition;
 
         // Create the Canvas if it doesn't exist
@@ -37,33 +34,29 @@ public class PromotionUI : MonoBehaviour
         RectTransform panelRect = panel.AddComponent<RectTransform>();
         panelRect.sizeDelta = new Vector2(tileSize.x, tileSize.y * (pieceTypes.Length));
 
-        // Calculate the world position of the tile
-        Vector3 worldPosition = GetWorldPositionFromBoard(tilePosition);
-        // Determine the position based on tilePosition.y
-        if (tilePosition.y == 0){
-            // Pawn is at the bottom of the board, position panel above and go up
-            panelRect.position = new Vector3(worldPosition.x, worldPosition.y + (panelRect.sizeDelta.y - tileSize.y) / 2, 0);
-        }else if (tilePosition.y == 7){
-            // Pawn is at the top of the board, position panel below and go down
-            panelRect.position = new Vector3(worldPosition.x, worldPosition.y - (panelRect.sizeDelta.y - tileSize.y) / 2, 0);
-        }
-
         // Add a background image to the panel
         Image panelImage = panel.AddComponent<Image>();
         panelImage.color = tileColor; // Semi-transparent background
 
+        // Determine the position based on tilePosition.y
         // Create and configure the close button based on position
+        Vector3 worldPosition = GetWorldPositionFromBoard(tilePosition); // Calculate the world position of the tile
+        
         if (tilePosition.y == 0){
-            // Create the close button first, at the top
-            CreateCloseButton(tileSize, tileColor, true);
+            // Pawn is at the bottom of the board, position panel above and go up
+            panelRect.position = new Vector3(worldPosition.x, worldPosition.y + (panelRect.sizeDelta.y - tileSize.y) / 2, 0);
+            
+            CreateCloseButton(tileSize, tileColor, true); // Create the close button first, at the top
             for (int i = 0; i < pieceTypes.Length; i++)
                 CreateButton(pieceTypes[i], tileColor, pawnColor, tileSize, i);  
         }
         else if (tilePosition.y == 7){
+            // Pawn is at the top of the board, position panel below and go down
+            panelRect.position = new Vector3(worldPosition.x, worldPosition.y - (panelRect.sizeDelta.y - tileSize.y) / 2, 0);
+
             for (int i = 0; i < pieceTypes.Length; i++)
                 CreateButton(pieceTypes[i], tileColor, pawnColor, tileSize, i);
-            // Create the close button last, at the bottom
-            CreateCloseButton(tileSize, tileColor, false);
+            CreateCloseButton(tileSize, tileColor, false); // Create the close button last, at the bottom
         }
 
         panel.SetActive(true);

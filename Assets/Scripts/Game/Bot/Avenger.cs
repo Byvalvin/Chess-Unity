@@ -45,7 +45,6 @@ public class AvengerState : BotState
         score += EvaluatePieceSafety(from, to, movingPieceType, clone);
         score += ArmyValue(clone, TurnIndex) - ArmyValue(clone, 1 - TurnIndex);
 
-        Debug.Log($"{movingPieceType} {movingPieceColour} {from} {to} {score}");
         return score;
     }
 

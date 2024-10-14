@@ -204,6 +204,31 @@ public static class Utility
     }
 
     /*
+    Get the positions a knight can move to from the given position.
+    */
+    public static HashSet<Vector2Int> GetKnightMoves(Vector2Int position){
+        HashSet<Vector2Int> knightMoves = new HashSet<Vector2Int>();
+
+        // All possible knight moves (2 in one direction and 1 in the other)
+        Vector2Int[] knightOffsets = {
+                    new Vector2Int(-1, 2),        new Vector2Int(1, 2),
+
+            new Vector2Int(-2, 1),                          new Vector2Int(2, 1),
+
+            new Vector2Int(-2, -1),                         new Vector2Int(2, -1),
+
+                    new Vector2Int(-1, -2),        new Vector2Int(1, -2)
+        };
+
+        foreach (var offset in knightOffsets)
+            knightMoves.Add(position + offset);
+
+        return knightMoves;
+    }
+
+
+
+    /*
     get the positions in the area formed by the start and end points, including the start and end points
     */
     public static HashSet<Vector2Int> GetAllPointsInArea(Vector2Int start, Vector2Int end)

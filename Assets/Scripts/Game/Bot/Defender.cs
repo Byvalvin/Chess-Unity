@@ -53,8 +53,6 @@ public class DefenderState : BotState
                 score -= 20; // Penalty for capturing defended pieces
             }
         }
-
-        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {from} {to} {score}");
         return score;
     }
 

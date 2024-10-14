@@ -16,7 +16,7 @@ public class GameState{
     private int currentIndex = 0;
     private PieceState selectedPieceState = null, lastMovedPieceState = null; // To track the last moved piece;
     Vector2Int originalPosition;
-    private bool checkmate = false;
+    private bool checkmate = false, gameover = false;
 
     private string promoteTo = "";
     private PawnState promotedPawnState = null;
@@ -43,6 +43,7 @@ public class GameState{
     public Vector2Int OriginalPosition => originalPosition;
 
     public bool Checkmate=>checkmate;
+    public bool Gameover=>gameover;
    
     public string PromoteTo {// This will hold the type of piece the player has chosen to promote to
         get => promoteTo; 
@@ -83,7 +84,7 @@ public class GameState{
     public TileState GetTile(Vector2Int pos) => boardState.GetTile(pos);
 
     // Game ends
-    bool IsGameEnd(){
+    bool CheckCheckmate(){
         foreach (PlayerState player in playerStates){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
             PieceState PlayerKing = player.GetKing();
             if(player.IsInCheck()){
@@ -108,7 +109,10 @@ public class GameState{
                 }
             }
         }
+        return false;
+    }
 
+    bool CheckStalemate(){
         if(GetAllPlayerMoves(playerStates[0]).Count==0 && currentIndex==0){
             Debug.Log($"GAME OVER: DRAW-> {playerStates[0].PlayerName} STALEMATED");
             return true;
@@ -119,7 +123,8 @@ public class GameState{
 
         return false;
     }
-    void End(){checkmate=true;}
+    public bool IsGameEnd()=>CheckCheckmate() || CheckStalemate();
+    void End(){gameover=true;}
 
     // for Bots
     public void MakeBotMove(Vector2Int from, Vector2Int to) {
@@ -127,7 +132,6 @@ public class GameState{
         PieceState pieceToMove = boardState.GetTile(from).pieceState;
         selectedPieceState = pieceToMove;
 
-        
         if(IsPromotion(selectedPieceState, to)){
             promotedPawnState=selectedPieceState as PawnState; // to replace
             promoteTo=(playerStates[currentIndex] as BotState).PromoteTo; // to know what bot wants to promore to 
@@ -166,12 +170,11 @@ public class GameState{
                     .Contains(move)); 
             bool mustAvoidCheck = playerStates[currentIndex].InCheck && (canEvade || canCapture || canBlock);
 
-
             // condition 3: cant move a pinned piece
             bool pinnedPiece = false, pinnedPieceCanCaptureAttacker = false;
             PieceState attacker = GetAttacker(piece); // selected piece is attacked
 
-            if(attacker!=null){
+            if(attacker!=null && attacker is not KingState){ // Kings dont hve the ability to pinned pieces on other kings
                 HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(playerStates[currentIndex].GetKing().Position, attacker.Position);
                 pinnedPiece = tilesBetweenKingAndAttacker.Contains(piece.Position);
                 // if there are multiple pieces in th epath, any can move
@@ -181,21 +184,21 @@ public class GameState{
                     if(GetTile(anotherPiecePosition).HasPieceState()){
                         pinnedPiece = false;
                         break;
-                    }
-                    
+                    } 
                 }
                 
                 HashSet<Vector2Int> allowedPinnedPieceMoves = tilesBetweenKingAndAttacker; // because a pinned piece can still attack
                 allowedPinnedPieceMoves.Add(attacker.Position);
                 pinnedPieceCanCaptureAttacker = allowedPinnedPieceMoves.Contains(move);
+                //if(pinnedPiece)Debug.Log(piece+" "+piece.Colour+" pinned by "+attacker+" "+attacker.Colour);
             }
+            
             bool avoidPinTactic = !pinnedPiece || pinnedPieceCanCaptureAttacker;
 
             //Debug.Log(mustMoveKing + " " + mustAvoidCheck + " " + avoidPinTactic + " " + isAnEnPassantMove + " ");
             if(mustMoveKing || mustAvoidCheck || (!playerStates[currentIndex].IsInCheck() && avoidPinTactic) || isAnEnPassantMove)
                 gameValidMoves.Add(move);    
         }
-
         return gameValidMoves;
     }
     HashSet<Vector2Int> GetAllPlayerMoves(PlayerState player){
@@ -233,7 +236,8 @@ public class GameState{
         return attackedTiles;
     }
     public HashSet<Vector2Int> KnightAttackedTiles(PieceState piece){
-        HashSet<Vector2Int> attackedTiles = new HashSet<Vector2Int>();
+        HashSet<Vector2Int> attackedTiles, allAttackedTiles = Utility.GetKnightMoves(piece.Position);
+        attackedTiles = Utility.FindAll<Vector2Int>(allAttackedTiles, boardState.InBounds);
         return attackedTiles;
     }
 
@@ -297,10 +301,9 @@ public class GameState{
                 knightMoves.Add(move);
         return knightMoves;
     }
-    bool FilterBishopMove(PieceState piece, Vector2Int pos){
+    bool SlidingPieceFilter(PieceState piece, Vector2Int pos, HashSet<Vector2Int> pointsBetween){
         bool pieceAtpos = boardState.GetTile(pos).HasPieceState(),
             sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
-        HashSet<Vector2Int> pointsBetween = Utility.GetIntermediatePoints(piece.Position, pos, Utility.MovementType.Diagonal);
         foreach (Vector2Int apos in pointsBetween){
             bool pieceAtApos = boardState.GetTile(apos).HasPieceState(),
                 sameColourPieceAtAPos = pieceAtApos && boardState.GetTile(apos).pieceState.Colour==piece.Colour;
@@ -310,6 +313,7 @@ public class GameState{
         }
         return !pieceAtpos || (pieceAtpos && !sameColourPieceAtPos);
     }
+    bool FilterBishopMove(PieceState piece, Vector2Int pos)=>SlidingPieceFilter(piece, pos, Utility.GetIntermediateDiagonalLinePoints(piece.Position, pos));
     HashSet<Vector2Int> FilterBishopMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> bishopMoves = new HashSet<Vector2Int>();
@@ -318,20 +322,7 @@ public class GameState{
                 bishopMoves.Add(move);
         return bishopMoves;
     }
-    bool FilterRookMove(PieceState piece, Vector2Int pos){
-        bool pieceAtpos = boardState.GetTile(pos).HasPieceState();
-        bool sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
-
-        HashSet<Vector2Int> pointsBetween = Utility.GetIntermediateNonDiagonalLinePoints(piece.Position, pos);
-        foreach (Vector2Int apos in pointsBetween){
-            bool pieceAtApos = boardState.GetTile(apos).HasPieceState(),
-                sameColourPieceAtAPos = pieceAtApos && boardState.GetTile(apos).pieceState.Colour==piece.Colour;
-            bool isAttackingKingTile = pieceAtApos && boardState.GetTile(apos).pieceState.Type=="King" && !sameColourPieceAtAPos;
-            if (pieceAtApos && (!isAttackingKingTile || sameColourPieceAtAPos))
-                return false;
-        }
-        return !pieceAtpos || (pieceAtpos && !sameColourPieceAtPos);
-    }
+    bool FilterRookMove(PieceState piece, Vector2Int pos)=>SlidingPieceFilter(piece, pos, Utility.GetIntermediateNonDiagonalLinePoints(piece.Position, pos));
     HashSet<Vector2Int> FilterRookMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> rookMoves = new HashSet<Vector2Int>();
@@ -340,22 +331,7 @@ public class GameState{
                 rookMoves.Add(move);
         return rookMoves;
     }
-
-    bool FilterQueenMove(PieceState piece, Vector2Int pos){
-        bool pieceAtpos = boardState.GetTile(pos).HasPieceState();
-        bool sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
-
-        // Determine movement type (diagonal or straight)
-        HashSet<Vector2Int> pointsBetween = Utility.GetIntermediateLinePoints(piece.Position, pos);
-        foreach (Vector2Int apos in pointsBetween){
-            bool pieceAtApos = boardState.GetTile(apos).HasPieceState(),
-                sameColourPieceAtAPos = pieceAtApos && boardState.GetTile(apos).pieceState.Colour==piece.Colour;
-            bool isAttackingKingTile = pieceAtApos && boardState.GetTile(apos).pieceState.Type=="King" && !sameColourPieceAtAPos;
-            if (pieceAtApos && (!isAttackingKingTile || sameColourPieceAtAPos))
-                return false;
-        }
-        return !pieceAtpos || (pieceAtpos && !sameColourPieceAtPos);
-    }
+    bool FilterQueenMove(PieceState piece, Vector2Int pos)=>SlidingPieceFilter(piece, pos, Utility.GetIntermediateLinePoints(piece.Position, pos)); // Determine movement type (diagonal or straight)
     HashSet<Vector2Int> FilterQueenMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> queenMoves = new HashSet<Vector2Int>();
@@ -459,7 +435,7 @@ public class GameState{
         
         // Check for castling
         int direction = pos.x - piece.Position.x;
-        bool castleMove = piece.Position.y == pos.y && Math.Abs(direction) == 2, canCastle = CanCastle(piece, pos, direction);
+        bool castleMove = piece.Position.y == pos.y && Math.Abs(direction) == 2, canCastle = castleMove && CanCastle(piece, pos, direction);
         // The move is valid if:
         // 1. There is no piece at the target position (no capturing) and not a castling move,
         // 2. There is an opponent's piece that is not defended and not a castling move, 
@@ -560,9 +536,10 @@ public class GameState{
         // Check for capture
         if (IsCapture(targetPosition)){
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
-            playerStates[currentIndex].Capture(captured);
+            boardState.MovePiece(targetPosition, default, true); // remove from tile/board
+            playerStates[currentIndex].Capture(captured); // remove from playerstate
             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
-            captured.Captured = true;
+            captured.Captured = true; // set final resting place
         }
 
         // promotion moves
@@ -572,6 +549,8 @@ public class GameState{
                 //Debug.Log(promoteTo + " is choice");
                 // set proper params, loaction, colour, etc
                 // create the piecestate
+                Debug.Log(promotedPawnState?.Position + "| "+ selectedPieceState?.Position+"swap6");
+                Debug.Log("For this bug "+promotedPawnState +" " + promotedPawnState.Position+targetPosition);
                 PieceState replacementState = Objects.CreatePieceState(
                     promoteTo, 
                     promotedPawnState.Colour, 
@@ -581,12 +560,15 @@ public class GameState{
                 );
                 
                 // Remove the pawnstate
+                
                 boardState.MovePiece(promotedPawnState.Position, targetPosition, true); // remove from tile/board
                 PlayerState currentPlayerState = playerStates[currentIndex]; // remove from playerstate
                 currentPlayerState.RemovePieceState(promotedPawnState);
-                promotedPawnState.Promoted = true;
+                promotedPawnState.Promoted = true; // set final resting place
+                Debug.Log(promotedPawnState + " " + promotedPawnState.Position + "finality");
                 if(currentPlayerState is BotState botState) // reset promotion choice if bot move
                     botState.PromoteTo = "";
+                Debug.Log(promotedPawnState?.Position + "| "+ selectedPieceState?.Position+"swap7");
 
                 // Add replacementstate
                 GetTile(replacementState.Position).pieceState = replacementState; // set for tile/board
@@ -602,6 +584,8 @@ public class GameState{
             lastPosition = promotedPawnState.Position;
             lastMovedPieceState = promotedPawnState; // Store the last moved piece
             promoteTo=""; promotedPawnState=null; // reset
+
+            Debug.Log(promotedPawnState?.Position + "| "+ selectedPieceState?.Position+"swap8");
             
         }else{
             // Handle en passant
@@ -646,6 +630,8 @@ public class GameState{
         SwitchPlayer();
         if(IsGameEnd())
             End();
+        
+        Debug.Log(promotedPawnState?.Position + " |"+ selectedPieceState?.Position+"swap9");
 
         return lastPosition;
     }
@@ -722,24 +708,28 @@ public class Game : MonoBehaviour{
         // Determine tile color and size
         Tile promotionTile = board.GetTile(promotionTileLocation);
         
-
         // Show the promotion UI
         PromotionUI promotionUI = gameObject.AddComponent<PromotionUI>(); // Add the PromotionUI component to the Game object
-        promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece.MyColour, promotionTile.State.Position);
+        promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece.MyColour, promotionTileLocation);
+        Debug.Log(state.PromotedPawnState?.Position + " |"+ state.SelectedPieceState?.Position+"swap2");
     }
 
     private void OnPromotionSelected(Vector2Int targetPosition, string pieceType){
+        Debug.Log(state.PromotedPawnState?.Position + "| "+ state.SelectedPieceState?.Position+"swap3");
         // Update the promoteTo variable in GameState
         state.PromoteTo = pieceType;
         if(state.PromoteTo!=""){
+            Debug.Log(state.PromotedPawnState?.Position + "| "+ state.SelectedPieceState?.Position+"swap4a");
             state.ExecuteMove(targetPosition);
         }else{
+            Debug.Log(state.PromotedPawnState?.Position + "| "+ state.SelectedPieceState?.Position+"swap4b");
             state.SelectedPieceState = state.PromotedPawnState;
             state.PromotedPawnState = null;
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
         }
         // Reset the promotion state
         isPromotionInProgress = false; // Reset after promotion is handled
+        Debug.Log(state.PromotedPawnState?.Position + "| "+ state.SelectedPieceState?.Position+"swap5");
     }
 
     // Player GUI
@@ -760,10 +750,6 @@ public class Game : MonoBehaviour{
             board.PieceScaleFactor
         );
 
-        if(currentPlayerState is BotState botState){
-           // Debug.Log(replacementState+"is what was evenetually promoted "+botState.PromoteTo+" to see if it was reset or not"+ "position of replacement "+replacementState.Position);
-        }
-        
         if (newPiece != null){
             Player currentPlayer = players[state.PlayerIndex]; // Get the current player
             currentPlayer.AddPiece(newPiece); 
@@ -820,6 +806,7 @@ public class Game : MonoBehaviour{
                 // Show promotion UI and wait for user input
                 isPromotionInProgress = true; // Set the promotion state to true
                 state.PromotedPawnState = state.SelectedPieceState as PawnState;
+                Debug.Log(state.PromotedPawnState.Position + "| "+ state.SelectedPieceState.Position+"swap");
                 ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour); 
             }else
                 state.ExecuteMove(targetPosition);
@@ -840,7 +827,7 @@ public class Game : MonoBehaviour{
     }
 
     private void HandleInput(){
-        if(state.Checkmate) return; // dont handl user input
+        if(state.Gameover) return; // dont handl user input
 
         if(players[state.PlayerIndex] is Bot){
             BotMove();
