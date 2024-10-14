@@ -288,13 +288,12 @@ public class Board : MonoBehaviour
             darkY++; lightY--;
         }
         int tileY = colour ? lightY : darkY;
+        PieceState correspondingPieceState = state.TileStates[tileY, x].pieceState;
         Piece piece = Objects.CreatePiece(
             type + (colour ? "W" : "B") + (type == "Pawn" ? x : ""),
             type, 
-            state.TileStates[tileY, x].pieceState, 
+            correspondingPieceState, 
             tileSize, 
-            x, 
-            tileY, 
             pieceScaleFactor
         );
 

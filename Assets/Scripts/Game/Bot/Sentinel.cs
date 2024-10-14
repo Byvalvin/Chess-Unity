@@ -13,9 +13,10 @@ public class SentinelState : BotState
     {
 
     }
-    public SentinelState(BotState botState) : base(botState){}
+    public SentinelState(SentinelState original) : base(original){}
+    public override PlayerState Clone() => new SentinelState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
     }

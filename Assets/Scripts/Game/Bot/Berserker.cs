@@ -17,16 +17,24 @@ public class BerserkerState : BotState
     private const int PunishmentReward = 5;
 
     public BerserkerState(string playerName, bool colour) : base(playerName, colour) { }
-    public BerserkerState(BotState botState) : base(botState) { }
+    public BerserkerState(BerserkerState original) : base(original) { }
+    public override PlayerState Clone() => new BerserkerState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         int score = 0;
-        PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
-        PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
+        PieceState movingPiece = clone.GetTile(from).pieceState;
+        PieceState targetPiece = clone.GetTile(to).pieceState;
+               if(movingPiece==null){
+            Debug.Log("someohow its null"+from+to);
+        }
+
+
+        string movingPieceType = movingPiece.Type;
+        bool movingPieceColour = movingPiece.Colour;
 
         // Simulate the move
-        GameState clone = currentGame.Clone();
+        //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
         // 1. Aggressive capture score
@@ -41,7 +49,8 @@ public class BerserkerState : BotState
         // 4. Potential for punishing opponent's mistakes
         score += EvaluatePunishment(clone);
 
-        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {from} {to} {score}");
+ 
+        Debug.Log($"{movingPieceType} {movingPieceColour} {from} {to} {score}");
         
         return score;
     }

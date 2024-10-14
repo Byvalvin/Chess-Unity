@@ -13,18 +13,18 @@ public class AggressorState : BotState
     private const int BehindCautionPenalty = -10;
 
     public AggressorState(string playerName, bool colour) : base(playerName, colour) { }
-    public AggressorState(BotState botState) : base(botState) { }
+    public AggressorState(AggressorState original) : base(original) { }
     
     public override PlayerState Clone() => new AggressorState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         int score = 0;
         PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
         PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
 
         // Simulate the move
-        GameState clone = currentGame.Clone();
+        //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
         // 1. Capture Bonus

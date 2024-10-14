@@ -42,7 +42,7 @@ public static class Objects
         return pieceState;
     }
 
-    public static Piece CreatePiece(string objectName, string pieceTypeName, PieceState pieceState, float tileSize, int x, int y, float pieceScaleFactor){
+    public static Piece CreatePiece(string objectName, string pieceTypeName, PieceState pieceState, float tileSize, float pieceScaleFactor){
         GameObject PieceObject = new GameObject(objectName);
         // Convert the type string to a Type object
         Type pieceType = Type.GetType(pieceTypeName);
@@ -58,7 +58,7 @@ public static class Objects
         piece.PieceColliderSize = 1/pieceScaleFactor;
 
         // Set UI
-        PieceObject.transform.position = new Vector3(x * tileSize, y * tileSize, 0);
+        PieceObject.transform.position = new Vector3(pieceState.Position.x * tileSize, pieceState.Position.y * tileSize, 0);
         PieceObject.transform.localScale = new Vector3(tileSize * pieceScaleFactor, tileSize * pieceScaleFactor, 1); // Adjust based on sprite size
 
         return piece;

@@ -17,7 +17,8 @@ public class LeviState : BotState
     private const int PieceProtectionReward = 5;
 
     public LeviState(string playerName, bool colour) : base(playerName, colour) { }
-    public LeviState(BotState original) : base(original) { }
+    public LeviState(LeviState original) : base(original) { }
+    public override PlayerState Clone() => new LeviState(this);
 
     protected override Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap)
     {

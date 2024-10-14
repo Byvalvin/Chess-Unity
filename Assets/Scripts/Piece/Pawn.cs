@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-public class PawnState : PieceState
-{
+public class PawnState : PieceState{
     private bool canBeCapturedEnPassant, promoted;
     private int enPassantCounter;
     public bool CanBeCapturedEnPassant => canBeCapturedEnPassant;
@@ -15,8 +14,7 @@ public class PawnState : PieceState
         }
     }
 
-    public PawnState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint) : base(_colour, _currentPos,  _minPoint, _maxPoint)
-    {
+    public PawnState(bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint) : base(_colour, _currentPos,  _minPoint, _maxPoint){
         this.type = "Pawn";
         this.canBeCapturedEnPassant = false;
         this.promoted = false;
@@ -24,15 +22,13 @@ public class PawnState : PieceState
     }
 
     // Copy constructor
-    public PawnState(PawnState original) : base(original)
-    {
+    public PawnState(PawnState original) : base(original){
         canBeCapturedEnPassant = original.canBeCapturedEnPassant;
         enPassantCounter = original.enPassantCounter;
         promoted = original.promoted;
     }
     
-    public override bool CanMove(Vector2Int to)
-    {
+    public override bool CanMove(Vector2Int to){
         if (!InBounds(to)) return false;
 
         int forwardStep = colour ? -1 : 1;
@@ -69,8 +65,7 @@ public class PawnState : PieceState
         
         int forwardStep = colour ? -1 : 1;
         bool doubleForwardMove = FirstMove && currentPos.y + 2 * forwardStep == to.y;
-        if (doubleForwardMove)
-        {
+        if (doubleForwardMove){
             canBeCapturedEnPassant = true; // Set en passant available
             //enPassantCounter++; // Type-Safe Casting: When accessing PawnState specific properties, you can cast the state to PawnState.
         }
@@ -81,10 +76,8 @@ public class PawnState : PieceState
     public override PieceState Clone() => new PawnState(this);
     
 
-    public void ResetEnPassant()
-    {
-        if (canBeCapturedEnPassant)
-        {
+    public void ResetEnPassant(){
+        if (canBeCapturedEnPassant){
             if (enPassantCounter >= 2)
                 canBeCapturedEnPassant = false; // Reset after one move cycle
             else
@@ -94,8 +87,7 @@ public class PawnState : PieceState
 }
 
 
-public class Pawn : Piece
-{
+public class Pawn : Piece{
     // public override void Move(Vector2Int to)
     // {
     //     state.Move(to); // Update the state

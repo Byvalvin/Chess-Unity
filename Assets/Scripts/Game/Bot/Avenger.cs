@@ -15,16 +15,20 @@ public class AvengerState : BotState
     private const int ValuablePieceThreshold = 5;
 
     public AvengerState(string playerName, bool colour) : base(playerName, colour) { }
-    public AvengerState(BotState botState) : base(botState) { }
+    public AvengerState(AvengerState original) : base(original) { }
+    public override PlayerState Clone() => new AvengerState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         int score = 0;
-        PieceState movingPiece = CurrentGame.GetTile(from).pieceState;
-        PieceState targetPiece = CurrentGame.GetTile(to).pieceState;
+        PieceState movingPiece = clone.GetTile(from).pieceState;
+        PieceState targetPiece = clone.GetTile(to).pieceState;
+
+        string movingPieceType = movingPiece.Type;
+        bool movingPieceColour = movingPiece.Colour;
 
         // Simulate the move
-        GameState clone = currentGame.Clone();
+        //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
         // 1. Vengeance: Prioritize captures on opponent's pieces
@@ -38,10 +42,10 @@ public class AvengerState : BotState
 
         // 4. General board control and safety
         score += CentralControlBonus(to, clone);
-        score += EvaluatePieceSafety(from, to, movingPiece.Type, clone);
+        score += EvaluatePieceSafety(from, to, movingPieceType, clone);
         score += ArmyValue(clone, TurnIndex) - ArmyValue(clone, 1 - TurnIndex);
 
-        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {from} {to} {score}");
+        Debug.Log($"{movingPieceType} {movingPieceColour} {from} {to} {score}");
         return score;
     }
 

@@ -12,9 +12,10 @@ public class StrategistState : BotState
     {
 
     }
-    public StrategistState(BotState botState) : base(botState){}
+    public StrategistState(StrategistState original) : base(original){}
+    public override PlayerState Clone() => new StrategistState(this);
 
-    protected override int EvaluateMove(Vector2Int from, Vector2Int to)
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)
     {
         return 0; // Placeholder logic; consider capturing pieces, controlling the center, etc.
     }

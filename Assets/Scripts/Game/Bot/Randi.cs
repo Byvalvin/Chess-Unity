@@ -6,6 +6,7 @@ public class RandiState : BotState
 {
     public RandiState(string playerName, bool color) : base(playerName, color) { }
     public RandiState(RandiState original) : base(original) { }
+    public override PlayerState Clone() => new RandiState(this);
 
     protected override Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap)
     {

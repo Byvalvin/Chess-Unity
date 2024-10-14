@@ -17,12 +17,22 @@ public abstract class BotState : PlayerState
     private const int CentralControlBonusValue = 2;
     private const int KingTileValue = 2;
 
+    private string promoteTo = "", PromoteToHolder;
+
+    public string PromoteTo{
+        get=>promoteTo;
+        set=>promoteTo=value;
+    }
+
 
     public BotState(string _playerName, bool _colour) : base(_playerName, _colour){}
     public BotState(BotState original) : base(original){
         this.currentGame = original.currentGame;
+        this.promoteTo = original.promoteTo;
     }
-    public override PlayerState Clone() => MemberwiseClone() as BotState;
+    // Make Clone abstract
+    public abstract override PlayerState Clone();
+
     public override Vector2Int[] GetMove()
     {
         //Vector2Int moveFrom = new Vector2Int(3,1), moveTo = new Vector2Int(3,3);
@@ -37,7 +47,28 @@ public abstract class BotState : PlayerState
         // call the thing that determines the mvoe to play given all the valid mvoes of all pieces
         Vector2Int[] completeMove = Evaluate(moveMap);
         Vector2Int moveFrom=completeMove[0], moveTo=completeMove[1];
+        if(GameState.IsPromotion(currentGame.GetTile(moveFrom).pieceState, moveTo)){
+            promoteTo=PromoteToHolder; PromoteToHolder="";
+        }
         return new Vector2Int[]{moveFrom, moveTo};
+    }
+    protected virtual int EvaluatePromotionMove(Vector2Int from, Vector2Int to){
+        // 4 clones
+        string[] promotions = {"Queen", "Rook", "Bishop", "Knight"};
+        string promotionChoice = "";
+        GameState clone;
+        int score = 1, newScore = 1;
+        foreach (string promotion in promotions){
+             clone = currentGame.Clone(); (clone.PlayerStates[TurnIndex] as BotState).PromoteTo=promotion;
+             newScore = EvaluateMove(from, to, clone);
+             if(newScore > score){
+                score = newScore;
+                promotionChoice = promotion;
+             }
+        }
+        // set promotion choice if promotion
+        PromoteToHolder = promotionChoice;
+        return score;
     }
     protected virtual Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap){
         Vector2Int bestFrom = default;
@@ -49,7 +80,7 @@ public abstract class BotState : PlayerState
         foreach (var kvp in moveMap){
             Vector2Int from = kvp.Key;
             foreach (var to in kvp.Value){
-                int score = EvaluateMove(from, to);
+                int score = GameState.IsPromotion(currentGame.GetTile(from).pieceState, to)? EvaluatePromotionMove(from, to) : EvaluateMove(from, to, currentGame.Clone());
                 if (score > bestScore){
                     bestScore = score;
                     bestFrom = from;
@@ -64,7 +95,7 @@ public abstract class BotState : PlayerState
         }
         return bestMoves.Count > 1 ? bestMoves[Random.Range(0, bestMoves.Count)] : new Vector2Int[] { bestFrom, bestTo };
     }
-    protected virtual int EvaluateMove(Vector2Int from, Vector2Int to)=>1; // placeholder assumes all moves are equal but diff bots will have diff scoring
+    protected virtual int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)=>1; // placeholder assumes all moves are equal but diff bots will have diff scoring
 
     protected bool InCenter(Vector2Int position)=> (3<=position.x&&position.x<=4 && 3<=position.y&&position.y<=4);
 

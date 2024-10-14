@@ -6,6 +6,9 @@ using Newtonsoft.Json; // for saving and loading games
 using System.Linq; // Add this line for LINQ
 
 
+/*
+man. Still project has thought me much to say the least. None the less the value of understand objects, like when they are the same reference, when they are different, when to clone when to just assign, building objects, separation of state from display, botting and how best to approach it, unity deployment, c#, inheritence, virtual and override, abstract classes, interfaces, the utility of utilities, chess notations, Unity UI (is the worst part of unity but is powerful if you know), why GameObject.Find() is bad, dynamics, static variables, singletons, the importance of structuring a project, UML dIAGREAMS AND SUCH. Asset management for Prefabs, stprites and so on. Different type of types!! i could go on but i'll stop here.
+*/
 public class GameState{
     public event Action<PieceState> OnSelectedPieceChanged, OnPiecePromoted;
     private BoardState boardState;
@@ -72,7 +75,6 @@ public class GameState{
         this.originalPosition = original.originalPosition;
         this.checkmate = original.checkmate;
         this.promoteTo = original.promoteTo;
-        this.promotedPawnState = original.promotedPawnState;
     }
     public GameState Clone()=>new GameState(this);
 
@@ -106,9 +108,13 @@ public class GameState{
                 }
             }
         }
+
+        if(GetAllPlayerMoves(playerStates[0]).Count==0 && GetAllPlayerMoves(playerStates[1]).Count==0){
+            Debug.Log($"GAME OVER: DRAW");
+        }
+
         return false;
     }
-
     void End(){checkmate=true;}
 
     // for Bots
@@ -116,6 +122,12 @@ public class GameState{
         // Ensure the piece being moved is valid
         PieceState pieceToMove = boardState.GetTile(from).pieceState;
         selectedPieceState = pieceToMove;
+
+        
+        if(IsPromotion(selectedPieceState, to)){
+            promotedPawnState=selectedPieceState as PawnState; // to replace
+            promoteTo=(playerStates[currentIndex] as BotState).PromoteTo; // to know what bot wants to promore to 
+        }
         if (selectedPieceState != null && selectedPieceState.Colour == playerStates[currentIndex].Colour) {
             ExecuteMove(to);
         }
@@ -321,6 +333,9 @@ public class GameState{
         bool pieceAtposDefended = false; // King cant capture a defended piece
         if(pieceAtpos && !sameColourPieceAtPos){ // check if that piece is defended
             foreach (PieceState opposingPiece in playerStates[piece.Colour?1:0].PieceStates){
+                if(boardState.InBounds(opposingPiece.Position) || boardState.InBounds(pos))
+                    continue; // dont consider any positions outside the board bounds
+                
                 if(opposingPiece.Position != pos) {//make sure piece isnt "defending" itself lol
                     switch(opposingPiece.Type){
                         case "King":
@@ -481,7 +496,6 @@ public class GameState{
             foreach (PieceState piece in player.PieceStates){
                 piece.ResetValidMoves();
                 piece.ValidMoves = FilterMoves(piece);
-
                 // Reset en passant status after each move
                 if (piece is PawnState pawn)
                     pawn.ResetEnPassant();   
@@ -508,8 +522,7 @@ public class GameState{
         }
 
         // promotion moves
-        bool isPromotion = promotedPawnState!=null && promotedPawnState is PawnState && targetPosition.y==(promotedPawnState.Colour?0:7); 
-        if(isPromotion){
+        if(IsPromotion(targetPosition)){
             // only handled move exxecution
             if(!string.IsNullOrEmpty(promoteTo)){
                 //Debug.Log(promoteTo + " is choice");
@@ -522,11 +535,21 @@ public class GameState{
                     promotedPawnState.MinPoint, 
                     promotedPawnState.MaxPoint
                 );
-                playerStates[currentIndex].AddPieceState(replacementState);
-                // call to game to create piece(for ui)-> set piecestate to piece, add piecestate and piece to playerstate and player
-                boardState.MovePiece(promotedPawnState.Position, targetPosition, true);
+                
+                // Remove the pawnstate
+                boardState.MovePiece(promotedPawnState.Position, targetPosition, true); // remove from tile/board
+                PlayerState currentPlayerState = playerStates[currentIndex]; // remove from playerstate
+                currentPlayerState.RemovePieceState(promotedPawnState);
+                promotedPawnState.Promoted = true;
+                if(currentPlayerState is BotState botState) // reset promotion choice if bot move
+                    botState.PromoteTo = "";
+
+                // Add replacementstate
+                GetTile(replacementState.Position).pieceState = replacementState; // set for tile/board
+                playerStates[currentIndex].AddPieceState(replacementState); // set for player
+
+                // call to game to create piece(for ui)-> set piecestate to piece, add piece to player
                 OnPiecePromoted?.Invoke(replacementState); // Trigger the promotion event
-                // remove pawn from playerstate piecestates and player pieces-> heavenOrhell location
                 
             }else{
                 Debug.LogError("want to promote but cant");
@@ -584,6 +607,8 @@ public class GameState{
     }
 
     public bool IsCapture(Vector2Int targetPosition) => boardState.GetTile(targetPosition).HasPieceState();
+    public bool IsPromotion(Vector2Int targetPosition)=>promotedPawnState!=null && promotedPawnState is PawnState && targetPosition.y==(promotedPawnState.Colour?0:7);
+    public static bool IsPromotion(PieceState pieceState, Vector2Int targetPosition)=>pieceState is PawnState && targetPosition.y==(pieceState.Colour?0:7);
 }
 
 
@@ -659,8 +684,7 @@ public class Game : MonoBehaviour{
         promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece.MyColour, promotionTile.State.Position);
     }
 
-    private void OnPromotionSelected(Vector2Int targetPosition, string pieceType)
-    {
+    private void OnPromotionSelected(Vector2Int targetPosition, string pieceType){
         // Update the promoteTo variable in GameState
         state.PromoteTo = pieceType;
         if(state.PromoteTo!=""){
@@ -675,29 +699,26 @@ public class Game : MonoBehaviour{
     }
 
     // Player GUI
-    private void UpdateSelectedPiece(PieceState newPieceState)
-    {
+    private void UpdateSelectedPiece(PieceState newPieceState){
         // Find the corresponding Piece based on the PieceState
         selectedPiece = FindPieceFromState(newPieceState);
     }
     private void HandlePiecePromotion(PieceState replacementState){
         PlayerState currentPlayerState = state.PlayerStates[state.PlayerIndex];
 
-        // Remove the pawn from PlayerState
-        currentPlayerState.RemovePieceState(state.PromotedPawnState);
-        state.PromotedPawnState.Promoted = true;
-
         // Create the new Piece and add it to the player's pieces
         string pieceTypeName = replacementState.GetType().Name.Replace("State",""); // Get the type name from the PieceState
         Piece newPiece = Objects.CreatePiece(
-            $"{pieceTypeName}{(currentPlayerState.Colour ? "W" : "B")}",
+            $"{pieceTypeName}{(currentPlayerState.Colour ? "W" : "B")}p",
             pieceTypeName,
             replacementState, 
-            currentPlayerState.TileSize, 
-            replacementState.Position.x, 
-            replacementState.Position.y, 
+            currentPlayerState.TileSize,
             board.PieceScaleFactor
         );
+
+        if(currentPlayerState is BotState botState){
+           // Debug.Log(replacementState+"is what was evenetually promoted "+botState.PromoteTo+" to see if it was reset or not"+ "position of replacement "+replacementState.Position);
+        }
         
         if (newPiece != null){
             Player currentPlayer = players[state.PlayerIndex]; // Get the current player
@@ -750,9 +771,7 @@ public class Game : MonoBehaviour{
         Vector2Int targetPosition = players[state.PlayerIndex].State.GetMove()[1];
         if (state.GetMovesAllowed(state.SelectedPieceState).Contains(targetPosition)){
             // promotion moves
-            bool isPromotion = state.SelectedPieceState is PawnState && targetPosition.y==(state.SelectedPieceState.Colour?0:7); 
-            if(isPromotion){
-
+            if(GameState.IsPromotion(state.SelectedPieceState, targetPosition)){
                 // show promotion UI
                 // Show promotion UI and wait for user input
                 isPromotionInProgress = true; // Set the promotion state to true
