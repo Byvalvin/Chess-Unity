@@ -41,7 +41,11 @@ public class TileState
         }
     }
 
-    public TileState() { }
+    public TileState(bool _colour, int _min, int _max, Vector2Int _position) {
+        Colour = _colour;
+        Min = _min; Max = _max;
+        Position = _position;
+     }
 
     // Copy constructor
     public TileState(TileState original)

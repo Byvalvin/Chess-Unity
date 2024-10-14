@@ -65,4 +65,17 @@ public static class Objects
 
     }
 
+    public static Tile CreateTile(int x, int y, float tileSize, TileState tileState){
+        GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        Tile tile = tileObject.AddComponent<Tile>();
+        tile.State = tileState;
+        tile.N = tileSize;
+
+        // Position the tile in the scene
+        tileObject.transform.position = new Vector3(x * tileSize, y * tileSize, 0);
+        tileObject.transform.localScale = new Vector3(tileSize, tileSize, 1); // Flatten for board look
+
+        return tile;
+    }
+
 }

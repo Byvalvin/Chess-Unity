@@ -44,14 +44,7 @@ public class BoardState{
 
         for (int yi = 0; yi < N; yi++){
             for (int xi = 0; xi < N; xi++){
-                TileState tileState = new TileState();
-
-                tileState.Colour = (yi + xi) % 2 == 1; // Alternate colours
-                tileState.Min = minPoint.x; tileState.Max = maxPoint.x;
-                tileState.Position = new Vector2Int(xi, yi); // Note the order here
-
-                tileStates[yi, xi] = tileState;
-
+                tileStates[yi, xi] = new TileState((yi + xi) % 2 == 1, minPoint.x, maxPoint.x, new Vector2Int(xi, yi)); //Alt colours
             }
         }
         
@@ -120,7 +113,6 @@ public class BoardState{
         }else{
             Vector2Int startPos = new Vector2Int(x, colour ? lightY : darkY);
             pieceState = Objects.CreatePieceState(type, colour, startPos, minPoint, maxPoint);
-            // Use Type.GetType to get the type of the piece state dynamically
         }
 
         // Set piece to tile
@@ -200,16 +192,7 @@ public class Board : MonoBehaviour
 
         for (int yi = 0; yi < state.N; yi++)
             for (int xi = 0; xi < state.N; xi++){
-                GameObject tileObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                Tile tile = tileObject.AddComponent<Tile>();
-                tile.State = state.TileStates[yi, xi];
-                tile.N = tileSize;
-
-                tiles[yi, xi] = tile;
-
-                // Position the tile in the scene
-                tileObject.transform.position = new Vector3(xi * tileSize, yi * tileSize, 0);
-                tileObject.transform.localScale = new Vector3(tileSize, tileSize, 1); // Flatten for board look
+                tiles[yi, xi] = Objects.CreateTile(xi,yi,tileSize,state.TileStates[yi, xi]);
             }
 
         // need tileSize for both player and bot moves

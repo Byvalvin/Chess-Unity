@@ -58,7 +58,7 @@ This covers a variety of notation cases in chess, demonstrating the flexibility 
 */
 
 public class NotationParser{
-        private static readonly Dictionary<char, string> pieceTypeNotationMap = new Dictionary<char, string>
+        public static readonly Dictionary<char, string> pieceTypeNotationMap = new Dictionary<char, string>
         {
             { 'K', "King" },
             { 'Q', "Queen" },
@@ -130,8 +130,8 @@ public class NotationParser{
         private Vector2Int[] HandlePromotionMove(string move){
             string[] fromAndToInfo = move.Split('=');
             string fromInfo = fromAndToInfo[0].Trim(), toInfo = fromAndToInfo[1].Trim();
+
             string processedMove = ProcessCapture(fromInfo);
-            
             if(processedMove.Length==2) return HandlePawnMove(processedMove);
             processedMove = ExplicitPawnMove(processedMove);
             return HandleComplexPieceMove(processedMove);
