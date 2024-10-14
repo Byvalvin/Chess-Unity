@@ -327,103 +327,109 @@ public class GameState{
                 queenMoves.Add(move);
         return queenMoves;
     }
-    bool FilterKingMove(PieceState piece, Vector2Int pos){
-        bool pieceAtpos = boardState.GetTile(pos).HasPieceState(),
-            sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
-        bool pieceAtposDefended = false; // King cant capture a defended piece
-        if(pieceAtpos && !sameColourPieceAtPos){ // check if that piece is defended
-            foreach (PieceState opposingPiece in playerStates[piece.Colour?1:0].PieceStates){
-                if(boardState.InBounds(opposingPiece.Position) || boardState.InBounds(pos))
-                    continue; // dont consider any positions outside the board bounds
-                
-                if(opposingPiece.Position != pos) {//make sure piece isnt "defending" itself lol
-                    switch(opposingPiece.Type){
-                        case "King":
-                            pieceAtposDefended = KingAttackedTiles(opposingPiece).Contains(pos);
-                            break;
-                        case "Knight":
-                            pieceAtposDefended = KnightAttackedTiles(opposingPiece).Contains(pos);
-                            break;
-                        case "Pawn":
-                            pieceAtposDefended = PawnAttackedTiles(opposingPiece).Contains(pos);
-                            break;
-                        default: // Queen, Rook, Bishop
-                            HashSet<Vector2Int> pointsBetweenAndEnds;
-                            switch(opposingPiece.Type){
-                                case "Bishop":
-                                    pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(opposingPiece.Position, pos, includeEnds:true);
-                                    break;
-                                case "Rook":
-                                    pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(opposingPiece.Position, pos, includeEnds:true);
-                                    break;
-                                case "Queen":
-                                    pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, pos, includeEnds:true);
-                                    break;
-                                default:
-                                    pointsBetweenAndEnds = new HashSet<Vector2Int>();
-                                    break;
-                            }
-                            
-                            pieceAtposDefended = pointsBetweenAndEnds.Count != 0; // if set is empty, then opposingPiece is not a defender
-                            if(pointsBetweenAndEnds.Count > 2){ // if there is a defender then only do this check if there are tiles between the defender and defended
-                                pointsBetweenAndEnds.Remove(opposingPiece.Position); pointsBetweenAndEnds.Remove(pos);
-                                foreach (Vector2Int point in pointsBetweenAndEnds){
-                                    pieceAtposDefended = pieceAtposDefended && !boardState.GetTile(point).HasPieceState(); // if a single piece on path, path is blocked and piece cant be defended
-                                    if(!pieceAtposDefended)
-                                        break; // there is another piece blocking the defense, onto next candidate
-                                }
-                            }
-                            break;
-                    }         
-                }
-                if(pieceAtposDefended) // piece is defended by one other piece already so can stop
+
+    private bool IsPieceDefended(Vector2Int pos, PieceState piece) {
+        foreach (PieceState opposingPiece in playerStates[piece.Colour ? 1 : 0].PieceStates) {
+            if (!boardState.InBounds(opposingPiece.Position)) continue; // Skip out of bounds
+
+            if (opposingPiece.Position == pos) continue; // Skip itself
+
+            bool isDefending = false;
+            switch (opposingPiece.Type) {
+                case "King":
+                    isDefending = KingAttackedTiles(opposingPiece).Contains(pos);
+                    break;
+                case "Knight":
+                    isDefending = KnightAttackedTiles(opposingPiece).Contains(pos);
+                    break;
+                case "Pawn":
+                    isDefending = PawnAttackedTiles(opposingPiece).Contains(pos);
+                    break;
+                default: // Queen, Rook, Bishop
+                    isDefending = IsPieceDefendedBySlidingPiece(opposingPiece, pos);
                     break;
             }
+
+            if (isDefending) return true; // Found a defender
         }
+        return false; // No defenders found
+    }
 
-        // also castle moves
-        int direction = pos.x-piece.Position.x;
-        bool leftSide=direction<0, castleMove = piece.Position.y==pos.y && Math.Abs(direction)==2,
-            canCastle = castleMove;
-        if(castleMove){
-            // determine the correct rook
-            PieceState theRook = null;
-            if(boardState.GetTile(leftSide?0:7, piece.Position.y).HasPieceState()
-            && boardState.GetTile(leftSide?0:7, piece.Position.y).pieceState is RookState rookState)
-                theRook = rookState;
-            if(theRook!=null){
-                /*
-                3)no pieces between king and rook in that direction
-                1)rooks first move
-                4)no opps attack space between king and rook in that dir
-                2)king/player to move not in check
-                */
-                // 1
-                canCastle = theRook.FirstMove;
-                //Debug.Log("castling 1"+canCastle);
-                // 2
-                canCastle = canCastle && !playerStates[piece.Colour?0:1].IsInCheck();
-                //Debug.Log("castling 2"+canCastle);
-                // 3
-                HashSet<Vector2Int> spacesBetween = Utility.GetIntermediateNonDiagonalLinePoints(theRook.Position, piece.Position);
-                foreach (Vector2Int space in spacesBetween)
-                    canCastle = canCastle && boardState.GetTile(space).HasPieceState()==false;
-                //Debug.Log("castling 3"+canCastle);
-                //4
-                foreach (PieceState opponentPiece in playerStates[piece.Colour?1:0].PieceStates)
-                {
-                    if(!canCastle) break;
-                    // better to intersect a smaller set into a larger one
-                    HashSet<Vector2Int> opPieceMoves = new HashSet<Vector2Int>(opponentPiece.ValidMoves);
-                    opPieceMoves.IntersectWith(spacesBetween);
-                    canCastle = canCastle && opPieceMoves.Count==0;
-                }
-                //Debug.Log("castling 4"+canCastle);
+    private bool IsPieceDefendedBySlidingPiece(PieceState opposingPiece, Vector2Int targetPos) {
+        HashSet<Vector2Int> pointsBetweenAndEnds;
+        switch (opposingPiece.Type) {
+            case "Bishop":
+                pointsBetweenAndEnds = Utility.GetIntermediateDiagonalLinePoints(opposingPiece.Position, targetPos, includeEnds: true);
+                break;
+            case "Rook":
+                pointsBetweenAndEnds = Utility.GetIntermediateNonDiagonalLinePoints(opposingPiece.Position, targetPos, includeEnds: true);
+                break;
+            case "Queen":
+                pointsBetweenAndEnds = Utility.GetIntermediateLinePoints(opposingPiece.Position, targetPos, includeEnds: true);
+                break;
+            default:
+                return false; // Not a defending piece
+        }
+        if(pointsBetweenAndEnds.Count==0) return false; // there is no path
 
+        // Check if the path is clear, there is the edge case where there are no point between but the piece is still defended, this will ignore the for loop and return true
+        pointsBetweenAndEnds.Remove(opposingPiece.Position);
+        pointsBetweenAndEnds.Remove(targetPos);
+        foreach (Vector2Int point in pointsBetweenAndEnds) {
+            if (boardState.GetTile(point).HasPieceState()) {
+                return false; // Path is blocked
             }
         }
-        return ((!pieceAtpos || (pieceAtpos && !sameColourPieceAtPos && !pieceAtposDefended)) && !castleMove) || canCastle;
+        return true; // There are defending points
     }
+
+    private bool CanCastle(PieceState piece, Vector2Int pos, int direction) {
+        bool leftSide = direction < 0;
+       
+
+        // Determine the correct rook
+        PieceState theRook = boardState.GetTile(leftSide ? 0 : 7, piece.Position.y).pieceState as RookState;
+        if (theRook == null || !theRook.FirstMove || playerStates[piece.Colour ? 0 : 1].IsInCheck()) {
+            return false; // Rook not available or other conditions not met
+        }
+
+        // Check spaces between king and rook
+        HashSet<Vector2Int> spacesBetween = Utility.GetIntermediateNonDiagonalLinePoints(theRook.Position, piece.Position);
+        foreach (Vector2Int space in spacesBetween) {
+            if (boardState.GetTile(space).HasPieceState()) return false; // Path blocked
+        }
+
+        // Check opponent's attack on the spaces
+        foreach (PieceState opponentPiece in playerStates[piece.Colour ? 1 : 0].PieceStates) {
+            HashSet<Vector2Int> opPieceMoves = new HashSet<Vector2Int>(opponentPiece.ValidMoves);
+            opPieceMoves.IntersectWith(spacesBetween);
+            if (opPieceMoves.Count > 0) return false; // Opponent can attack the spaces
+        }
+
+        return true; // All castling conditions met
+    }
+    
+
+    bool FilterKingMove(PieceState piece, Vector2Int pos) {
+        bool pieceAtpos = boardState.GetTile(pos).HasPieceState();
+        bool sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
+        bool pieceAtposDefended = false; // King can't capture a defended piece
+
+        // Check if there's an opponent's piece at the target position
+        if (pieceAtpos && !sameColourPieceAtPos) 
+            pieceAtposDefended = IsPieceDefended(pos, piece);
+        
+        // Check for castling
+        int direction = pos.x - piece.Position.x;
+        bool castleMove = piece.Position.y == pos.y && Math.Abs(direction) == 2, canCastle = CanCastle(piece, pos, direction);
+        // The move is valid if:
+        // 1. There is no piece at the target position (no capturing) and not a castling move,
+        // 2. There is an opponent's piece that is not defended and not a castling move, 
+        // 3. The move is a valid castling move.
+        return canCastle || (!castleMove && (!pieceAtpos  || (pieceAtpos && !sameColourPieceAtPos && !pieceAtposDefended)));
+    }
+
+
     HashSet<Vector2Int> FilterKingMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
