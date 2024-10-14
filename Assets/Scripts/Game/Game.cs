@@ -109,8 +109,12 @@ public class GameState{
             }
         }
 
-        if(GetAllPlayerMoves(playerStates[0]).Count==0 && GetAllPlayerMoves(playerStates[1]).Count==0){
-            Debug.Log($"GAME OVER: DRAW");
+        if(GetAllPlayerMoves(playerStates[0]).Count==0 && currentIndex==0){
+            Debug.Log($"GAME OVER: DRAW-> {playerStates[0].PlayerName} STALEMATED");
+            return true;
+        }else if(GetAllPlayerMoves(playerStates[1]).Count==0 && currentIndex==1){
+            Debug.Log($"GAME OVER: DRAW-> {playerStates[1].PlayerName} STALEMATED");
+            return true;
         }
 
         return false;
@@ -272,14 +276,24 @@ public class GameState{
                 pawnMoves.Add(move);
         return pawnMoves;
     }
-    bool FilterKnightMove(Vector2Int pos){
-        return false; // Implement actual logic as needed
+    bool FilterKnightMove(PieceState piece, Vector2Int pos){
+        bool pieceAtPos = boardState.GetTile(pos).HasPieceState();
+        bool sameColourPieceAtPos = pieceAtPos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
+
+        // Check for valid knight move: 2 squares in one direction and 1 square in another
+        int dx = Mathf.Abs(piece.Position.x - pos.x);
+        int dy = Mathf.Abs(piece.Position.y - pos.y);
+        
+        // A knight move is valid if it moves in an L-shape
+        bool isValidMove = (dx == 2 && dy == 1) || (dx == 1 && dy == 2);
+        
+        return isValidMove && ( !pieceAtPos || (pieceAtPos && !sameColourPieceAtPos));
     }
     HashSet<Vector2Int> FilterKnightMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> knightMoves = new HashSet<Vector2Int>();
         foreach (var move in piece.ValidMoves)
-            if (FilterKnightMove(move))
+            if (FilterKnightMove(piece, move))
                 knightMoves.Add(move);
         return knightMoves;
     }
@@ -304,26 +318,49 @@ public class GameState{
                 bishopMoves.Add(move);
         return bishopMoves;
     }
-    bool FilterRookMove(Vector2Int pos){
-        return false; // Implement actual logic as needed
+    bool FilterRookMove(PieceState piece, Vector2Int pos){
+        bool pieceAtpos = boardState.GetTile(pos).HasPieceState();
+        bool sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
+
+        HashSet<Vector2Int> pointsBetween = Utility.GetIntermediateNonDiagonalLinePoints(piece.Position, pos);
+        foreach (Vector2Int apos in pointsBetween){
+            bool pieceAtApos = boardState.GetTile(apos).HasPieceState(),
+                sameColourPieceAtAPos = pieceAtApos && boardState.GetTile(apos).pieceState.Colour==piece.Colour;
+            bool isAttackingKingTile = pieceAtApos && boardState.GetTile(apos).pieceState.Type=="King" && !sameColourPieceAtAPos;
+            if (pieceAtApos && (!isAttackingKingTile || sameColourPieceAtAPos))
+                return false;
+        }
+        return !pieceAtpos || (pieceAtpos && !sameColourPieceAtPos);
     }
     HashSet<Vector2Int> FilterRookMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> rookMoves = new HashSet<Vector2Int>();
         foreach (var move in piece.ValidMoves)
-            if (FilterRookMove(move))
+            if (FilterRookMove(piece, move))
                 rookMoves.Add(move);
         return rookMoves;
     }
 
-    bool FilterQueenMove(Vector2Int pos){
-        return false; // Implement actual logic as needed
+    bool FilterQueenMove(PieceState piece, Vector2Int pos){
+        bool pieceAtpos = boardState.GetTile(pos).HasPieceState();
+        bool sameColourPieceAtPos = pieceAtpos && boardState.GetTile(pos).pieceState.Colour == piece.Colour;
+
+        // Determine movement type (diagonal or straight)
+        HashSet<Vector2Int> pointsBetween = Utility.GetIntermediateLinePoints(piece.Position, pos);
+        foreach (Vector2Int apos in pointsBetween){
+            bool pieceAtApos = boardState.GetTile(apos).HasPieceState(),
+                sameColourPieceAtAPos = pieceAtApos && boardState.GetTile(apos).pieceState.Colour==piece.Colour;
+            bool isAttackingKingTile = pieceAtApos && boardState.GetTile(apos).pieceState.Type=="King" && !sameColourPieceAtAPos;
+            if (pieceAtApos && (!isAttackingKingTile || sameColourPieceAtAPos))
+                return false;
+        }
+        return !pieceAtpos || (pieceAtpos && !sameColourPieceAtPos);
     }
     HashSet<Vector2Int> FilterQueenMoves(PieceState piece){
         if (piece == null) return null; // don't even bother
         HashSet<Vector2Int> queenMoves = new HashSet<Vector2Int>();
         foreach (var move in piece.ValidMoves)
-            if (FilterQueenMove(move))
+            if (FilterQueenMove(piece, move))
                 queenMoves.Add(move);
         return queenMoves;
     }
@@ -384,9 +421,10 @@ public class GameState{
     }
 
     private bool CanCastle(PieceState piece, Vector2Int pos, int direction) {
+        if(piece is not KingState) return false; // only kings can castle
+
         bool leftSide = direction < 0;
        
-
         // Determine the correct rook
         PieceState theRook = boardState.GetTile(leftSide ? 0 : 7, piece.Position.y).pieceState as RookState;
         if (theRook == null || !theRook.FirstMove || playerStates[piece.Colour ? 0 : 1].IsInCheck()) {
