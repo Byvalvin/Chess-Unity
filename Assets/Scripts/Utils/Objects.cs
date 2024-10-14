@@ -6,14 +6,12 @@ using System.Linq; // Add this line for LINQ
 
 public static class Objects
 {
-    public static PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite, string filePath)
-    {
+    public static PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite, string filePath){
         // Use reflection to instantiate the appropriate player state
         var type = System.Reflection.Assembly.GetExecutingAssembly().GetTypes()
             .FirstOrDefault(t => t.Name == $"{playerTypeName}State");
         
-        if (type != null)
-        {
+        if (type != null){
             PlayerState playerState = (playerTypeName=="Preset")? 
                 new PresetState(playerName, isWhite, filePath) 
                 : 
@@ -24,8 +22,7 @@ public static class Objects
         return null; // Handle case where type is not found
     }
 
-    public static PieceState CreatePieceState(string pieceTypeName, bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint)
-    {
+    public static PieceState CreatePieceState(string pieceTypeName, bool _colour, Vector2Int _currentPos, Vector2Int _minPoint, Vector2Int _maxPoint){
         // Use Type.GetType to get the type of the piece state dynamically
         Type pieceStateType = Type.GetType(pieceTypeName + "State"); // Assumes the class names are in the format "KingState", "QueenState", etc.
         if (pieceStateType == null){
