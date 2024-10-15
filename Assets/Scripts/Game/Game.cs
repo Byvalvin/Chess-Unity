@@ -499,7 +499,7 @@ public class GameState{
                 attackingPiecesCount++;
                 // Find the attacking piece
                 PieceState attacker = GetAttacker(king);
-                if (attacker != null) 
+                if (attacker != null && attacker is not KingState) 
                     player.KingAttacker = attacker; // Set the attacker
             }
             if(attackingPiecesCount >= 2)
@@ -549,8 +549,6 @@ public class GameState{
                 //Debug.Log(promoteTo + " is choice");
                 // set proper params, loaction, colour, etc
                 // create the piecestate
-                Debug.Log(promotedPawnState?.Position + "| "+ selectedPieceState?.Position+"swap6");
-                Debug.Log("For this bug "+promotedPawnState +" " + promotedPawnState.Position+targetPosition);
                 PieceState replacementState = Objects.CreatePieceState(
                     promoteTo, 
                     promotedPawnState.Colour, 
@@ -565,10 +563,8 @@ public class GameState{
                 PlayerState currentPlayerState = playerStates[currentIndex]; // remove from playerstate
                 currentPlayerState.RemovePieceState(promotedPawnState);
                 promotedPawnState.Promoted = true; // set final resting place
-                Debug.Log(promotedPawnState + " " + promotedPawnState.Position + "finality");
                 if(currentPlayerState is BotState botState) // reset promotion choice if bot move
                     botState.PromoteTo = "";
-                Debug.Log(promotedPawnState?.Position + "| "+ selectedPieceState?.Position+"swap7");
 
                 // Add replacementstate
                 GetTile(replacementState.Position).pieceState = replacementState; // set for tile/board
@@ -584,9 +580,6 @@ public class GameState{
             lastPosition = promotedPawnState.Position;
             lastMovedPieceState = promotedPawnState; // Store the last moved piece
             promoteTo=""; promotedPawnState=null; // reset
-
-            Debug.Log(promotedPawnState?.Position + "| "+ selectedPieceState?.Position+"swap8");
-            
         }else{
             // Handle en passant
             if (lastMovedPieceState is PawnState lastPawn && lastPawn.CanBeCapturedEnPassant && SelectedPieceState is PawnState) {
@@ -630,8 +623,6 @@ public class GameState{
         SwitchPlayer();
         if(IsGameEnd())
             End();
-        
-        Debug.Log(promotedPawnState?.Position + " |"+ selectedPieceState?.Position+"swap9");
 
         return lastPosition;
     }
@@ -711,25 +702,22 @@ public class Game : MonoBehaviour{
         // Show the promotion UI
         PromotionUI promotionUI = gameObject.AddComponent<PromotionUI>(); // Add the PromotionUI component to the Game object
         promotionUI.Show(OnPromotionSelected, promotionTile.MyColour, new Vector2(promotionTile.N,promotionTile.N), selectedPiece.MyColour, promotionTileLocation);
-        Debug.Log(state.PromotedPawnState?.Position + " |"+ state.SelectedPieceState?.Position+"swap2");
     }
 
     private void OnPromotionSelected(Vector2Int targetPosition, string pieceType){
-        Debug.Log(state.PromotedPawnState?.Position + "| "+ state.SelectedPieceState?.Position+"swap3");
+        state.SelectedPieceState = null; // an extra nullifier for sselectedPiece state because black queens always leave the promoted piece
+    
         // Update the promoteTo variable in GameState
         state.PromoteTo = pieceType;
         if(state.PromoteTo!=""){
-            Debug.Log(state.PromotedPawnState?.Position + "| "+ state.SelectedPieceState?.Position+"swap4a");
             state.ExecuteMove(targetPosition);
         }else{
-            Debug.Log(state.PromotedPawnState?.Position + "| "+ state.SelectedPieceState?.Position+"swap4b");
             state.SelectedPieceState = state.PromotedPawnState;
             state.PromotedPawnState = null;
             state.SelectedPieceState.Position = state.OriginalPosition; // Reset to original
         }
         // Reset the promotion state
         isPromotionInProgress = false; // Reset after promotion is handled
-        Debug.Log(state.PromotedPawnState?.Position + "| "+ state.SelectedPieceState?.Position+"swap5");
     }
 
     // Player GUI
@@ -806,7 +794,6 @@ public class Game : MonoBehaviour{
                 // Show promotion UI and wait for user input
                 isPromotionInProgress = true; // Set the promotion state to true
                 state.PromotedPawnState = state.SelectedPieceState as PawnState;
-                Debug.Log(state.PromotedPawnState.Position + "| "+ state.SelectedPieceState.Position+"swap");
                 ShowPromotionOptions(targetPosition, state.SelectedPieceState.Colour); 
             }else
                 state.ExecuteMove(targetPosition);

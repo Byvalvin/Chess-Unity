@@ -14,7 +14,7 @@ public abstract class BotState : PlayerState{
     };
     private const int SafeMovePenalty = 10;
     private const int CentralControlBonusValue = 2;
-    private const int KingTileValue = 2;
+    private const int KingTileValue = 3;
 
     private string promoteTo = "", PromoteToHolder;
 
