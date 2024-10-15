@@ -26,6 +26,10 @@ public class AlchemistState : BotState
         //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
+        // game ending moves
+        score = GameEndingMove(score, clone);
+        if(score!=0) return score;
+        
         // 1. Capture Bonus
         score += EvaluateCaptureBonus(targetPiece);
 
@@ -43,6 +47,7 @@ public class AlchemistState : BotState
 
         // 6. Check for threats to the king
         score += AttackedKingTiles(clone);
+        
         return score;
     }
 

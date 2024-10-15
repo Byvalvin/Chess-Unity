@@ -27,6 +27,10 @@ public class DefenderState : BotState
         //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
+        // game ending moves
+        score = GameEndingMove(score, clone);
+        if(score!=0) return score;
+
         // 1. Evaluate King Safety
         score -= KingThreatScore(clone);
 
@@ -53,6 +57,8 @@ public class DefenderState : BotState
                 score -= 20; // Penalty for capturing defended pieces
             }
         }
+        // 6. Attack King
+        score += AttackedKingTiles(clone);
         return score;
     }
 

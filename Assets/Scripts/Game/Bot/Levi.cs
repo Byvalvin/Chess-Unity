@@ -101,6 +101,9 @@ public class LeviState : BotState
 
     private int EvaluateGameState(GameState gameState){
         int score = 0;
+        // game ending moves
+        score = GameEndingMove(score, gameState);
+        if(score!=0) return score;
 
         // Evaluate material balance
         score += EvaluateMaterial(gameState);

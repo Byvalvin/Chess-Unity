@@ -84,46 +84,49 @@ public class GameState{
     public TileState GetTile(Vector2Int pos) => boardState.GetTile(pos);
 
     // Game ends
-    bool CheckCheckmate(){
-        foreach (PlayerState player in playerStates){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
-            PieceState PlayerKing = player.GetKing();
-            if(player.IsInCheck()){
-                if(player.DoubleCheck){
-                    if(PlayerKing.ValidMoves.Count==0){
-                        Debug.Log($"GAME OVER:{player.PlayerName} IS DOUBLE CHECKMATED");
-                        return true;
-                    }
+
+    public bool PlayerCheckmated(PlayerState player){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
+        PieceState PlayerKing = player.GetKing();
+        if(player.IsInCheck()){
+            if(player.DoubleCheck){
+                if(PlayerKing.ValidMoves.Count==0){
+                    Debug.Log($"GAME OVER:{player.PlayerName} IS DOUBLE CHECKMATED");
+                    return true;
                 }
-                else if(player.InCheck){
-                    bool evade = PlayerKing.ValidMoves.Count != 0,
-                        capture = GetAllPlayerAttackMoves(player).Contains(player.KingAttacker.Position);
-        
-                    HashSet<Vector2Int> blockingMoves = GetAllPlayerMoves(player);
-                    blockingMoves.IntersectWith(Utility.GetIntermediateLinePoints(PlayerKing.Position, player.KingAttacker.Position, includeEnds:true));
-                    bool block = blockingMoves.Count != 0;
-                    
-                    if(!(evade || capture || block)){
-                        Debug.Log($"GAME OVER:{player.PlayerName} IS CHECKMATED");
-                        return true;
-                    }
+            }
+            else if(player.InCheck){
+                bool evade = PlayerKing.ValidMoves.Count != 0,
+                    capture = GetAllPlayerAttackMoves(player).Contains(player.KingAttacker.Position);
+    
+                HashSet<Vector2Int> blockingMoves = GetAllPlayerMoves(player);
+                blockingMoves.IntersectWith(Utility.GetIntermediateLinePoints(PlayerKing.Position, player.KingAttacker.Position, includeEnds:true));
+                bool block = blockingMoves.Count != 0;
+                
+                if(!(evade || capture || block)){
+                    Debug.Log($"GAME OVER:{player.PlayerName} IS CHECKMATED");
+                    return true;
                 }
             }
         }
         return false;
     }
-
-    bool CheckStalemate(){
-        if(GetAllPlayerMoves(playerStates[0]).Count==0 && currentIndex==0){
-            Debug.Log($"GAME OVER: DRAW-> {playerStates[0].PlayerName} STALEMATED");
-            return true;
-        }else if(GetAllPlayerMoves(playerStates[1]).Count==0 && currentIndex==1){
-            Debug.Log($"GAME OVER: DRAW-> {playerStates[1].PlayerName} STALEMATED");
+    public bool CheckCheckmate()=> PlayerCheckmated(playerStates[0]) || PlayerCheckmated(playerStates[1]);
+    public bool CheckInsufficientMaterial(){
+        if(playerStates[0].PieceStates.Count==1 && playerStates[1].PieceStates.Count==1){
+            Debug.Log($"GAME OVER: DRAW-> INSUFFICIENT MATERIAL");
             return true;
         }
-
         return false;
     }
-    public bool IsGameEnd()=>CheckCheckmate() || CheckStalemate();
+    public bool PlayerStalemated(PlayerState player){
+        if(GetAllPlayerMoves(player).Count==0 && currentIndex==player.TurnIndex){
+            Debug.Log($"GAME OVER: DRAW-> {player.PlayerName} STALEMATED");
+            return true;
+        }
+        return false;
+    }
+    public bool CheckStalemate()=> PlayerStalemated(playerStates[0]) || PlayerStalemated(playerStates[1]);
+    public bool IsGameEnd()=>CheckCheckmate() || CheckStalemate() || CheckInsufficientMaterial();
     void End(){gameover=true;}
 
     // for Bots
@@ -511,8 +514,12 @@ public class GameState{
     }
 
     public void UpdateGameState(){
+
         // Reset and filter valid moves for each piece
-        foreach (PlayerState player in playerStates)
+        foreach (PlayerState player in playerStates){
+            if(player.GetKing() is not KingState){
+                Debug.Log(player + " lost their king now");
+            }
             foreach (PieceState piece in player.PieceStates){
                 piece.ResetValidMoves();
                 piece.ValidMoves = FilterMoves(piece);
@@ -520,6 +527,7 @@ public class GameState{
                 if (piece is PawnState pawn)
                     pawn.ResetEnPassant();   
             } 
+        }
         Opposition(); // Update the opposition
 
         // Check if playerStates are in check
@@ -536,6 +544,9 @@ public class GameState{
         // Check for capture
         if (IsCapture(targetPosition)){
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
+            if(captured is KingState){
+                Debug.Log("The king has been capture by "+ selectedPieceState==null? promotedPawnState:selectedPieceState);
+            }
             boardState.MovePiece(targetPosition, default, true); // remove from tile/board
             playerStates[currentIndex].Capture(captured); // remove from playerstate
             playerStates[(currentIndex + 1) % 2].RemovePieceState(captured);
@@ -545,6 +556,8 @@ public class GameState{
         // promotion moves
         if(IsPromotion(targetPosition)){
             // only handled move exxecution
+            if(playerStates[currentIndex] is BotState botState)
+                promoteTo = botState.PromoteTo;
             if(!string.IsNullOrEmpty(promoteTo)){
                 //Debug.Log(promoteTo + " is choice");
                 // set proper params, loaction, colour, etc
@@ -563,8 +576,8 @@ public class GameState{
                 PlayerState currentPlayerState = playerStates[currentIndex]; // remove from playerstate
                 currentPlayerState.RemovePieceState(promotedPawnState);
                 promotedPawnState.Promoted = true; // set final resting place
-                if(currentPlayerState is BotState botState) // reset promotion choice if bot move
-                    botState.PromoteTo = "";
+                // if(currentPlayerState is BotState botState) // reset promotion choice if bot move
+                //     botState.PromoteTo = "";
 
                 // Add replacementstate
                 GetTile(replacementState.Position).pieceState = replacementState; // set for tile/board
@@ -779,6 +792,10 @@ public class Game : MonoBehaviour{
 
     void BotMove() {
         Vector2Int[] fromTo = players[state.PlayerIndex].State.GetMove();
+        if(fromTo == null){
+            Debug.Log("Bot got no moves left");
+            return;
+        }
         Vector2Int fromPosition = fromTo[0];
         Vector2Int targetPosition = fromTo[1];
 

@@ -27,6 +27,10 @@ public class AggressorState : BotState
         //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
+        // game ending moves
+        score = GameEndingMove(score, clone);
+        if(score!=0) return score;
+
         // 1. Capture Bonus
         if (targetPiece != null)
         {
@@ -50,6 +54,7 @@ public class AggressorState : BotState
 
         // Adjust Aggressiveness
         score = AdjustAggressiveness(score);
+        
         return score;
     }
 

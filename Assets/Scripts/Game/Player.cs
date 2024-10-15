@@ -27,7 +27,7 @@ public class PlayerState{
             turnIndex=colour?0:1;
         }
     }
-    protected int TurnIndex => turnIndex;
+    public int TurnIndex => turnIndex;
     public float TileSize{
         get=>tileSize;
         set=>tileSize=value;

@@ -31,6 +31,10 @@ public class AvengerState : BotState
         //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
+        // game ending moves
+        score = GameEndingMove(score, clone);
+        if(score!=0) return score;
+
         // 1. Vengeance: Prioritize captures on opponent's pieces
         score += EvaluateVengeance(targetPiece);
 

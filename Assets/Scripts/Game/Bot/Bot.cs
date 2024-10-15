@@ -3,6 +3,7 @@ using UnityEngine;
 
 
 public abstract class BotState : PlayerState{
+    const int MAX = 100000, softMax = MAX/100;
     protected static readonly Dictionary<string, int> pieceValue = new Dictionary<string, int>
     {
         { "Pawn", 1 },
@@ -10,13 +11,14 @@ public abstract class BotState : PlayerState{
         { "Bishop", 3 },
         { "Rook", 5 },
         { "Queen", 9 },
-        { "King", int.MaxValue } // King is invaluable
+        { "King", MAX } // King is invaluable
     };
     private const int SafeMovePenalty = 10;
     private const int CentralControlBonusValue = 2;
     private const int KingTileValue = 3;
+    
 
-    private string promoteTo = "", PromoteToHolder;
+    private string promoteTo = "";
 
     public string PromoteTo{
         get=>promoteTo;
@@ -44,33 +46,28 @@ public abstract class BotState : PlayerState{
         // call the thing that determines the mvoe to play given all the valid mvoes of all pieces
         Vector2Int[] completeMove = Evaluate(moveMap);
         Vector2Int moveFrom=completeMove[0], moveTo=completeMove[1];
-        if(GameState.IsPromotion(currentGame.GetTile(moveFrom).pieceState, moveTo)){
-            promoteTo=PromoteToHolder; PromoteToHolder="";
-        }
         return new Vector2Int[]{moveFrom, moveTo};
     }
-    protected virtual int EvaluatePromotionMove(Vector2Int from, Vector2Int to){
+    protected virtual (int, string) EvaluatePromotionMove(Vector2Int from, Vector2Int to){
+        (int score, string choice) promotionPack = (int.MinValue, "");
         // 4 clones
         string[] promotions = {"Queen", "Rook", "Bishop", "Knight"};
-        string promotionChoice = "";
         GameState clone;
-        int score = 1, newScore = 1;
+        int newScore;
         foreach (string promotion in promotions){
              clone = currentGame.Clone(); (clone.PlayerStates[TurnIndex] as BotState).PromoteTo=promotion;
              newScore = EvaluateMove(from, to, clone);
-             if(newScore > score){
-                score = newScore;
-                promotionChoice = promotion;
+             if(newScore > promotionPack.score){
+                promotionPack = (newScore, promotion);
              }
         }
-        // set promotion choice if promotion
-        PromoteToHolder = promotionChoice;
-        return score;
+        return promotionPack;
     }
     protected virtual Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap){
         Vector2Int bestFrom = default;
         Vector2Int bestTo = default;
         int bestScore = int.MinValue;
+        string bestPromoChoice = "";
 
         var bestMoves = new List<Vector2Int[]>();
         Vector2Int[] best = null; 
@@ -80,8 +77,21 @@ public abstract class BotState : PlayerState{
         foreach (var kvp in moveMap){
             Vector2Int from = kvp.Key;
             foreach (var to in kvp.Value){
+                int score = int.MinValue;
+                string promoChoice = "";
                 movingPiece = currentGame.GetTile(from).pieceState;
-                int score = GameState.IsPromotion(currentGame.GetTile(from).pieceState, to)? EvaluatePromotionMove(from, to) : EvaluateMove(from, to, currentGame.Clone());
+                if(GameState.IsPromotion(currentGame.GetTile(from).pieceState, to)){
+                    (int score, string choice) promotionScore =  EvaluatePromotionMove(from, to);
+                    score = promotionScore.score;
+                    promoChoice = promotionScore.choice;
+                    // Check if this is the best promotion
+                    if (score > bestScore)
+                        bestPromoChoice = promoChoice; // Track the best promotion choice
+                    
+                }else{
+                    score = EvaluateMove(from, to, currentGame.Clone());
+                }
+                
                 Debug.Log($"score eval: {movingPiece.Type} {movingPiece.Colour} {from} -> {to}: {score}");
 
                 if (score > bestScore){
@@ -96,11 +106,23 @@ public abstract class BotState : PlayerState{
             }
         }
         best = bestMoves.Count > 1 ? bestMoves[Random.Range(0, bestMoves.Count)] : new Vector2Int[] { bestFrom, bestTo };
+        promoteTo=GameState.IsPromotion(currentGame.GetTile(best[0]).pieceState, best[1])? bestPromoChoice : "";
+        
         movingPiece = currentGame.GetTile(best[0]).pieceState;
         Debug.Log($"BEST MOVE: {movingPiece.Type} {movingPiece.Colour} {best[0]} {best[1]} {bestScore}");
         return best;
     }
-    protected virtual int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)=>1; // placeholder assumes all moves are equal but diff bots will have diff scoring
+
+    protected int GameEndingMove(int score, GameState clone){
+        if (clone.PlayerStalemated(clone.PlayerStates[1 - TurnIndex]))
+            return -MAX; // Avoid stalemate
+        if (clone.PlayerCheckmated(clone.PlayerStates[TurnIndex]))
+            return -MAX; // Current player is checkmated
+        if (clone.PlayerCheckmated(clone.PlayerStates[1 - TurnIndex]))
+            return MAX; // Opponent is checkmated
+        return score; // No special state
+    }
+    protected virtual int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)=>GameEndingMove(1, clone);// placeholder assumes all moves are equal but diff bots will have diff scoring
 
     protected bool InCenter(Vector2Int position)=> (3<=position.x&&position.x<=4 && 3<=position.y&&position.y<=4);
 
@@ -139,12 +161,12 @@ public abstract class BotState : PlayerState{
     protected int AttackedKingTiles(GameState nextGame){
         int beforeCount = currentGame.PlayerStates[1 - TurnIndex].GetKing().ValidMoves.Count;
         int afterCount = nextGame.PlayerStates[1 - TurnIndex].GetKing().ValidMoves.Count;
-        return afterCount == 0 ? int.MaxValue / 2 : Mathf.Max(0, (beforeCount - afterCount) * 5);
+        return afterCount == 0 ? softMax : Mathf.Max(0, (beforeCount - afterCount) * 5);
     }
 
     protected int KingTiles(GameState gameState){
         int tileCount = currentGame.PlayerStates[1 - TurnIndex].GetKing().ValidMoves.Count;
-        return tileCount == 0 ? int.MaxValue / 2 : KingTileValue * (8 - tileCount);
+        return KingTileValue * (8 - tileCount);
     }
 
     protected int PieceDefended(GameState gameState, PieceState pieceState, Vector2Int to){
