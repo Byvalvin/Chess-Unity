@@ -39,7 +39,7 @@ public abstract class BotState : PlayerState{
         
         Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap = new Dictionary<Vector2Int, HashSet<Vector2Int>>();
         foreach (PieceState piece in PieceStates){
-            HashSet<Vector2Int> validMoves = CurrentGame.GetMovesAllowed(piece);
+            HashSet<Vector2Int> validMoves = currentGame.GetMovesAllowed(piece);
             if(validMoves.Count!=0) moveMap[piece.Position] = validMoves;
         }
         
@@ -121,7 +121,7 @@ public abstract class BotState : PlayerState{
         if (clone.PlayerStalemated(clone.PlayerStates[1 - TurnIndex]))
             return -MAX; // Avoid stalemate
 
-        return score; // No special state
+        return 0; // No special state
     }
     protected virtual int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)=>GameEndingMove(1, clone);// placeholder assumes all moves are equal but diff bots will have diff scoring
 

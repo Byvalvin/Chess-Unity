@@ -99,7 +99,8 @@ public class GameState{
                     capture = GetAllPlayerAttackMoves(player).Contains(player.KingAttacker.Position);
     
                 HashSet<Vector2Int> blockingMoves = GetAllPlayerMoves(player);
-                blockingMoves.IntersectWith(Utility.GetIntermediateLinePoints(PlayerKing.Position, player.KingAttacker.Position, includeEnds:true));
+                blockingMoves.ExceptWith(PlayerKing.ValidMoves); // set diff
+                blockingMoves.IntersectWith(Utility.GetIntermediateLinePoints(PlayerKing.Position, player.KingAttacker.Position));
                 bool block = blockingMoves.Count != 0;
                 
                 if(!(evade || capture || block)){
@@ -869,10 +870,10 @@ public class Game : MonoBehaviour{
         state.OnSelectedPieceChanged += UpdateSelectedPiece;
         state.OnPiecePromoted += HandlePiecePromotion; // Subscribe to promotion events
 
-        if (P1State is BotState)
-            (P1State as BotState).CurrentGame = this.state;
-        if (P2State is BotState)
-            (P2State as BotState).CurrentGame = this.state;
+        if (P1State is BotState botState1)
+            botState1.CurrentGame = this.state;
+        if (P2State is BotState botState2)
+            botState2.CurrentGame = this.state;
     }
 
     private void InitializePlayers(string whitePlayerTypeName, string blackPlayerTypeName, string whitePlayerName, string blackPlayerName, string filePath){
