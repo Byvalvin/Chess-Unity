@@ -32,7 +32,7 @@ public class AggressorState : BotState
         if(score!=0) return score;
 
         // 1. Capture Bonus
-        if (targetPiece != null)
+        if (targetPiece != null && targetPiece is not KingState)
         {
             score += EvaluateCapture(targetPiece, to);
         }

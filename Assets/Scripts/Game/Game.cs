@@ -119,7 +119,7 @@ public class GameState{
         return false;
     }
     public bool PlayerStalemated(PlayerState player){
-        if(GetAllPlayerMoves(player).Count==0 && currentIndex==player.TurnIndex){
+        if(GetAllPlayerMoves(player).Count==0 && currentIndex==player.TurnIndex && !player.IsInCheck()){
             Debug.Log($"GAME OVER: DRAW-> {player.PlayerName} STALEMATED");
             return true;
         }
@@ -545,7 +545,7 @@ public class GameState{
         if (IsCapture(targetPosition)){
             PieceState captured = boardState.GetTile(targetPosition).pieceState;
             if(captured is KingState){
-                Debug.Log("The king has been capture by "+ selectedPieceState==null? promotedPawnState:selectedPieceState);
+                Debug.Log("The king has been captured by " + (selectedPieceState == null ? promotedPawnState : selectedPieceState));
             }
             boardState.MovePiece(targetPosition, default, true); // remove from tile/board
             playerStates[currentIndex].Capture(captured); // remove from playerstate
@@ -576,8 +576,8 @@ public class GameState{
                 PlayerState currentPlayerState = playerStates[currentIndex]; // remove from playerstate
                 currentPlayerState.RemovePieceState(promotedPawnState);
                 promotedPawnState.Promoted = true; // set final resting place
-                // if(currentPlayerState is BotState botState) // reset promotion choice if bot move
-                //     botState.PromoteTo = "";
+                if(currentPlayerState is BotState botState1) // reset promotion choice if bot move
+                    botState1.PromoteTo = "";
 
                 // Add replacementstate
                 GetTile(replacementState.Position).pieceState = replacementState; // set for tile/board

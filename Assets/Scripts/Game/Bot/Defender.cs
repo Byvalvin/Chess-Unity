@@ -44,7 +44,7 @@ public class DefenderState : BotState
         score += CentralControlBonus(to, clone);
 
         // 5. Evaluate potential captures
-        if (targetPiece != null)
+        if (targetPiece != null && targetPiece is not KingState)
         {
             score += pieceValue[targetPiece.Type]; // Add score for capturing pieces
             int defended = PieceDefended(currentGame, targetPiece, to);

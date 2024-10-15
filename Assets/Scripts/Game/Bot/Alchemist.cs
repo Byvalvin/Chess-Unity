@@ -53,7 +53,7 @@ public class AlchemistState : BotState
 
     private int EvaluateCaptureBonus(PieceState targetPiece)
     {
-        if (targetPiece == null) return 0;
+        if (targetPiece == null && targetPiece is not KingState) return 0;
 
         int score = pieceValue[targetPiece.Type] + CaptureBonus;
         int nDefenders = PieceDefended(currentGame, targetPiece, targetPiece.Position);
@@ -120,7 +120,7 @@ public class AlchemistState : BotState
 
     private int EvaluatePieceExchange(GameState gameState, PieceState movingPiece, PieceState targetPiece)
     {
-        if (targetPiece != null && PieceDefended(gameState, targetPiece, targetPiece.Position) <= 2) // Capturing
+        if (targetPiece != null && targetPiece is not KingState && PieceDefended(gameState, targetPiece, targetPiece.Position) <= 2) // Capturing
         {
             return ExchangeValueMultiplier * (pieceValue[targetPiece.Type] - pieceValue[movingPiece.Type]);
         }

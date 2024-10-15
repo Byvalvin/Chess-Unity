@@ -114,12 +114,13 @@ public abstract class BotState : PlayerState{
     }
 
     protected int GameEndingMove(int score, GameState clone){
-        if (clone.PlayerStalemated(clone.PlayerStates[1 - TurnIndex]))
-            return -MAX; // Avoid stalemate
-        if (clone.PlayerCheckmated(clone.PlayerStates[TurnIndex]))
-            return -MAX; // Current player is checkmated
         if (clone.PlayerCheckmated(clone.PlayerStates[1 - TurnIndex]))
             return MAX; // Opponent is checkmated
+        if(clone.PlayerCheckmated(clone.PlayerStates[TurnIndex]))
+            return -MAX; // Current player is checkmated
+        if (clone.PlayerStalemated(clone.PlayerStates[1 - TurnIndex]))
+            return -MAX; // Avoid stalemate
+
         return score; // No special state
     }
     protected virtual int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone)=>GameEndingMove(1, clone);// placeholder assumes all moves are equal but diff bots will have diff scoring

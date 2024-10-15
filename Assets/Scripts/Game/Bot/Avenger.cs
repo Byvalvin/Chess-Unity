@@ -54,7 +54,7 @@ public class AvengerState : BotState
 
     private int EvaluateVengeance(PieceState targetPiece)
     {
-        if (targetPiece != null)
+        if (targetPiece != null && targetPiece is not KingState)
         {
             // High reward for capturing a piece
             return pieceValue[targetPiece.Type];
@@ -101,7 +101,7 @@ public class AvengerState : BotState
     {
         PieceState targetPiece = clone.GetTile(to).pieceState;
 
-        if (targetPiece != null && pieceValue[targetPiece.Type] >= ValuablePieceThreshold)
+        if (targetPiece != null && targetPiece is not KingState && pieceValue[targetPiece.Type] >= ValuablePieceThreshold)
         {
             // Check for potential follow-up threats
             foreach (PieceState piece in clone.PlayerStates[TurnIndex].PieceStates)

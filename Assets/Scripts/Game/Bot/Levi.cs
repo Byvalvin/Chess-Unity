@@ -84,7 +84,7 @@ public class LeviState : BotState
             foreach (var to in validMoves)
             {
                 PieceState targetPiece = gameState.GetTile(to).pieceState;
-                if (targetPiece != null && targetPiece.Colour != gameState.PlayerStates[playerIndex].Colour)
+                if (targetPiece != null && targetPiece is not KingState && targetPiece.Colour != gameState.PlayerStates[playerIndex].Colour)
                 {
                     // Prioritize capturing moves
                     moves.Insert(0, new Vector2Int[] { piece.Position, to });

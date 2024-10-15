@@ -58,7 +58,7 @@ public class BerserkerState : BotState
     private int EvaluateAggressiveCapture(PieceState targetPiece)
     {
         // Higher score for capturing pieces
-        if (targetPiece != null)
+        if (targetPiece != null && targetPiece is not KingState)
         {
             return pieceValue[targetPiece.Type] + AggressiveCaptureBonus;
         }
