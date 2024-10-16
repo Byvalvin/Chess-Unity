@@ -55,7 +55,7 @@ public class TileState
         this.Min = original.min;
         this.Max = original.max;
         
-        pieceState = original.pieceState?.Clone();
+        //pieceState = original.pieceState?.Clone();
     }
 
     public TileState Clone() => new TileState(this); // Clone method

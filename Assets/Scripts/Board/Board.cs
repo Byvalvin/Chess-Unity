@@ -28,14 +28,19 @@ public class BoardState{
     }
 
     public BoardState(){}
-    public BoardState(BoardState original){
+    public BoardState(BoardState original, PlayerState playerState1Clone, PlayerState playerState2Clone){
         // Clone the tile states
         this.tileStates = new TileState[N, N];
         for (int yi = 0; yi < N; yi++)
             for (int xi = 0; xi < N; xi++)
                 tileStates[yi, xi] = original.tileStates[yi, xi]?.Clone(); // Clone each tile
+        
+        foreach (PieceState playerPieceState in playerState1Clone.PieceStates)
+            tileStates[playerPieceState.Position.y, playerPieceState.Position.x].pieceState = playerPieceState;
+        foreach (PieceState playerPieceState in playerState2Clone.PieceStates)
+            tileStates[playerPieceState.Position.y, playerPieceState.Position.x].pieceState = playerPieceState;
     }
-    public BoardState Clone() => new BoardState(this); // Clone method
+    public BoardState Clone(PlayerState playerState1, PlayerState playerState2) => new BoardState(this, playerState1, playerState2); // Clone method
 
     public void CreateBoardState(PlayerState player1, PlayerState player2){
         // Create and Add Tiles

@@ -67,9 +67,10 @@ public class GameState{
     }
 
     public GameState(GameState original){
-        this.boardState = original.boardState.Clone();
         this.playerStates[0] = original.playerStates[0].Clone();
         this.playerStates[1] = original.playerStates[1].Clone();
+        this.boardState = original.boardState.Clone(this.playerStates[0], this.playerStates[1]);
+        
         this.currentIndex = original.currentIndex;
         this.selectedPieceState = original.selectedPieceState?.Clone();
         this.lastMovedPieceState = original.lastMovedPieceState?.Clone();
@@ -86,28 +87,9 @@ public class GameState{
     // Game ends
 
     public bool PlayerCheckmated(PlayerState player){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
-        PieceState PlayerKing = player.GetKing();
-        if(player.IsInCheck()){
-            if(player.DoubleCheck){
-                if(PlayerKing.ValidMoves.Count==0){
-                    Debug.Log($"GAME OVER:{player.PlayerName} IS DOUBLE CHECKMATED");
-                    return true;
-                }
-            }
-            else if(player.InCheck){
-                bool evade = PlayerKing.ValidMoves.Count != 0,
-                    capture = GetAllPlayerAttackMoves(player).Contains(player.KingAttacker.Position);
-    
-                HashSet<Vector2Int> blockingMoves = GetAllPlayerMoves(player);
-                blockingMoves.ExceptWith(PlayerKing.ValidMoves); // set diff
-                blockingMoves.IntersectWith(Utility.GetIntermediateLinePoints(PlayerKing.Position, player.KingAttacker.Position));
-                bool block = blockingMoves.Count != 0;
-                
-                if(!(evade || capture || block)){
-                    Debug.Log($"GAME OVER:{player.PlayerName} IS CHECKMATED");
-                    return true;
-                }
-            }
+        if(GetAllPlayerMoves(player).Count==0 && currentIndex==player.TurnIndex && player.IsInCheck()){
+            Debug.Log($"GAME OVER:{player.PlayerName} IS CHECKMATED");
+            return true;
         }
         return false;
     }
@@ -146,84 +128,137 @@ public class GameState{
         selectedPieceState = null; // Deselect the piece after moving
     }
 
-    public HashSet<Vector2Int> GetMovesAllowed(PieceState piece){ // using the game constraints to get moves allowed
-        HashSet<Vector2Int> pieceMoves = FilterMoves(piece), gameValidMoves=new HashSet<Vector2Int>();
+        // Method to check if en passant is valid
+    private bool IsEnPassantMove(PieceState piece)
+    {
+        return lastMovedPieceState != null 
+            && piece.Type == "Pawn" 
+            && lastMovedPieceState.Type == "Pawn" 
+            && Mathf.Abs(lastMovedPieceState.Position.x - piece.Position.x) == 1
+            && lastMovedPieceState.Position.y == piece.Position.y
+            && (lastMovedPieceState as PawnState).CanBeCapturedEnPassant;
+    }
+    // Calculate the en passant move position
+    private Vector2Int CalculateEnPassantMove(PieceState piece)
+    {
+        return lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
+    }
+    // Validate if a move is legal considering check and pin conditions
+    private bool IsValidMove(Vector2Int move, PieceState piece, bool isKing)
+    {
+        // condition 3: cant move a pinned piece, but can move within a range
+        PieceState pinner = IsPinnedPiece(piece);
+        bool pinnedPiece = pinner!=null, moveInRange = withinPinnedPieceMovement(piece, pinner, move);
+        bool avoidPinTactic = !pinnedPiece || moveInRange;
 
-        // add enPassantMove for checking
-        bool isAnEnPassantMove = lastMovedPieceState!=null 
-                && piece.Type=="Pawn" && lastMovedPieceState.Type=="Pawn" 
-                && Mathf.Abs(lastMovedPieceState.Position.x-piece.Position.x)==1
-                && lastMovedPieceState.Position.y==piece.Position.y
-                && (lastMovedPieceState as PawnState).CanBeCapturedEnPassant;
-        if(isAnEnPassantMove){
-            Vector2Int enPassantMove = lastMovedPieceState.Position+new Vector2Int(0, currentIndex==0 ? -1:1);
+        // condition 1
+        bool mustMoveKing = playerStates[currentIndex].DoubleCheck;
+        if(mustMoveKing) return isKing;
+        
+        // condition 2
+        bool check = playerStates[currentIndex].InCheck, mustAvoidCheck = false;;
+        if(check){
+            PieceState kingAttacker = playerStates[currentIndex].KingAttacker;
+            bool canEvade = isKing,
+                canCapture = kingAttacker!=null && ((kingAttacker.Position == move||IsEnPassantMove(piece)) && avoidPinTactic),
+                canBlock = kingAttacker!=null && (Utility.GetIntermediateLinePoints(kingAttacker.Position, playerStates[currentIndex].GetKing().Position).Contains(move) && avoidPinTactic);
+            mustAvoidCheck = (canEvade || canCapture || canBlock);
+            return mustAvoidCheck;
+        }
+
+        return avoidPinTactic || IsEnPassantMove(piece);
+    }
+
+    // Check if the piece is pinned
+    private PieceState IsPinnedPiece(PieceState piece){
+        PieceState pinner = null;
+        List<PieceState> allAttackers = GetAllAttackers(piece);
+        foreach (PieceState attacker in allAttackers){
+            if(pinner!=null) break; // one attacker pin is enough to count
+
+            HashSet<Vector2Int> tilesBetweenKingAndAttacker;
+            switch(attacker.Type){
+                case "Bishop":
+                    tilesBetweenKingAndAttacker = Utility.GetIntermediateDiagonalLinePoints(playerStates[currentIndex].GetKing().Position, attacker.Position);
+                    break;
+                case "Rook":
+                    tilesBetweenKingAndAttacker = Utility.GetIntermediateNonDiagonalLinePoints(playerStates[currentIndex].GetKing().Position, attacker.Position);
+                    break;
+                case "Queen":
+                    tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(playerStates[currentIndex].GetKing().Position, attacker.Position);
+                    break;
+                default:
+                    // other attacker types cant pin
+                    tilesBetweenKingAndAttacker = new HashSet<Vector2Int>(); //empty
+                    break;
+            }
+            if(tilesBetweenKingAndAttacker.Contains(piece.Position) && !HasOtherPiecesInPath(piece, tilesBetweenKingAndAttacker))
+                pinner = attacker;
+        }
+        return pinner;
+    }
+    // Check for other pieces in the path
+    private bool HasOtherPiecesInPath(PieceState piece, HashSet<Vector2Int> tilesBetween)
+    {
+        HashSet<Vector2Int> tilesWithoutPiecePos = new HashSet<Vector2Int>(tilesBetween);
+        tilesWithoutPiecePos.Remove(piece.Position);
+
+        foreach (Vector2Int anotherPiecePosition in tilesWithoutPiecePos)
+            if (GetTile(anotherPiecePosition).HasPieceState())
+                return true;
+        return false;
+    }
+
+    bool withinPinnedPieceMovement(PieceState piece, PieceState attacker, Vector2Int move){
+        bool pinnedPieceCanCaptureAttacker = false;
+        if(attacker!=null){
+            HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(playerStates[currentIndex].GetKing().Position, attacker.Position);
+            HashSet<Vector2Int> allowedPinnedPieceMoves = new HashSet<Vector2Int>(tilesBetweenKingAndAttacker); // because a pinned piece can still attack
+            allowedPinnedPieceMoves.Add(attacker.Position);
+            return allowedPinnedPieceMoves.Contains(move);
+        }
+        return pinnedPieceCanCaptureAttacker; 
+    }
+
+
+
+    // Main method to get allowed moves for a piece
+    public HashSet<Vector2Int> GetMovesAllowed(PieceState piece){
+        HashSet<Vector2Int> pieceMoves = FilterMoves(piece);
+        HashSet<Vector2Int> gameValidMoves = new HashSet<Vector2Int>();
+
+        // Check for en passant move
+        if (IsEnPassantMove(piece)){
+            Vector2Int enPassantMove = CalculateEnPassantMove(piece);
             pieceMoves.Add(enPassantMove);
         }
 
         bool isKing = piece is KingState;
+
         foreach (Vector2Int move in pieceMoves){
-            // condition 1
-            bool mustMoveKing = playerStates[currentIndex].DoubleCheck && isKing;
-
-            // condition 2
-            PieceState kingAttacker = playerStates[currentIndex].KingAttacker;
-            bool canEvade=isKing, // move king
-                canCapture=kingAttacker!=null && (kingAttacker.Position==move || isAnEnPassantMove), // cap attacker
-                canBlock=kingAttacker!=null && (Utility // can block
-                    .GetIntermediateLinePoints(kingAttacker.Position, playerStates[currentIndex].GetKing().Position)
-                    .Contains(move)); 
-            bool mustAvoidCheck = playerStates[currentIndex].InCheck && (canEvade || canCapture || canBlock);
-
-            // condition 3: cant move a pinned piece
-            bool pinnedPiece = false, pinnedPieceCanCaptureAttacker = false;
-            PieceState attacker = GetAttacker(piece); // selected piece is attacked
-
-            if(attacker!=null && attacker is not KingState){ // Kings dont hve the ability to pinned pieces on other kings
-                HashSet<Vector2Int> tilesBetweenKingAndAttacker = Utility.GetIntermediateLinePoints(playerStates[currentIndex].GetKing().Position, attacker.Position);
-                pinnedPiece = tilesBetweenKingAndAttacker.Contains(piece.Position);
-                // if there are multiple pieces in th epath, any can move
-                HashSet<Vector2Int> tBKaA_without_piecePos = new HashSet<Vector2Int>(tilesBetweenKingAndAttacker);
-                tBKaA_without_piecePos.Remove(piece.Position);
-                foreach (Vector2Int anotherPiecePosition in tBKaA_without_piecePos){
-                    if(GetTile(anotherPiecePosition).HasPieceState()){
-                        pinnedPiece = false;
-                        break;
-                    } 
-                }
-                
-                HashSet<Vector2Int> allowedPinnedPieceMoves = tilesBetweenKingAndAttacker; // because a pinned piece can still attack
-                allowedPinnedPieceMoves.Add(attacker.Position);
-                pinnedPieceCanCaptureAttacker = allowedPinnedPieceMoves.Contains(move);
-                //if(pinnedPiece)Debug.Log(piece+" "+piece.Colour+" pinned by "+attacker+" "+attacker.Colour);
+            if (IsValidMove(move, piece, isKing)){
+                gameValidMoves.Add(move);
             }
-            
-            bool avoidPinTactic = !pinnedPiece || pinnedPieceCanCaptureAttacker;
-
-            //Debug.Log(mustMoveKing + " " + mustAvoidCheck + " " + avoidPinTactic + " " + isAnEnPassantMove + " ");
-            if(mustMoveKing || mustAvoidCheck || (!playerStates[currentIndex].IsInCheck() && avoidPinTactic) || isAnEnPassantMove)
-                gameValidMoves.Add(move);    
         }
+
         return gameValidMoves;
     }
+
     HashSet<Vector2Int> GetAllPlayerMoves(PlayerState player){
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
         foreach (PieceState piece in player.PieceStates)
-            foreach (Vector2Int move in piece.ValidMoves)
-                allMoves.Add(move);
+            allMoves.UnionWith(GetMovesAllowed(piece));
         return allMoves;
     }
 
     // JUST FOR POSITIONS THE OPPOSING PLAYER PIECES ARE ATTACKING, not necessarily defended positions(same as defended positons only for pawns)
+    // since we are usuing sets all moves will be unique so to check for double checks, have each piece have its own attack moves set
+    HashSet<Vector2Int> GetPieceAttackMoves(PieceState pieceState)=>pieceState is PawnState? PawnAttackedTiles(pieceState):pieceState.ValidMoves;
     HashSet<Vector2Int> GetAllPlayerAttackMoves(PlayerState player){
         HashSet<Vector2Int> allMoves = new HashSet<Vector2Int>();
-        foreach (PieceState piece in player.PieceStates){
-            bool isPawn = piece.Type=="Pawn";
-            if(isPawn)
-                allMoves.UnionWith(PawnAttackedTiles(piece)); // add the squares attacked by the Pawn, Pawn fwd moves not included here
-            else
-                foreach (Vector2Int move in piece.ValidMoves)
-                    allMoves.Add(move); 
-        }
+        foreach (PieceState piece in player.PieceStates)
+            allMoves.UnionWith(GetPieceAttackMoves(piece)); // add the squares attacked by the Pawn, Pawn fwd moves not included here
+
         return allMoves;
     }
     public HashSet<Vector2Int> PawnAttackedTiles(PieceState piece){
@@ -458,28 +493,33 @@ public class GameState{
         return kingMoves;
     }
 
+    // Filtering methods for each piece type
     public HashSet<Vector2Int> FilterMoves(PieceState piece){
-        if (piece == null) return null; // no piece was passed
-        switch (piece.Type){
-            case "King":
-                return FilterKingMoves(piece);
-            case "Queen":
-                return FilterQueenMoves(piece);
-            case "Rook":
-                return FilterRookMoves(piece);
-            case "Knight":
-                return FilterKnightMoves(piece);
-            case "Bishop":
-                return FilterBishopMoves(piece);
-            case "Pawn":
-                return FilterPawnMoves(piece);
-            default:
-                Debug.Log("Bryhh"+piece.Type);
-                return null;
-        }
+        if (piece == null) return null;
+        return piece.Type switch
+        {
+            "King" => FilterKingMoves(piece),
+            "Queen" => FilterQueenMoves(piece),
+            "Rook" => FilterRookMoves(piece),
+            "Knight" => FilterKnightMoves(piece),
+            "Bishop" => FilterBishopMoves(piece),
+            "Pawn" => FilterPawnMoves(piece),
+            _ => throw new ArgumentException($"Unknown piece type: {piece.Type}")
+        };
     }
 
-    private PieceState GetAttacker(PieceState piece)=>playerStates[piece.Colour ? 1 : 0].PieceStates.Find(p => p.ValidMoves.Contains(piece.Position));
+    private PieceState GetAttacker(PieceState piece)=>playerStates[piece.Colour ? 1 : 0].PieceStates.Find(p =>(p is PawnState)?PawnAttackedTiles(p).Contains(piece.Position): p.ValidMoves.Contains(piece.Position));
+    private List<PieceState> GetAllAttackers(PieceState piece){
+        List<PieceState> attackers = new List<PieceState>();
+        
+        foreach (PieceState opposingPiece in playerStates[piece.Colour ? 1 : 0].PieceStates){
+            HashSet<Vector2Int> attackedTiles = opposingPiece is PawnState? PawnAttackedTiles(opposingPiece) : opposingPiece.ValidMoves; 
+            if (attackedTiles.Contains(piece.Position))
+                attackers.Add(opposingPiece);
+        }
+        return attackers;
+    }
+
     private void UpdateKingAttack(PieceState king){
         HashSet<Vector2Int> opposingMoves = GetAllPlayerAttackMoves(playerStates[king.Colour ? 1:0]);
         HashSet<Vector2Int> kingMoves = new HashSet<Vector2Int>();
@@ -491,22 +531,25 @@ public class GameState{
     }
     private void UpdateCheckStatus(PlayerState player){
         PieceState king = player.GetKing();
-        if (king == null) return;
-
-        HashSet<Vector2Int> opposingMoves = GetAllPlayerAttackMoves(playerStates[player.Colour ? 1 : 0]);
+        if (king == null) return; // poterntial error to log
 
         // Check how many opposing pieces can attack the king
         int attackingPiecesCount = 0;
-        //player.KingAttacker = null;
-        foreach (var move in opposingMoves){
-            if (move == king.Position){
+        HashSet<Vector2Int> opposingMoves;
+        foreach (PieceState opposingPiece in playerStates[player.Colour ? 1 : 0].PieceStates){
+            if(opposingPiece is KingState) continue;
+            opposingMoves = GetPieceAttackMoves(opposingPiece);
+            if(opposingMoves.Contains(king.Position)){ // king attack!
                 attackingPiecesCount++;
                 // Find the attacking piece
                 PieceState attacker = GetAttacker(king);
-                if (attacker != null && attacker is not KingState) 
+                if (attacker != null){
                     player.KingAttacker = attacker; // Set the attacker
+                }else{
+                    Debug.LogError("Attacker count went up but could not find attacker");
+                }
             }
-            if(attackingPiecesCount >= 2)
+            if(attackingPiecesCount >= 2) // if there is 1 attacker we found them, if two(or more) doesnt matter the attacker, its double check
                 break;
         }
         // Update player's check status
@@ -608,7 +651,10 @@ public class GameState{
 
             // is a castleMove, already moved king now move correct rook
             int direction = targetPosition.x-selectedPieceState.Position.x;
-            bool leftSide=direction<0, castleMove = selectedPieceState.Position.y==targetPosition.y && Math.Abs(direction)==2;
+            bool leftSide=direction<0,
+                    castleMove = selectedPieceState.Position.y==targetPosition.y
+                                && Math.Abs(direction)==2
+                                && selectedPieceState is KingState; // only kings castle
             if(castleMove){
                 // determine the correct rook
                 PieceState theRook = null;
