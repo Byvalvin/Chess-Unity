@@ -32,7 +32,11 @@ public class PresetState : BotState
 
             // set promotion choice for promotion
             bool isPromotion = moveString.Contains('=');
-            if(isPromotion) PromoteTo=NotationParser.pieceTypeNotationMap[moveString[moveString.Length-1]];
+
+            if(isPromotion){
+                char choice = moveString.Split('=')[1][0];
+                PromoteTo=NotationParser.pieceTypeNotationMap[choice];
+            }
             moveIndex++;
             return ParseMove(moveString); // Parse it into Vector2Int[]
         }

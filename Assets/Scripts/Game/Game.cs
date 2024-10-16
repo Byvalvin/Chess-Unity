@@ -47,8 +47,7 @@ public class GameState{
    
     public string PromoteTo {// This will hold the type of piece the player has chosen to promote to
         get => promoteTo; 
-        set
-        {
+        set{
             promoteTo = value;
             // OnPromotionChanged?.Invoke(promoteTo); // Example of notifying when it changes
         }
@@ -139,10 +138,8 @@ public class GameState{
             && (lastMovedPieceState as PawnState).CanBeCapturedEnPassant;
     }
     // Calculate the en passant move position
-    private Vector2Int CalculateEnPassantMove(PieceState piece)
-    {
-        return lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
-    }
+    private Vector2Int CalculateEnPassantMove(PieceState piece)=>lastMovedPieceState.Position + new Vector2Int(0, currentIndex == 0 ? -1 : 1);
+    
     // Validate if a move is legal considering check and pin conditions
     private bool IsValidMove(Vector2Int move, PieceState piece, bool isKing)
     {
