@@ -1,0 +1,46 @@
+- Player vs Player
+- Bot vs Bot
+- Player vs Bot
+- Different evalution methods for bots
+- Different AI methods for bots
+- Open Board A: Classic chess board with piece start position set, free movement of all pieces/no turns
+- Open Board B: Empty chess board, add desired pieces for various tactical setups
+- Tactical Master: List of all tactics, emphasis on most common and most effective ones
+  - Attacking f7f2(weakerst square)
+  - *Fork/Double Attack*
+  - *Sacrifice*
+  - Attacking the Castled King
+  - Hanging Piece
+  - *Simplification*
+  - Back Rank
+  - *Interference*
+  - *Skewer*
+  - Basic Checkmates
+  - Mate in One
+  - *Smothered Mate*
+  - Clearance Sacrifice
+  - Mate in Two
+  - Stalemate
+  - Decoy/Deflection
+  - Mate in Three+
+  - Support Mate
+  - *Defense*
+  - *Mating Net*
+  - *Trapped Piece*
+  - *Desperado*
+  - *Overloading*
+  - Underpromotion
+  - *Discovered Attack/Check*
+  - Pawn Promotion
+  - Vulnerable King
+  - *Double Check*
+  - Perpetual Check
+  - *Windmill*
+  - En Passant
+  - *Pin*
+  - *X-Ray Attack*
+  - Endgame Tactic
+  - Queen Sacrifice
+  - Zugzwang/Zwischenzug
+  - *Exchange Sacrifice*
+  - *Removal of the Defender*        
