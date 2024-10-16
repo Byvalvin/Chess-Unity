@@ -45,8 +45,6 @@ public class KingState : PieceState
 
 public class King : Piece
 {    
-
-
     protected override void Awake()
     {
         base.Awake();

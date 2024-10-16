@@ -4,8 +4,7 @@ using System;
 using UnityEngine;
 using System.Linq; // Add this line for LINQ
 
-public static class Objects
-{
+public static class Objects{
     public static PlayerState CreatePlayerState(string playerTypeName, string playerName, bool isWhite, string filePath){
         // Use reflection to instantiate the appropriate player state
         var type = System.Reflection.Assembly.GetExecutingAssembly().GetTypes()
@@ -59,7 +58,6 @@ public static class Objects
         PieceObject.transform.localScale = new Vector3(tileSize * pieceScaleFactor, tileSize * pieceScaleFactor, 1); // Adjust based on sprite size
 
         return piece;
-
     }
 
     public static Tile CreateTile(int x, int y, float tileSize, TileState tileState){

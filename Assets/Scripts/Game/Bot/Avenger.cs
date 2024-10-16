@@ -31,6 +31,10 @@ public class AvengerState : BotState
         //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
 
+        // game ending moves
+        score = GameEndingMove(score, clone);
+        if(score!=0) return score;
+
         // 1. Vengeance: Prioritize captures on opponent's pieces
         score += EvaluateVengeance(targetPiece);
 
@@ -45,13 +49,12 @@ public class AvengerState : BotState
         score += EvaluatePieceSafety(from, to, movingPieceType, clone);
         score += ArmyValue(clone, TurnIndex) - ArmyValue(clone, 1 - TurnIndex);
 
-        Debug.Log($"{movingPieceType} {movingPieceColour} {from} {to} {score}");
         return score;
     }
 
     private int EvaluateVengeance(PieceState targetPiece)
     {
-        if (targetPiece != null)
+        if (targetPiece != null && targetPiece is not KingState)
         {
             // High reward for capturing a piece
             return pieceValue[targetPiece.Type];
@@ -98,7 +101,7 @@ public class AvengerState : BotState
     {
         PieceState targetPiece = clone.GetTile(to).pieceState;
 
-        if (targetPiece != null && pieceValue[targetPiece.Type] >= ValuablePieceThreshold)
+        if (targetPiece != null && targetPiece is not KingState && pieceValue[targetPiece.Type] >= ValuablePieceThreshold)
         {
             // Check for potential follow-up threats
             foreach (PieceState piece in clone.PlayerStates[TurnIndex].PieceStates)

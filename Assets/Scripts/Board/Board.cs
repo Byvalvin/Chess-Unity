@@ -28,14 +28,19 @@ public class BoardState{
     }
 
     public BoardState(){}
-    public BoardState(BoardState original){
+    public BoardState(BoardState original, PlayerState playerState1Clone, PlayerState playerState2Clone){
         // Clone the tile states
         this.tileStates = new TileState[N, N];
         for (int yi = 0; yi < N; yi++)
             for (int xi = 0; xi < N; xi++)
                 tileStates[yi, xi] = original.tileStates[yi, xi]?.Clone(); // Clone each tile
+        
+        foreach (PieceState playerPieceState in playerState1Clone.PieceStates)
+            tileStates[playerPieceState.Position.y, playerPieceState.Position.x].pieceState = playerPieceState;
+        foreach (PieceState playerPieceState in playerState2Clone.PieceStates)
+            tileStates[playerPieceState.Position.y, playerPieceState.Position.x].pieceState = playerPieceState;
     }
-    public BoardState Clone() => new BoardState(this); // Clone method
+    public BoardState Clone(PlayerState playerState1, PlayerState playerState2) => new BoardState(this, playerState1, playerState2); // Clone method
 
     public void CreateBoardState(PlayerState player1, PlayerState player2){
         // Create and Add Tiles
@@ -68,8 +73,8 @@ public class BoardState{
                 AddPieceState(type, false, 3, player2);
                 break;
             case "Queen":
-                // AddPieceState(type, true, 4, player1);
-                // AddPieceState(type, false, 4, player2);
+                AddPieceState(type, true, 4, player1);
+                AddPieceState(type, false, 4, player2);
                 break;
             case "Rook":
                 AddPieceState(type, true, 0, player1);
@@ -78,10 +83,10 @@ public class BoardState{
                 AddPieceState(type, false, 7, player2);
                 break;
             case "Knight":
-                // AddPieceState(type, true, 1, player1);
-                // AddPieceState(type, true, 6, player1);
-                // AddPieceState(type, false, 1, player2);
-                // AddPieceState(type, false, 6, player2);
+                AddPieceState(type, true, 1, player1);
+                AddPieceState(type, true, 6, player1);
+                AddPieceState(type, false, 1, player2);
+                AddPieceState(type, false, 6, player2);
                 break;
             case "Bishop":
                 AddPieceState(type, true, 2, player1);
@@ -232,8 +237,8 @@ public class Board : MonoBehaviour
                 AddPiece(type, false, 3, Player2);
                 break;
             case "Queen":
-                // AddPiece(type, true, 4, Player1);
-                // AddPiece(type, false, 4, Player2);
+                AddPiece(type, true, 4, Player1);
+                AddPiece(type, false, 4, Player2);
                 break;
             case "Rook":
                 AddPiece(type, true, 0, Player1);
@@ -242,10 +247,10 @@ public class Board : MonoBehaviour
                 AddPiece(type, false, 7, Player2);
                 break;
             case "Knight":
-                // AddPiece(type, true, 1, Player1);
-                // AddPiece(type, true, 6, Player1);
-                // AddPiece(type, false, 1, Player2);
-                // AddPiece(type, false, 6, Player2);
+                AddPiece(type, true, 1, Player1);
+                AddPiece(type, true, 6, Player1);
+                AddPiece(type, false, 1, Player2);
+                AddPiece(type, false, 6, Player2);
                 break;
             case "Bishop":
                 AddPiece(type, true, 2, Player1);

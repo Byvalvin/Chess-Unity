@@ -10,10 +10,13 @@ public class RandiState : BotState
 
     protected override Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap)
     {
-        if (moveMap.Count == 0) return null; // No moves available
+        if (moveMap.Count == 0){
+            Debug.Log("Randi has no more moves left onfortunately");
+            return null; // No moves available
+        }
 
         // Get a random key from the dictionary
-        int randomKeyIndex = UnityEngine.Random.Range(0, moveMap.Count);
+        int randomKeyIndex = Random.Range(0, moveMap.Count);
         Vector2Int randomFrom = new List<Vector2Int>(moveMap.Keys)[randomKeyIndex];
 
         // Get valid moves for the selected key
@@ -21,8 +24,12 @@ public class RandiState : BotState
         if (validMoves.Count == 0) return null; // No valid moves available for this key
 
         // Select a random move from the valid moves
-        int randomMoveIndex = UnityEngine.Random.Range(0, validMoves.Count);
+        int randomMoveIndex = Random.Range(0, validMoves.Count);
         Vector2Int randomTo = new List<Vector2Int>(validMoves)[randomMoveIndex];
+
+        if(GameState.IsPromotion(currentGame.GetTile(randomFrom).pieceState,randomTo))
+            PromoteTo = new string[]{ "Queen", "Rook", "Bishop", "Knight" }[Random.Range(0, 4)];
+           
 
         // Return the random move
         return new Vector2Int[] { randomFrom, randomTo };

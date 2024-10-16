@@ -20,46 +20,11 @@ public class LeviState : BotState
     public LeviState(LeviState original) : base(original) { }
     public override PlayerState Clone() => new LeviState(this);
 
-    protected override Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap)
-    {
-        Vector2Int bestFrom = default;
-        Vector2Int bestTo = default;
-        int bestScore = int.MinValue;
-
-        List<Vector2Int[]> bestMoves = new List<Vector2Int[]>();
-        Vector2Int[] best = null;
-
-        foreach (var kvp in moveMap)
-        {
-            Vector2Int from = kvp.Key;
-            foreach (var to in kvp.Value)
-            {
-                GameState clonedGame = currentGame.Clone();
-                clonedGame.MakeBotMove(from, to);
-                int score = Minimax(clonedGame, MaxDepth, int.MinValue, int.MaxValue, Colour);
-
-                Debug.Log($"score eval: {from} -> {to}: {score}");
-
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestFrom = from;
-                    bestTo = to;
-                    bestMoves.Clear();
-                    bestMoves.Add(new[] { bestFrom, bestTo });
-                }
-                else if (score == bestScore)
-                {
-                    bestMoves.Add(new[] { from, to });
-                }
-            }
-        }
-
-        best = bestMoves.Count > 1 ? bestMoves[Random.Range(0, bestMoves.Count)] : new Vector2Int[] { bestFrom, bestTo };
-        PieceState movingPiece = currentGame.GetTile(best[0]).pieceState;
-        Debug.Log($"{movingPiece.Type} {movingPiece.Colour} {best[0]} {best[1]} {bestScore}");
-        return best;
+    protected override int EvaluateMove(Vector2Int from, Vector2Int to, GameState clone){
+        clone.MakeBotMove(from, to);
+        return Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, Colour);
     }
+
 
     private int Minimax(GameState gameState, int depth, int alpha, int beta, bool maximizingPlayer)
     {
@@ -80,9 +45,8 @@ public class LeviState : BotState
                 alpha = Mathf.Max(alpha, eval);
 
                 if (beta <= alpha)
-                {
                     break; // Alpha-beta pruning
-                }
+                
             }
             return maxEval;
         }
@@ -98,18 +62,15 @@ public class LeviState : BotState
                 beta = Mathf.Min(beta, eval);
 
                 if (beta <= alpha)
-                {
                     break; // Alpha-beta pruning
-                }
             }
             return minEval;
         }
     }
 
-    private bool IsGameOver(GameState gameState)
-    {
+    private bool IsGameOver(GameState gameState){
         // Implement logic to determine if the game is over (checkmate, stalemate, etc.)
-        return gameState.Checkmate; // Placeholder
+        return gameState.IsGameEnd(); // Placeholder
     }
 
     private List<Vector2Int[]> GenerateAllMoves(GameState gameState, int playerIndex)
@@ -123,7 +84,7 @@ public class LeviState : BotState
             foreach (var to in validMoves)
             {
                 PieceState targetPiece = gameState.GetTile(to).pieceState;
-                if (targetPiece != null && targetPiece.Colour != gameState.PlayerStates[playerIndex].Colour)
+                if (targetPiece != null && targetPiece is not KingState && targetPiece.Colour != gameState.PlayerStates[playerIndex].Colour)
                 {
                     // Prioritize capturing moves
                     moves.Insert(0, new Vector2Int[] { piece.Position, to });
@@ -138,9 +99,11 @@ public class LeviState : BotState
         return moves;
     }
 
-    private int EvaluateGameState(GameState gameState)
-    {
+    private int EvaluateGameState(GameState gameState){
         int score = 0;
+        // game ending moves
+        score = GameEndingMove(score, gameState);
+        if(score!=0) return score;
 
         // Evaluate material balance
         score += EvaluateMaterial(gameState);
@@ -155,16 +118,13 @@ public class LeviState : BotState
         return score;
     }
 
-    private int EvaluateMaterial(GameState gameState)
-    {
+    private int EvaluateMaterial(GameState gameState){
         return ArmyValue(gameState, TurnIndex) - ArmyValue(gameState, 1 - TurnIndex);
     }
 
-    private int EvaluatePositioning(GameState gameState)
-    {
+    private int EvaluatePositioning(GameState gameState){
         int positionScore = 0;
-        foreach (PieceState piece in gameState.PlayerStates[TurnIndex].PieceStates)
-        {
+        foreach (PieceState piece in gameState.PlayerStates[TurnIndex].PieceStates){
             positionScore += CentralControlBonus(piece.Position, gameState);
             // Additional scoring logic based on piece type and position can be added here
         }
@@ -172,26 +132,21 @@ public class LeviState : BotState
         return positionScore;
     }
 
-    private int EvaluateKingSafety(GameState gameState)
-    {
+    private int EvaluateKingSafety(GameState gameState){
         int safetyScore = 0;
         Vector2Int kingPosition = gameState.PlayerStates[TurnIndex].GetKing().Position;
         HashSet<Vector2Int> kingMoves = gameState.PlayerStates[TurnIndex].GetKing().ValidMoves;
 
         // Check for direct threats to the king
-        foreach (var opponentPiece in gameState.PlayerStates[1 - TurnIndex].PieceStates)
-        {
+        foreach (var opponentPiece in gameState.PlayerStates[1 - TurnIndex].PieceStates){
             // Check if the opponent can directly attack the king
-            if (opponentPiece.ValidMoves.Contains(kingPosition))
-            {
+            if (opponentPiece.ValidMoves.Contains(kingPosition)){
                 safetyScore -= KingThreatPenalty * 3; // Higher penalty for being in check
             }
 
             // Check if opponent can attack king's escape moves
-            foreach (var escape in kingMoves)
-            {
-                if (opponentPiece.ValidMoves.Contains(escape))
-                {
+            foreach (var escape in kingMoves){
+                if (opponentPiece.ValidMoves.Contains(escape)){
                     safetyScore -= KingThreatPenalty; // Penalty for threatening escape routes
                 }
             }
@@ -203,8 +158,7 @@ public class LeviState : BotState
     }
 
 
-    private int EvaluateMobility(GameState gameState)
-    {
+    private int EvaluateMobility(GameState gameState){
         int spaceControl = 0, enemyControl = 0;
         foreach (PieceState pieceState in gameState.PlayerStates[TurnIndex].PieceStates)
             spaceControl += pieceState.ValidMoves.Count;

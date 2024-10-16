@@ -27,7 +27,7 @@ public class PlayerState{
             turnIndex=colour?0:1;
         }
     }
-    protected int TurnIndex => turnIndex;
+    public int TurnIndex => turnIndex;
     public float TileSize{
         get=>tileSize;
         set=>tileSize=value;
@@ -53,6 +53,7 @@ public class PlayerState{
         this.colour = original.colour;
         this.turnIndex = original.turnIndex;
         this.tileSize = original.tileSize;
+        
         this.pieces = new List<PieceState>();
         foreach (var piece in original.pieces)
             pieces.Add(piece.Clone()); // Assuming PieceState has a Clone method
@@ -60,7 +61,6 @@ public class PlayerState{
         foreach (var piece in original.captured)
             captured.Add(piece.Clone());
         
-
         this.inCheck = original.inCheck;
         this.doubleCheck = original.doubleCheck;
         this.KingAttacker = original.KingAttacker?.Clone(); // Handle cloning if necessary

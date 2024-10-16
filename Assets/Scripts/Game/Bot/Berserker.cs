@@ -25,10 +25,6 @@ public class BerserkerState : BotState
         int score = 0;
         PieceState movingPiece = clone.GetTile(from).pieceState;
         PieceState targetPiece = clone.GetTile(to).pieceState;
-               if(movingPiece==null){
-            Debug.Log("someohow its null"+from+to);
-        }
-
 
         string movingPieceType = movingPiece.Type;
         bool movingPieceColour = movingPiece.Colour;
@@ -36,6 +32,10 @@ public class BerserkerState : BotState
         // Simulate the move
         //GameState clone = currentGame.Clone();
         clone.MakeBotMove(from, to);
+
+        // game ending moves
+        score = GameEndingMove(score, clone);
+        if(score!=0) return score;
 
         // 1. Aggressive capture score
         score += EvaluateAggressiveCapture(targetPiece);
@@ -49,8 +49,8 @@ public class BerserkerState : BotState
         // 4. Potential for punishing opponent's mistakes
         score += EvaluatePunishment(clone);
 
- 
-        Debug.Log($"{movingPieceType} {movingPieceColour} {from} {to} {score}");
+        // 5. Attack King
+        score += AttackedKingTiles(clone);
         
         return score;
     }
@@ -58,7 +58,7 @@ public class BerserkerState : BotState
     private int EvaluateAggressiveCapture(PieceState targetPiece)
     {
         // Higher score for capturing pieces
-        if (targetPiece != null)
+        if (targetPiece != null && targetPiece is not KingState)
         {
             return pieceValue[targetPiece.Type] + AggressiveCaptureBonus;
         }
