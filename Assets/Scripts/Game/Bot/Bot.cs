@@ -1,5 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Collections.Concurrent;
+using System.Linq;
+
 
 
 public abstract class BotState : PlayerState{
@@ -48,71 +53,76 @@ public abstract class BotState : PlayerState{
         Vector2Int moveFrom=completeMove[0], moveTo=completeMove[1];
         return new Vector2Int[]{moveFrom, moveTo};
     }
-    protected virtual (int, string) EvaluatePromotionMove(Vector2Int from, Vector2Int to){
-        (int score, string choice) promotionPack = (int.MinValue, "");
-        // 4 clones
-        string[] promotions = {"Queen", "Rook", "Bishop", "Knight"};
-        GameState clone;
-        int newScore;
-        foreach (string promotion in promotions){
-             clone = currentGame.Clone(); (clone.PlayerStates[TurnIndex] as BotState).PromoteTo=promotion;
-             newScore = EvaluateMove(from, to, clone);
-             if(newScore > promotionPack.score){
+protected virtual (int, string) EvaluatePromotionMove(Vector2Int from, Vector2Int to){
+    (int score, string choice) promotionPack = (int.MinValue, "");
+    string[] promotions = { "Queen", "Rook", "Bishop", "Knight" };
+    object lockObject = new object(); // For thread safety
+
+    Parallel.ForEach(promotions, promotion =>{
+        GameState clone = currentGame.Clone();
+        (clone.PlayerStates[TurnIndex] as BotState).PromoteTo = promotion;
+        int newScore = EvaluateMove(from, to, clone);
+
+        lock (lockObject) {// Ensure thread-safe updates
+            if (newScore > promotionPack.score)
                 promotionPack = (newScore, promotion);
-             }
         }
-        return promotionPack;
-    }
-    protected virtual Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap){
+    });
+
+    return promotionPack;
+}
+
+    protected virtual Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap)
+    {
         Vector2Int bestFrom = default;
         Vector2Int bestTo = default;
         int bestScore = int.MinValue;
         string bestPromoChoice = "";
 
         var bestMoves = new List<Vector2Int[]>();
-        Vector2Int[] best = null; 
+        object lockObject = new object(); // For thread safety
 
-        PieceState movingPiece;
-
-        foreach (var kvp in moveMap){
+        Parallel.ForEach(moveMap, kvp =>{
             Vector2Int from = kvp.Key;
-            foreach (var to in kvp.Value){
+            Parallel.ForEach(kvp.Value, to =>{
                 int score = int.MinValue;
                 string promoChoice = "";
-                movingPiece = currentGame.GetTile(from).pieceState;
-                if(GameState.IsPromotion(currentGame.GetTile(from).pieceState, to)){
-                    (int score, string choice) promotionScore =  EvaluatePromotionMove(from, to);
+                PieceState movingPiece = currentGame.GetTile(from).pieceState;
+
+                if (GameState.IsPromotion(movingPiece, to)){
+                    (int score, string choice) promotionScore = EvaluatePromotionMove(from, to);
                     score = promotionScore.score;
                     promoChoice = promotionScore.choice;
-                    // Check if this is the best promotion
-                    if (score > bestScore)
-                        bestPromoChoice = promoChoice; // Track the best promotion choice
-                    
-                }else{
+                }
+                else{
                     score = EvaluateMove(from, to, currentGame.Clone());
                 }
-                
+
                 Debug.Log($"score eval: {movingPiece.Type} {movingPiece.Colour} {from} -> {to}: {score}");
 
-                if (score > bestScore){
-                    bestScore = score;
-                    bestFrom = from;
-                    bestTo = to;
-                    bestMoves.Clear();
-                    bestMoves.Add(new[] { bestFrom, bestTo });
+                lock (lockObject) {// Ensure thread-safe updates
+                    if (score > bestScore){
+                        bestScore = score;
+                        bestFrom = from;
+                        bestTo = to;
+                        bestMoves.Clear();
+                        bestMoves.Add(new[] { bestFrom, bestTo });
+                        bestPromoChoice = promoChoice; // Track the best promotion choice
+                    }
+                    else if (score == bestScore){
+                        bestMoves.Add(new[] { from, to });
+                    }
                 }
-                else if (score == bestScore)
-                    bestMoves.Add(new[] { from, to }); 
-            }
-        }
-        best = bestMoves.Count > 1 ? bestMoves[Random.Range(0, bestMoves.Count)] : new Vector2Int[] { bestFrom, bestTo };
-        promoteTo=GameState.IsPromotion(currentGame.GetTile(best[0]).pieceState, best[1])? bestPromoChoice : "";
-        
-        movingPiece = currentGame.GetTile(best[0]).pieceState;
-        Debug.Log($"BEST MOVE: {movingPiece.Type} {movingPiece.Colour} {best[0]} {best[1]} {bestScore}");
+            });
+        });
+
+        Vector2Int[] best = bestMoves.Count > 1 ? bestMoves[Random.Range(0, bestMoves.Count)] : new Vector2Int[] { bestFrom, bestTo };
+        promoteTo = GameState.IsPromotion(currentGame.GetTile(best[0]).pieceState, best[1]) ? bestPromoChoice : "";
+
+        PieceState finalMovingPiece = currentGame.GetTile(best[0]).pieceState;
+        Debug.Log($"BEST MOVE: {finalMovingPiece.Type} {finalMovingPiece.Colour} {best[0]} {best[1]} {bestScore}");
         return best;
     }
-
     protected int GameEndingMove(int score, GameState clone){
         if (clone.PlayerCheckmated(clone.PlayerStates[1 - TurnIndex]))
             return MAX; // Opponent is checkmated
@@ -128,34 +138,65 @@ public abstract class BotState : PlayerState{
     protected bool InCenter(Vector2Int position)=> (3<=position.x&&position.x<=4 && 3<=position.y&&position.y<=4);
 
     // some commonon factors to consider
-    protected int ArmyValue(GameState gameState, int playerIndex){
+    protected int ArmyValue(GameState gameState, int playerIndex)
+    {
         int av = 0;
-        foreach (PieceState piece in gameState.PlayerStates[playerIndex].PieceStates)
-            if(piece is not KingState)
-                av+=pieceValue[piece.Type];
+
+        Parallel.ForEach(gameState.PlayerStates[playerIndex].PieceStates, piece =>{
+            if (piece is not KingState){
+                // Use Interlocked to safely add to the total army value
+                Interlocked.Add(ref av, pieceValue[piece.Type]);
+            }
+        });
+
         return av;
     }
 
-    protected int CentralControlBonus(Vector2Int position, GameState gameState){
-        // Implement a method to calculate score based on board control
-        // Example: add 1 point for controlling the center squares
-        int centreControl = InCenter(position)? 2:0;
-        foreach (PieceState piece in gameState.PlayerStates[TurnIndex].PieceStates)
-            centreControl += Utility.FindAll(piece.validMoves, InCenter).Count;
 
-        return centreControl;
+    protected int CentralControlBonus(Vector2Int position, GameState gameState)
+    {
+        // Initialize the score for controlling the center
+        int centreControl = InCenter(position) ? 2 : 0;
+        
+        // Use a thread-safe variable to accumulate scores
+        int totalControl = 0;
+        object lockObject = new object(); // For thread safety
+
+        // Parallelize the loop to calculate control from valid moves of each piece
+        Parallel.ForEach(gameState.PlayerStates[TurnIndex].PieceStates, piece =>{
+            // Calculate control from valid moves for each piece
+            int pieceControl = Utility.FindAll(piece.ValidMoves, InCenter).Count;
+
+            lock (lockObject) // Ensure thread-safe updates
+            {
+                totalControl += pieceControl;
+            }
+        });
+
+        return centreControl + totalControl;
     }
+
 
     protected int EvaluatePieceSafety(Vector2Int from, Vector2Int to, string type, GameState gameState){
         int toNotSafe = EvaluateSafety(to, gameState, true);
         int fromNotSafe = EvaluateSafety(from, gameState, false);
         return (toNotSafe + fromNotSafe) * pieceValue[type];
     }
-    private int EvaluateSafety(Vector2Int position, GameState gameState, bool isTarget){
+    private int EvaluateSafety(Vector2Int position, GameState gameState, bool isTarget)
+    {
         int penalty = 0;
-        foreach (PieceState opponentPiece in gameState.PlayerStates[1 - TurnIndex].PieceStates)
-            if (opponentPiece.ValidMoves.Contains(position))
-                penalty -= SafeMovePenalty; // don't go to unsafe positions
+        object lockObject = new object(); // For thread safety
+
+        // Use Parallel.ForEach to iterate over opponent pieces
+        Parallel.ForEach(gameState.PlayerStates[1 - TurnIndex].PieceStates, opponentPiece =>{
+            if (opponentPiece.ValidMoves.Contains(position)){
+                lock (lockObject) // Ensure thread-safe updates
+                {
+                    penalty -= SafeMovePenalty; // Don't go to unsafe positions
+                }
+            }
+        });
+
         return penalty;
     }
 
@@ -170,11 +211,24 @@ public abstract class BotState : PlayerState{
         return KingTileValue * (8 - tileCount);
     }
 
-    protected int PieceDefended(GameState gameState, PieceState pieceState, Vector2Int to){
+    protected int PieceDefended(GameState gameState, PieceState pieceState, Vector2Int to)
+    {
         int defendedCount = 0;
-        foreach (PieceState allyPiece in gameState.PlayerStates[pieceState.Colour ? 0 : 1].PieceStates)
+        var allyPieces = gameState.PlayerStates[pieceState.Colour ? 0 : 1].PieceStates;
+
+        // Use a ConcurrentBag to store defended counts from different threads
+        var defendedCounts = new ConcurrentBag<int>();
+
+        Parallel.ForEach(allyPieces, allyPiece =>
+        {
             if (IsPieceDefending(allyPiece, pieceState, to, gameState))
-                defendedCount++;
+            {
+                defendedCounts.Add(1); // Add a count if defending
+            }
+        });
+
+        // Sum up all defended counts
+        defendedCount = defendedCounts.Sum();
         return defendedCount;
     }
 
@@ -207,16 +261,25 @@ public abstract class BotState : PlayerState{
     }
 
     private bool HasBlockingPiece(HashSet<Vector2Int> points, PieceState allyPiece, Vector2Int to, GameState gameState){
+        // Remove the ally piece's position and target position
         points.Remove(allyPiece.Position);
         points.Remove(to);
 
-        foreach (Vector2Int point in points){
-            if (!gameState.CurrentBoardState.InBounds(point)) continue; // Skip out of bounds
+        // Use a ConcurrentBag to store results from different threads
+        var blockedResults = new ConcurrentBag<bool>();
+
+        Parallel.ForEach(points, point =>{
+            if (!gameState.CurrentBoardState.InBounds(point))
+                return; // Skip out of bounds
+
             if (gameState.GetTile(point).HasPieceState())
-                return true; // Blocked
-        }
-        return false; // Not blocked
+                blockedResults.Add(true); // Found a blocking piece 
+        });
+
+        // Return true if any thread found a blocking piece
+        return blockedResults.Any(result => result);
     }
+
 
 }
 public abstract class Bot : Player{

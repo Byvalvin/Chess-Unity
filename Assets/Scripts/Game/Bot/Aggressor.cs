@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading.Tasks; // pARALLEL
+using System.Threading; // iNterlocked
 
 /*
 Aggressor: Always looking to capture enemy pieces, favoring aggressive plays.
@@ -69,26 +71,38 @@ public class AggressorState : BotState
         return score;
     }
 
-    private int CountAttackers(Vector2Int targetPosition)
-    {
+    private int CountAttackers(Vector2Int targetPosition){
         int attackerCount = 0;
-        foreach (PieceState piece in currentGame.PlayerStates[TurnIndex].PieceStates)
-        {
-            if (piece.ValidMoves.Contains(targetPosition))
-                attackerCount++;
-        }
+
+        // Use Parallel.ForEach for potential performance boost
+        Parallel.ForEach(currentGame.PlayerStates[TurnIndex].PieceStates, piece =>{
+            if (piece.ValidMoves.Contains(targetPosition)){
+                // Atomically increment the attacker count
+                Interlocked.Increment(ref attackerCount);
+            }
+        });
+
         return attackerCount;
     }
+
 
     private int EvaluateMobility(GameState clone)
     {
         int mobilityScore = 0;
-        foreach (PieceState pieceState in clone.PlayerStates[TurnIndex].PieceStates)
+
+        // Use Interlocked for thread-safe updates to the score
+        Parallel.ForEach(clone.PlayerStates[TurnIndex].PieceStates, pieceState =>
         {
-            mobilityScore += pieceState.ValidMoves.Count;
-        }
+            // Calculate the count of valid moves for this piece
+            int count = pieceState.ValidMoves.Count;
+
+            // Use Interlocked to add to the mobility score atomically
+            Interlocked.Add(ref mobilityScore, count);
+        });
+
         return mobilityScore;
     }
+
 
     private int EvaluateKingThreat(Vector2Int to, GameState clone)
     {
