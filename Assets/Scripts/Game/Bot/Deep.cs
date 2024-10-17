@@ -57,7 +57,8 @@ In contrast, a fixed-depth approach like LeviState may miss out on finding the b
 */
 public class DeepState : BotState
 {
-    private const int MaxDepth = 10;
+    private const int MaxDepth = 51;
+    private const int KingThreatPenalty = 10;
     
     public DeepState(string playerName, bool colour) : base(playerName, colour) { }
     public DeepState(DeepState original) : base(original) { }
@@ -180,20 +181,53 @@ public class DeepState : BotState
 
     private int EvaluatePositioning(GameState gameState)
     {
-        // Implement your logic for piece positioning evaluation
-        return 0; // Placeholder
+        int positionScore = 0;
+        foreach (PieceState piece in gameState.PlayerStates[TurnIndex].PieceStates)
+        {
+            positionScore += CentralControlBonus(piece.Position, gameState);
+            // Additional scoring logic based on piece type and position can be added here
+        }
+
+        return positionScore;
     }
 
     private int EvaluateKingSafety(GameState gameState)
     {
-        // Implement your logic for king safety evaluation
-        return 0; // Placeholder
+        int safetyScore = 0;
+        Vector2Int kingPosition = gameState.PlayerStates[TurnIndex].GetKing().Position;
+        HashSet<Vector2Int> kingMoves = gameState.PlayerStates[TurnIndex].GetKing().ValidMoves;
+
+        // Check for direct threats to the king
+        foreach (var opponentPiece in gameState.PlayerStates[1 - TurnIndex].PieceStates)
+        {
+            // Check if the opponent can directly attack the king
+            if (opponentPiece.ValidMoves.Contains(kingPosition))
+            {
+                safetyScore -= KingThreatPenalty * 3; // Higher penalty for being in check
+            }
+
+            // Check if opponent can attack king's escape moves
+            foreach (var escape in kingMoves)
+            {
+                if (opponentPiece.ValidMoves.Contains(escape))
+                {
+                    safetyScore -= KingThreatPenalty; // Penalty for threatening escape routes
+                }
+            }
+        }
+
+        return safetyScore;
     }
 
     private int EvaluateMobility(GameState gameState)
     {
-        // Implement your logic for mobility evaluation
-        return 0; // Placeholder
+        int spaceControl = 0, enemyControl = 0;
+        foreach (PieceState pieceState in gameState.PlayerStates[TurnIndex].PieceStates)
+            spaceControl += pieceState.ValidMoves.Count;
+        foreach (PieceState pieceState in gameState.PlayerStates[1 - TurnIndex].PieceStates)
+            enemyControl += pieceState.ValidMoves.Count;
+
+        return 5 * (spaceControl - enemyControl);
     }
 }
 
