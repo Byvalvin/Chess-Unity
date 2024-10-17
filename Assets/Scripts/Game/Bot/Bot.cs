@@ -25,11 +25,17 @@ public abstract class BotState : PlayerState{
         set=>promoteTo=value;
     }
 
+    // for opt speed eff
+    // Transposition table
+    protected Dictionary<string, int> TT = new Dictionary<string, int>();
+
+
 
     public BotState(string _playerName, bool _colour) : base(_playerName, _colour){}
     public BotState(BotState original) : base(original){
         this.currentGame = original.currentGame;
         this.promoteTo = original.promoteTo;
+        this.TT = new Dictionary<string, int>(); // Initialize for the copied state
     }
     // Make Clone abstract
     public abstract override PlayerState Clone();
@@ -64,8 +70,7 @@ public abstract class BotState : PlayerState{
         return promotionPack;
     }
     protected virtual Vector2Int[] Evaluate(Dictionary<Vector2Int, HashSet<Vector2Int>> moveMap){
-        Vector2Int bestFrom = default;
-        Vector2Int bestTo = default;
+        Vector2Int bestFrom = default, bestTo = default;
         int bestScore = int.MinValue;
         string bestPromoChoice = "";
 
