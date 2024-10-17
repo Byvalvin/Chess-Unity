@@ -137,7 +137,7 @@ public class GameState{
 
         if(IsPromotion(selectedPieceState, to)){
             promotedPawnState=selectedPieceState as PawnState; // to replace
-            promoteTo=(playerStates[currentIndex] as BotState).PromoteTo; // to know what bot wants to promore to 
+            promoteTo=playerStates[currentIndex].PromoteTo; // to know what bot wants to promore to 
         }
         if (selectedPieceState != null && selectedPieceState.Colour == playerStates[currentIndex].Colour) {
             ExecuteMove(to);
@@ -780,6 +780,7 @@ public class Game : MonoBehaviour{
         state.SelectedPieceState = null; // an extra nullifier for sselectedPiece state because black queens always leave the promoted piece
     
         // Update the promoteTo variable in GameState
+        state.PlayerStates[state.PlayerIndex].PromoteTo = pieceType; // for bot vs player
         state.PromoteTo = pieceType;
         if(state.PromoteTo!=""){
             state.ExecuteMove(targetPosition);

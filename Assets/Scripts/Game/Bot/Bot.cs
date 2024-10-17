@@ -18,13 +18,6 @@ public abstract class BotState : PlayerState{
     private const int KingTileValue = 3;
     
 
-    private string promoteTo = "";
-
-    public string PromoteTo{
-        get=>promoteTo;
-        set=>promoteTo=value;
-    }
-
     // for opt speed eff
     // Transposition table
     protected Dictionary<string, int> TT = new Dictionary<string, int>();

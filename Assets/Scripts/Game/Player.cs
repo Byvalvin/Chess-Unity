@@ -14,7 +14,15 @@ public class PlayerState{
 
     private bool inCheck = true, doubleCheck = true;
 
-    public PieceState KingAttacker = null; // the opposing piece attacking player's king 
+    public PieceState KingAttacker = null; // the opposing piece attacking player's king
+
+    protected string promoteTo = "";
+
+    public string PromoteTo{
+        get=>promoteTo;
+        set=>promoteTo=value;
+    }
+ 
 
     public string PlayerName{
         get=>playerName;
