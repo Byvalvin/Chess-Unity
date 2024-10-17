@@ -51,13 +51,16 @@ public class PresetState : BotState
     {
         // Load the file and read moves line by line
         string[] lines = File.ReadAllLines(filePath);
+        Debug.Log(lines);
         foreach (var line in lines)
         {
+            Debug.Log(line);
             if (!string.IsNullOrWhiteSpace(line))
             {
                 var columns = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                 string moveString = this.Colour ? columns[0] : columns[1];
                 MoveList.Add(moveString.Trim()); // Add the move string directly
+                Debug.Log(moveString);
             }
         }
     }

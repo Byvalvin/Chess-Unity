@@ -91,6 +91,8 @@ public class NotationParser{
             if (move.Length == 2) return HandlePawnMove(move);
             if (move.Length == 3) return HandleSimplePieceMove(move);
             if (move.Length >= 4) return HandleSpecialMove(move);
+
+            Debug.LogError("Couldnt parse mvoe :(");
             return null; // Invalid move
         }
 
