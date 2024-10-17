@@ -25,72 +25,72 @@ public class LeviState : BotState
         return Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, Colour);
     }
 
+    private int Minimax(GameState gameState, int depth, int alpha, int beta, bool maximizingPlayer){
+        string hashKey = gameState.Hash(); // Generate the hash for the current game state
 
-    private int Minimax(GameState gameState, int depth, int alpha, int beta, bool maximizingPlayer)
-    {
+        // Check if we have already evaluated this game state
+        if (TT.TryGetValue(hashKey, out int cachedValue))
+            return cachedValue; // Return the cached evaluation
+        
         if (depth == 0 || IsGameOver(gameState))
-        {
             return EvaluateGameState(gameState);
-        }
 
-        if (maximizingPlayer == Colour)
-        {
+        int eval;
+        if (maximizingPlayer == Colour){
             int maxEval = int.MinValue;
-            foreach (var move in GenerateAllMoves(gameState, TurnIndex))
-            {
+            foreach (var move in GenerateAllMoves(gameState, TurnIndex)){
                 GameState clonedGame = gameState.Clone();
                 clonedGame.MakeBotMove(move[0], move[1]);
-                int eval = Minimax(clonedGame, depth - 1, alpha, beta, !Colour);
+                eval = Minimax(clonedGame, depth - 1, alpha, beta, !Colour);
                 maxEval = Mathf.Max(maxEval, eval);
                 alpha = Mathf.Max(alpha, eval);
 
                 if (beta <= alpha)
                     break; // Alpha-beta pruning
-                
             }
-            return maxEval;
+            eval = maxEval;
         }
-        else
-        {
+        else{
             int minEval = int.MaxValue;
-            foreach (var move in GenerateAllMoves(gameState, 1 - TurnIndex))
-            {
+            foreach (var move in GenerateAllMoves(gameState, 1 - TurnIndex)){
                 GameState clonedGame = gameState.Clone();
                 clonedGame.MakeBotMove(move[0], move[1]);
-                int eval = Minimax(clonedGame, depth - 1, alpha, beta, Colour);
+                eval = Minimax(clonedGame, depth - 1, alpha, beta, Colour);
                 minEval = Mathf.Min(minEval, eval);
                 beta = Mathf.Min(beta, eval);
 
                 if (beta <= alpha)
                     break; // Alpha-beta pruning
             }
-            return minEval;
+            eval = minEval;
         }
+
+        // Store the evaluation in the transposition table
+        TT[hashKey] = eval;
+
+        return eval;
     }
+
 
     private bool IsGameOver(GameState gameState){
         // Implement logic to determine if the game is over (checkmate, stalemate, etc.)
         return gameState.IsGameEnd(); // Placeholder
     }
 
-    private List<Vector2Int[]> GenerateAllMoves(GameState gameState, int playerIndex)
-    {
+    private List<Vector2Int[]> GenerateAllMoves(GameState gameState, int playerIndex){
         var moves = new List<Vector2Int[]>();
         var pieces = gameState.PlayerStates[playerIndex].PieceStates;
 
         foreach (var piece in pieces)
         {
             var validMoves = gameState.GetMovesAllowed(piece);
-            foreach (var to in validMoves)
-            {
+            foreach (var to in validMoves){
                 PieceState targetPiece = gameState.GetTile(to).pieceState;
-                if (targetPiece != null && targetPiece is not KingState && targetPiece.Colour != gameState.PlayerStates[playerIndex].Colour)
-                {
+                if (targetPiece != null && targetPiece is not KingState && targetPiece.Colour != gameState.PlayerStates[playerIndex].Colour){
                     // Prioritize capturing moves
                     moves.Insert(0, new Vector2Int[] { piece.Position, to });
                 }
-                else
-                {
+                else{
                     moves.Add(new Vector2Int[] { piece.Position, to });
                 }
             }

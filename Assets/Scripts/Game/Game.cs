@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using Newtonsoft.Json; // for saving and loading games
 using System.Linq; // Add this line for LINQ
+using System.Text;
+
 
 
 /*
@@ -78,6 +80,22 @@ public class GameState{
         this.promoteTo = original.promoteTo;
     }
     public GameState Clone()=>new GameState(this);
+
+    public string Hash(){
+        // Simple example: concatenate relevant properties
+        StringBuilder hashBuilder = new StringBuilder();
+
+        foreach (var playerState in playerStates){
+            foreach (var piece in playerState.PieceStates){
+                hashBuilder.Append(piece.Type);
+                hashBuilder.Append(piece.Position);
+            }
+        }
+
+        hashBuilder.Append(currentIndex); // Include whose turn it is
+        return hashBuilder.ToString();
+    }
+
 
     public void SwitchPlayer()=>currentIndex = (currentIndex + 1) % playerStates.Length;
 
@@ -558,9 +576,6 @@ public class GameState{
 
         // Reset and filter valid moves for each piece
         foreach (PlayerState player in playerStates){
-            if(player.GetKing() is not KingState){
-                Debug.Log(player + " lost their king now");
-            }
             foreach (PieceState piece in player.PieceStates){
                 piece.ResetValidMoves();
                 piece.ValidMoves = FilterMoves(piece);
