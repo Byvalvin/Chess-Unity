@@ -21,7 +21,12 @@ public class Game : MonoBehaviour
         // Additional setup as needed
     }
 
+
     void Start(){
         StartGame("P1", "P2");
+    }
+
+    void Update(){
+
     }
 }

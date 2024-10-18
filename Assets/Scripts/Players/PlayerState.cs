@@ -23,6 +23,13 @@ public class PlayerState
             { 'P', new PawnBoard(isWhite) }  // Pawn
         };
     }
+    public PlayerState(PlayerState original){
+        PlayerType = original.PlayerType;
+        IsWhite = original.IsWhite;
+        foreach(char type in original.PieceBoards.Keys)
+            PieceBoards[type] = original.PieceBoards[type].Clone();
+    }
+    public PlayerState Clone() => new PlayerState(this);
 
     public void InitializePieces()
     {

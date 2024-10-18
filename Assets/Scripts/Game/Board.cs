@@ -49,6 +49,11 @@ public class Board : MonoBehaviour
     float pieceScaleFactor; // Scale factor for pieces
     public static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>(); // Dictionary for sprites
 
+    public const ulong a1 = 1UL; //will sue ALOT
+
+    Vector2Int originalPosition;
+    GameObject selectedPiece = null;
+
     private void CenterCamera(){
         Camera.main.transform.position = new Vector3((N - 1) * tileSize / 2, (N - 1) * tileSize / 2, -1);
         Camera.main.orthographic = true; // Ensure it's set to Orthographic
@@ -60,7 +65,8 @@ public class Board : MonoBehaviour
     public void Initialize(GameState state)
     {
         gameState = state;
-        UpdateBoard(); // Initialize the board with pieces
+        CreateBoard(); // Initialize the board with pieces
+        LogBoard();
     }
 
     private void LoadSprites(int sheetN = 1)
@@ -99,15 +105,8 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void UpdateBoard()
+    public void CreateBoard()
     {
-        // Clear existing pieces
-        foreach (Transform child in transform)
-        {
-            if (child.gameObject.name.EndsWith("_Piece")) // Check if it's a piece
-                Destroy(child.gameObject);
-        }
-
         // Logic to update the visual board based on gameState's bitboards
         foreach (var playerState in gameState.PlayerStates)
         {
@@ -119,7 +118,7 @@ public class Board : MonoBehaviour
                 // For each piece type, check its bitboard and place the pieces accordingly
                 for (int i = 0; i < 64; i++) // Loop through all 64 squares
                 {
-                    if ((pieceBoard.Bitboard & (1UL << i)) != 0) // Check if the piece is present
+                    if ((pieceBoard.Bitboard & (a1 << i)) != 0) // Check if the piece is present
                     {
                         int x = i % 8; // X position on the board
                         int y = PlayerState.IsTop == playerState.IsWhite ? 7-(i / 8) : i / 8; // Inverted for black on top; // Y position on the board
@@ -158,14 +157,111 @@ public class Board : MonoBehaviour
 
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
 
+    public void LogBoard()
+    {
+        Debug.Log("Current Board State:");
+        
+        for (int y = 0; y <= 7; y++) // From 8th rank to 1st rank
+        {
+            string row = $"row{y}: ";
+            for (int x = 0; x < 8; x++) // From a-file to h-file
+            {
+                // Check if there's a piece on the square
+                string pieceChar = GetPieceAtPosition(x, y);
+                row += pieceChar + " "; // Add the piece character to the row
+            }
+            Debug.Log(row); // Log the row
+        }
+    }
+
+    private string GetPieceAtPosition(int x, int y)
+    {
+        // Iterate through all player states
+        foreach (var playerState in gameState.PlayerStates)
+        {
+            foreach (var pieceBoard in playerState.PieceBoards.Values)
+            {
+                // Calculate the index of the square
+                int index = x + (y * 8);
+                // Check if the piece is present in the bitboard
+                if ((pieceBoard.Bitboard & (a1 << index)) != 0)
+                {
+                    // Return the type of the piece along with its color
+                    return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
+                }
+            }
+        }
+        return "."; // Return a dot for empty squares
+    }
+
+// ui
+    void SelectPiece()
+    {
+        Vector2 mousePosition = Utility.GetMouseWorldPosition();
+        Collider2D collision = Physics2D.OverlapPoint(mousePosition);
+
+        bool hit = collision != null, // Check if the piece is present in the bitboard) // Confirm the piece's color matches the player's color
+            pieceObjectFound=hit && collision.gameObject.name.EndsWith("_Piece");
+
+        if(hit && pieceObjectFound){ 
+            selectedPiece = collision.gameObject;
+            originalPosition = Utility.RoundVector2(collision.gameObject.transform.position);
+            int index = originalPosition.x + (originalPosition.y * 8);
+            if((gameState.OccupancyBoard & (a1 << index)) != 0
+            && gameState.PlayerStates[gameState.currentIndex].IsWhite == (selectedPiece.name[1]=='w')){
+                Debug.Log("selected piece is NOT the same colour as player to play");
+                selectedPiece = null;
+            }
+        }else{
+            Debug.Log("Collision null OR no gameobject with name foud");
+        }
+            
+            
+        if(selectedPiece == null){
+            Debug.Log("selectedPiece null");
+        }else{
+            Debug.Log(selectedPiece);
+        }
+    }
+
+    void DragPiece(){
+        Vector2 mousePosition = Utility.GetMouseWorldPosition();
+        if (selectedPiece != null)
+            selectedPiece.transform.position = new Vector3(mousePosition.x, mousePosition.y, 0); // move piece with mouse
+    }
+    void ReleasePiece(){
+        Vector2Int targetPosition = Utility.RoundVector2(Utility.GetMouseWorldPosition());
+        int index = targetPosition.x + (targetPosition.y * 8);
+        if((gameState.OccupancyBoard & (a1 << index)) == 0){
+            selectedPiece.transform.position = new Vector2(targetPosition.x, targetPosition.y); // new pos
+        }else{
+            selectedPiece.transform.position = new Vector2(originalPosition.x, originalPosition.y); // Reset to original
+        }
+        selectedPiece = null;
+        
+    }
+    void HandleDragAndDrop(){
+        if (selectedPiece != null){
+            DragPiece();
+            if (Utility.MouseUp())
+                ReleasePiece();
+        }
+    }
+    
+    void HandleInput(){
+        if (Utility.MouseDown()) // Left mouse button
+            SelectPiece();
+        else if (selectedPiece != null)
+            HandleDragAndDrop();
+    }
+
 
 
     private void Awake()
     {
         if (colourIndex == -1) // Generate once
             colourIndex = UnityEngine.Random.Range(0, LightColors.Length);
-        lightColour = LightColors[colourIndex];
-        darkColour = DarkColors[colourIndex];
+        lightColour = LightColors[colourIndex]; darkColour = DarkColors[colourIndex];
 
         // Initialize the piece scale factor
         pieceScaleFactor = pieceScaleMap[sheetN];
@@ -185,7 +281,6 @@ public class Board : MonoBehaviour
 
     private void Update()
     {
-        // Optionally, you can check for game updates or user input here
-        //UpdateBoard(); // Update board visuals based on game state changes
+        HandleInput();
     }
 }

@@ -2,6 +2,7 @@ public class GameState
 {
     public PlayerState[] PlayerStates { get; private set; } // Array of player states
     public ulong OccupancyBoard { get; private set; } // Combined occupancy board
+    public int currentIndex = 0; // white to start
 
     public GameState(string player1Type, string player2Type)
     {
@@ -10,6 +11,12 @@ public class GameState
         PlayerStates[1] = new PlayerState(player2Type.Trim(), false); // Second player is black
         OccupancyBoard = 0; // Initialize occupancy board
     }
+    public GameState(GameState original){
+        PlayerStates[0] = original.PlayerStates[0].Clone();
+        PlayerStates[1] = original.PlayerStates[1].Clone();
+        currentIndex = original.currentIndex;
+    }
+    public GameState Clone() => new GameState(this);
 
     public void Initialize()
     {
