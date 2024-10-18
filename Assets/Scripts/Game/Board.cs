@@ -122,7 +122,7 @@ public class Board : MonoBehaviour
                     if ((pieceBoard.Bitboard & (1UL << i)) != 0) // Check if the piece is present
                     {
                         int x = i % 8; // X position on the board
-                        int y = PlayerState.IsTop && playerState.IsWhite ? 7-(i / 8) : i / 8; // Inverted for black on top; // Y position on the board
+                        int y = PlayerState.IsTop == playerState.IsWhite ? 7-(i / 8) : i / 8; // Inverted for black on top; // Y position on the board
                         GameObject piece = CreatePiece(pieceBoard.Type, playerState.IsWhite);
                         SetPosition(piece, x, y);
                     }
