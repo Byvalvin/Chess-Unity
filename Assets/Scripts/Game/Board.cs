@@ -55,11 +55,7 @@ public class Board : MonoBehaviour
         Camera.main.orthographicSize = (N * tileSize) / 2; // Adjust size based on board dimensions
     }
 
-    private void Update()
-    {
-        // Optionally, you can check for game updates or user input here
-        //UpdateBoard(); // Update board visuals based on game state changes
-    }
+
 
     public void Initialize(GameState state)
     {
@@ -127,18 +123,18 @@ public class Board : MonoBehaviour
                     {
                         int x = i % 8; // X position on the board
                         int y = PlayerState.IsTop && playerState.IsWhite ? 7-(i / 8) : i / 8; // Inverted for black on top; // Y position on the board
-                        PlacePiece(pieceBoard.Type, playerState.IsWhite, x, y);
+                        GameObject piece = CreatePiece(pieceBoard.Type, playerState.IsWhite);
+                        SetPosition(piece, x, y);
                     }
                 }
             }
         }
     }
 
-    private void PlacePiece(char pieceType, bool isWhite, int x, int y)
+    private GameObject CreatePiece(char pieceType, bool isWhite)
     {
         // Create a new GameObject for the piece
-        GameObject piece = new GameObject($"{pieceType}{(isWhite?'w':'b')}-({x},{y})_Piece");
-        piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0); // Place above the tiles
+        GameObject piece = new GameObject($"{pieceType}{(isWhite?'w':'b')}_Piece");
 
         // Add a SpriteRenderer and assign the correct sprite based on pieceType
         SpriteRenderer spriteRenderer = piece.AddComponent<SpriteRenderer>();
@@ -156,8 +152,11 @@ public class Board : MonoBehaviour
         collider.size = new Vector2(1/pieceScaleFactor, 1/pieceScaleFactor); // Match collider size to piece size
 
         //spriteRenderer.sortingOrder = 1; // Ensure pieces are rendered on top
+
+        return piece;
     }
 
+    private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
 
 
 
@@ -182,5 +181,11 @@ public class Board : MonoBehaviour
     {
         // Any additional initialization can go here
         CenterCamera();
+    }
+
+    private void Update()
+    {
+        // Optionally, you can check for game updates or user input here
+        //UpdateBoard(); // Update board visuals based on game state changes
     }
 }
