@@ -95,7 +95,7 @@ public class Board : MonoBehaviour
                 tile.transform.SetParent(transform); // Set parent to keep hierarchy clean
 
                 // Set tile color based on position
-                Color tileColor = (x + y) % 2 == 1 ? Color.white : Color.black;
+                Color tileColor = (x + y) % 2 == (PlayerState.IsTop?0:1) ? Color.white : Color.black;
                 tile.GetComponent<Renderer>().material.color = tileColor;
 
                 tiles[x, y] = tile; // Store the tile reference
@@ -126,7 +126,7 @@ public class Board : MonoBehaviour
                     if ((pieceBoard.Bitboard & (1UL << i)) != 0) // Check if the piece is present
                     {
                         int x = i % 8; // X position on the board
-                        int y = i / 8; // Y position on the board
+                        int y = PlayerState.IsTop && playerState.IsWhite ? 7-(i / 8) : i / 8; // Inverted for black on top; // Y position on the board
                         PlacePiece(pieceBoard.Type, playerState.IsWhite, x, y);
                     }
                 }

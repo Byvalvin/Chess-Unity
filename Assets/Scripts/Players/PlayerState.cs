@@ -4,7 +4,9 @@ public class PlayerState
 {
     public string PlayerType { get; set; } // Type of player
     public bool IsWhite { get; set; } // True for white, false for black
-    private bool IsTop { get; set; } // True if white is at the top
+
+    public const bool IsTop = true; // IsTop says who is at bottom; true->white at bottom
+
 
     public Dictionary<char, PieceBoard> PieceBoards { get; set; } // Dictionary of piece boards
 
@@ -12,7 +14,6 @@ public class PlayerState
     {
         PlayerType = playerType;
         IsWhite = isWhite;
-        IsTop = isWhite; // Set IsTop based on IsWhite; adjust as needed
 
         PieceBoards = new Dictionary<char, PieceBoard>
         {
