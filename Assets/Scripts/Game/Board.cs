@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Board : MonoBehaviour
 {
     private GameState gameState;
-    private const int N = 8; // BOARDSIZE
+    public const int N = 8; // BOARDSIZE
     private GameObject[,] tiles = new GameObject[N, N]; // Array to hold tile references
     static float tileSize = 5.0f;
 
@@ -49,7 +50,6 @@ public class Board : MonoBehaviour
     float pieceScaleFactor; // Scale factor for pieces
     public static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>(); // Dictionary for sprites
 
-    public const ulong a1 = 1UL; //will sue ALOT
 
     Vector2Int originalPosition;
     GameObject selectedPiece = null;
@@ -59,8 +59,6 @@ public class Board : MonoBehaviour
         Camera.main.orthographic = true; // Ensure it's set to Orthographic
         Camera.main.orthographicSize = (N * tileSize) / 2; // Adjust size based on board dimensions
     }
-
-
 
     public void Initialize(GameState state)
     {
@@ -118,7 +116,7 @@ public class Board : MonoBehaviour
                 // For each piece type, check its bitboard and place the pieces accordingly
                 for (int i = 0; i < 64; i++) // Loop through all 64 squares
                 {
-                    if ((pieceBoard.Bitboard & (a1 << i)) != 0) // Check if the piece is present
+                    if ((pieceBoard.Bitboard & (BitOps.a1 << i)) != 0) // Check if the piece is present
                     {
                         int x = i % 8; // X position on the board
                         int y = PlayerState.IsTop == playerState.IsWhite ? 7-(i / 8) : i / 8; // Inverted for black on top; // Y position on the board
@@ -156,6 +154,7 @@ public class Board : MonoBehaviour
     }
 
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
+    private void SetPosition(GameObject piece, Vector2Int position)=>piece.transform.position = new Vector3(tileSize*position.x, tileSize*position.y, 0);
 
     public void LogBoard()
     {
@@ -182,9 +181,9 @@ public class Board : MonoBehaviour
             foreach (var pieceBoard in playerState.PieceBoards.Values)
             {
                 // Calculate the index of the square
-                int index = x + (y * 8);
+                int index = BitOps.GetIndex(y,x);
                 // Check if the piece is present in the bitboard
-                if ((pieceBoard.Bitboard & (a1 << index)) != 0)
+                if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
                 {
                     // Return the type of the piece along with its color
                     return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
@@ -195,6 +194,7 @@ public class Board : MonoBehaviour
     }
 
 // ui
+    Vector2Int GetIndexPosition(Vector2 pos)=>Utility.RoundVector2(pos/tileSize);
     void SelectPiece()
     {
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
@@ -205,9 +205,9 @@ public class Board : MonoBehaviour
 
         if(hit && pieceObjectFound){ 
             selectedPiece = collision.gameObject;
-            originalPosition = Utility.RoundVector2(collision.gameObject.transform.position);
-            int index = originalPosition.x + (originalPosition.y * 8);
-            if((gameState.OccupancyBoard & (a1 << index)) != 0
+            originalPosition = GetIndexPosition(collision.gameObject.transform.position);
+            int index = BitOps.GetIndex(originalPosition);
+            if((gameState.OccupancyBoard & (BitOps.a1 << index)) != 0
             && gameState.PlayerStates[gameState.currentIndex].IsWhite == (selectedPiece.name[1]=='w')){
                 Debug.Log("selected piece is NOT the same colour as player to play");
                 selectedPiece = null;
@@ -229,17 +229,45 @@ public class Board : MonoBehaviour
         if (selectedPiece != null)
             selectedPiece.transform.position = new Vector3(mousePosition.x, mousePosition.y, 0); // move piece with mouse
     }
-    void ReleasePiece(){
-        Vector2Int targetPosition = Utility.RoundVector2(Utility.GetMouseWorldPosition());
-        int index = targetPosition.x + (targetPosition.y * 8);
-        if((gameState.OccupancyBoard & (a1 << index)) == 0){
-            selectedPiece.transform.position = new Vector2(targetPosition.x, targetPosition.y); // new pos
-        }else{
-            selectedPiece.transform.position = new Vector2(originalPosition.x, originalPosition.y); // Reset to original
-        }
-        selectedPiece = null;
-        
+void ReleasePiece()
+{
+    Vector2Int targetPosition = GetIndexPosition(Utility.GetMouseWorldPosition());
+    int index = BitOps.GetIndex(targetPosition);
+
+    // Check if the target position is valid (i.e., within bounds and not occupied by the player's own piece)
+    bool validMove = (gameState.OccupancyBoard & (BitOps.a1 << index)) == 0;
+
+    if (validMove)
+    {
+        // Get the original index of the selected piece
+        int originalIndex = BitOps.GetIndex(originalPosition);
+
+        // Update the bitboards: remove the piece from the original position and add it to the target position
+        var playerState = gameState.PlayerStates[gameState.currentIndex];
+        var pieceBoard = playerState.PieceBoards[selectedPiece.name[0]]; // Assuming the piece name format is e.g., "Kw"
+
+        // Update the bitboard
+        pieceBoard.Move(originalIndex, index); // Update first move tracking if necessary
+
+        // Update the occupancy board
+        gameState.UpdateBoard();
+
+        // Move the piece visually
+        SetPosition(selectedPiece, targetPosition);
     }
+    else
+    {
+        // If the move isn't valid, reset to original position
+        SetPosition(selectedPiece, originalPosition);
+    }
+
+    // Reset selected piece
+    selectedPiece = null;
+
+    // Log the board state after the move
+    LogBoard();
+}
+
     void HandleDragAndDrop(){
         if (selectedPiece != null){
             DragPiece();

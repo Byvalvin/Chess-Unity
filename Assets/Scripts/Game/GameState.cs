@@ -22,17 +22,26 @@ public class GameState
     {
         foreach (var playerState in PlayerStates)
         {
-            playerState.InitializePieces(); // Call to initialize pieces
+            //playerState.InitializePieces(); // Call to initialize pieces
             UpdateOccupancyBoard(playerState);
         }
     }
 
     private void UpdateOccupancyBoard(PlayerState playerState)
     {
+        OccupancyBoard = 0; // reset
         // Combine the player's piece boards into the occupancy board
         foreach (var pieceBoard in playerState.PieceBoards.Values) // Access the values of the dictionary
         {
             OccupancyBoard |= pieceBoard.Bitboard; // OR operation to combine bitboards
+        }
+    }
+
+    public void UpdateBoard(){
+        OccupancyBoard = 0; // reset
+        foreach(PlayerState playerState in PlayerStates){
+            foreach(PieceBoard pieceBoard in playerState.PieceBoards.Values)
+                OccupancyBoard |= pieceBoard.Bitboard;
         }
     }
 }
