@@ -154,44 +154,40 @@ public class Board : MonoBehaviour
     }
 
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
-    private void SetPosition(GameObject piece, Vector2Int position)=>piece.transform.position = new Vector3(tileSize*position.x, tileSize*position.y, 0);
+    private void SetPosition(GameObject piece, Vector2Int position)=> SetPosition(piece, position.x, position.y);
 
-    public void LogBoard()
+public void LogBoard()
+{
+    Debug.Log("Current Board State:");
+    
+    for (int y = 0; y < 8; y++) // From 1st rank to 8th rank
     {
-        Debug.Log("Current Board State:");
-        
-        for (int y = 0; y <= 7; y++) // From 8th rank to 1st rank
+        string row = $"Row {N - 1 - y}: "; // Adjust for logging
+        for (int x = 0; x < 8; x++) // From a-file to h-file
         {
-            string row = $"row{y}: ";
-            for (int x = 0; x < 8; x++) // From a-file to h-file
-            {
-                // Check if there's a piece on the square
-                string pieceChar = GetPieceAtPosition(x, y);
-                row += pieceChar + " "; // Add the piece character to the row
-            }
-            Debug.Log(row); // Log the row
+            int index = BitOps.GetIndex(y, x); // Calculate the index
+            string pieceChar = GetPieceAtIndex(index);
+            row += pieceChar + " "; // Add the piece character to the row
         }
+        Debug.Log(row); // Log the row
     }
+}
 
-    private string GetPieceAtPosition(int x, int y)
+private string GetPieceAtIndex(int index)
+{
+    foreach (var playerState in gameState.PlayerStates)
     {
-        // Iterate through all player states
-        foreach (var playerState in gameState.PlayerStates)
+        foreach (var pieceBoard in playerState.PieceBoards.Values)
         {
-            foreach (var pieceBoard in playerState.PieceBoards.Values)
+            if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
             {
-                // Calculate the index of the square
-                int index = BitOps.GetIndex(y,x);
-                // Check if the piece is present in the bitboard
-                if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
-                {
-                    // Return the type of the piece along with its color
-                    return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
-                }
+                return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
             }
         }
-        return "."; // Return a dot for empty squares
     }
+    return "."; // Return a dot for empty squares
+}
+
 
 // ui
     Vector2Int GetIndexPosition(Vector2 pos)=>Utility.RoundVector2(pos/tileSize);
@@ -234,6 +230,8 @@ void ReleasePiece()
     Vector2Int targetPosition = GetIndexPosition(Utility.GetMouseWorldPosition());
     int index = BitOps.GetIndex(targetPosition);
 
+    Debug.Log($"Attempting to move from {originalPosition} (Index: {BitOps.GetIndex(originalPosition)}) to {targetPosition} (Index: {index})");
+
     // Check if the target position is valid (i.e., within bounds and not occupied by the player's own piece)
     bool validMove = (gameState.OccupancyBoard & (BitOps.a1 << index)) == 0;
 
@@ -242,23 +240,23 @@ void ReleasePiece()
         // Get the original index of the selected piece
         int originalIndex = BitOps.GetIndex(originalPosition);
 
-        // Update the bitboards: remove the piece from the original position and add it to the target position
+        // Update the bitboards
         var playerState = gameState.PlayerStates[gameState.currentIndex];
         var pieceBoard = playerState.PieceBoards[selectedPiece.name[0]]; // Assuming the piece name format is e.g., "Kw"
 
         // Update the bitboard
-        pieceBoard.Move(originalIndex, index); // Update first move tracking if necessary
-
-        // Update the occupancy board
+        pieceBoard.Move(originalIndex, index);
         gameState.UpdateBoard();
 
         // Move the piece visually
         SetPosition(selectedPiece, targetPosition);
+        Debug.Log($"Moved piece to {targetPosition} (Index: {index})");
     }
     else
     {
         // If the move isn't valid, reset to original position
         SetPosition(selectedPiece, originalPosition);
+        Debug.Log("Invalid move, resetting position.");
     }
 
     // Reset selected piece
@@ -267,6 +265,7 @@ void ReleasePiece()
     // Log the board state after the move
     LogBoard();
 }
+
 
     void HandleDragAndDrop(){
         if (selectedPiece != null){

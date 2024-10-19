@@ -8,8 +8,8 @@ public static class BitOps
     public const int N = Board.N; // Board size
 
     // Method to calculate the index based on row and column
-    public static int GetIndex(int row, int col) => row*N + col;
-    public static int GetIndex(Vector2Int position) => position.x + position.y*N;
+    public static int GetIndex(int row, int col) => row * N + col; // Adjust for Unity's Y direction
+    public static int GetIndex(Vector2Int position) => GetIndex(position.y, position.x);
 
     // Method to check if an index is within bounds
     public static bool InBounds(int index)=> 0<=index && index<N*N;
