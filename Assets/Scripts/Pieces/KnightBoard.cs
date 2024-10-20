@@ -11,11 +11,6 @@ public class KnightBoard : PieceBoard
 
     public override PieceBoard Clone() => new KnightBoard(this);
 
-    public override bool CanMove(int index)
-    {
-        return ValidMoves(index).Count > 0;
-    }
-
     public override HashSet<int> ValidMoves(int index)
     {
         HashSet<int> validMoves = new HashSet<int>();

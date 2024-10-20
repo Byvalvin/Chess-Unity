@@ -1,5 +1,8 @@
+using UnityEngine;
+
 public class GameState
 {
+    
     public PlayerState[] PlayerStates { get; private set; } // Array of player states
     public ulong OccupancyBoard { get; private set; } // Combined occupancy board
     public int currentIndex = 0; // white to start
@@ -10,6 +13,9 @@ public class GameState
         PlayerStates[0] = new PlayerState(player1Type.Trim(), true);  // First player is white
         PlayerStates[1] = new PlayerState(player2Type.Trim(), false); // Second player is black
         OccupancyBoard = 0; // Initialize occupancy board
+
+        // listeN BUT ONLY for main GameStae
+        PieceBoard.OnPieceMoved += MoveUpdate;
     }
     public GameState(GameState original){
         PlayerStates[0] = original.PlayerStates[0].Clone();
@@ -20,16 +26,14 @@ public class GameState
 
     public void Initialize()
     {
-        foreach (var playerState in PlayerStates)
-        {
-            //playerState.InitializePieces(); // Call to initialize pieces
-            UpdateOccupancyBoard(playerState);
-        }
+        UpdateBoard();
     }
+
+    public void SwitchPlayer()=>currentIndex = 1-currentIndex;
 
     private void UpdateOccupancyBoard(PlayerState playerState)
     {
-        OccupancyBoard = 0; // reset
+        //OccupancyBoard = 0; // reset? no because the whole point is to not have to do both playerstates
         // Combine the player's piece boards into the occupancy board
         foreach (var pieceBoard in playerState.PieceBoards.Values) // Access the values of the dictionary
         {
@@ -43,5 +47,11 @@ public class GameState
             foreach(PieceBoard pieceBoard in playerState.PieceBoards.Values)
                 OccupancyBoard |= pieceBoard.Bitboard;
         }
+    }
+
+    private void MoveUpdate(){
+        Debug.Log("move invoked updated");
+        SwitchPlayer();
+        UpdateBoard();
     }
 }

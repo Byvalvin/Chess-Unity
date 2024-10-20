@@ -10,12 +10,6 @@ public class RookBoard : PieceBoard
     public RookBoard(RookBoard original) : base(original) { }
 
     public override PieceBoard Clone() => new RookBoard(this);
-
-    public override bool CanMove(int index)
-    {
-        return ValidMoves(index).Count > 0;
-    }
-
     public override HashSet<int> ValidMoves(int index)
     {
         HashSet<int> validMoves = new HashSet<int>();

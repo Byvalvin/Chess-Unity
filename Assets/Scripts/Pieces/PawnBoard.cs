@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public class PawnBoard : PieceBoard
 {
@@ -11,14 +12,9 @@ public class PawnBoard : PieceBoard
 
     public override PieceBoard Clone() => new PawnBoard(this);
 
-    public override bool CanMove(int index)
-    {
-        // Implement pawn-specific movement logic
-        return ValidMoves(index).Count > 0;
-    }
-
     public override HashSet<int> ValidMoves(int index)
     {
+        Debug.Log("Valid moves for"+index);
         HashSet<int> validMoves = new HashSet<int>();
         int direction = IsWhite ? 1 : -1;
 
@@ -30,9 +26,10 @@ public class PawnBoard : PieceBoard
         }
 
         // First move: two squares
-        if (FirstMoveMap.ContainsKey(index) && FirstMoveMap[index])
+        if (!FirstMoveMap.ContainsKey(index) || (FirstMoveMap.ContainsKey(index) && FirstMoveMap[index]))
         {
             int doubleForwardIndex = BitOps.ForwardMove(index, direction * 2);
+            Debug.Log(doubleForwardIndex+"dfwd");
             if (BitOps.InBounds(doubleForwardIndex) && ((Bitboard & (BitOps.a1 << doubleForwardIndex)) == 0))
             {
                 validMoves.Add(doubleForwardIndex);
@@ -51,6 +48,12 @@ public class PawnBoard : PieceBoard
         {
             validMoves.Add(rightCaptureIndex);
         }
+
+        foreach (var item in validMoves)
+        {
+            Debug.Log("pawn move"+item);
+        }
+        
 
         return validMoves;
     }
