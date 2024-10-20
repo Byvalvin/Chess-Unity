@@ -37,13 +37,19 @@ public class PawnBoard : PieceBoard
         }
 
         // Diagonal captures
-        int leftCaptureIndex = BitOps.Diagonal3Move(index, direction);
+        int leftCaptureIndex = IsWhite 
+            ? BitOps.Diagonal1Move(index, direction) // White: up-left
+            : BitOps.Diagonal3Move(index, -direction); // Black: down-left
+
         if (BitOps.InBounds(leftCaptureIndex) && ((Bitboard & (BitOps.a1 << leftCaptureIndex)) != 0))
         {
             validMoves.Add(leftCaptureIndex);
         }
 
-        int rightCaptureIndex = BitOps.Diagonal4Move(index, direction);
+        int rightCaptureIndex = IsWhite 
+            ? BitOps.Diagonal2Move(index, direction) // White: up-right
+            : BitOps.Diagonal4Move(index, -direction); // Black: down-right
+
         if (BitOps.InBounds(rightCaptureIndex) && ((Bitboard & (BitOps.a1 << rightCaptureIndex)) != 0))
         {
             validMoves.Add(rightCaptureIndex);
