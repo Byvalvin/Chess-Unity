@@ -10,7 +10,7 @@ public class KingBoard : PieceBoard
     public KingBoard(KingBoard original) : base(original) { }
 
     public override PieceBoard Clone() => new KingBoard(this);
-    public override HashSet<int> ValidMoves(int index)
+    public override HashSet<int> ValidMoves(ulong fullBoard, int index)
     {
         HashSet<int> validMoves = new HashSet<int>();
 

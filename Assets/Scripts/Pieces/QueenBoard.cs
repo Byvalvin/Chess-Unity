@@ -10,13 +10,13 @@ public class QueenBoard : PieceBoard
     public QueenBoard(QueenBoard original) : base(original) { }
 
     public override PieceBoard Clone() => new QueenBoard(this);
-    public override HashSet<int> ValidMoves(int index)
+    public override HashSet<int> ValidMoves(ulong fullBoard, int index)
     {
         HashSet<int> validMoves = new HashSet<int>();
 
         // Combine rook and bishop moves
-        validMoves.UnionWith(new RookBoard(IsWhite, Bitboard).ValidMoves(index));
-        validMoves.UnionWith(new BishopBoard(IsWhite, Bitboard).ValidMoves(index));
+        validMoves.UnionWith(new RookBoard(IsWhite, Bitboard).ValidMoves(fullBoard, index));
+        validMoves.UnionWith(new BishopBoard(IsWhite, Bitboard).ValidMoves(fullBoard, index));
 
         return validMoves;
     }

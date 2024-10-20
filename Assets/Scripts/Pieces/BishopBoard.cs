@@ -11,7 +11,7 @@ public class BishopBoard : PieceBoard
 
     public override PieceBoard Clone() => new BishopBoard(this);
 
-    public override HashSet<int> ValidMoves(int index)
+    public override HashSet<int> ValidMoves(ulong fullBoard, int index)
     {
         HashSet<int> validMoves = new HashSet<int>();
 

@@ -64,6 +64,8 @@ public class Board : MonoBehaviour
     {
         gameState = state;
         CreateBoard(); // Initialize the board with pieces
+
+        GameState.OnPieceMoved += UpdateSelectedPieceUI; // auto update ui for bord after piece moves
         LogBoard();
         //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
     }
@@ -156,43 +158,54 @@ public class Board : MonoBehaviour
 
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
     private void SetPosition(GameObject piece, Vector2Int position)=> SetPosition(piece, position.x, position.y);
-
-public void LogBoard()
-{
-    Debug.Log("Current Board State:");
-    
-    for (int y = 7; y >=0; y--) // From 1st rank to 8th rank
-    {
-        string row = $"Row {y}: "; // Adjust for logging
-        for (int x = 0; x < 8; x++) // From a-file to h-file
-        {
-            int index = BitOps.GetIndex(y, x); // Calculate the index
-            string pieceChar = GetPieceAtIndex(index);
-            //row += pieceChar + "" + index + " "; // Add the piece character to the row
-            row += pieceChar + " "; // Add the piece character to the row
-        }
-        Debug.Log(row); // Log the row
+    private void UpdateSelectedPieceUI(Vector2Int finalPosition){
+        //ui update
+        SetPosition(selectedPiece, finalPosition);
+        // reset piece selection
+        DeselectPiece();
     }
-}
 
-private string GetPieceAtIndex(int index)
-{
-    foreach (var playerState in gameState.PlayerStates)
+    public void LogBoard()
     {
-        foreach (var pieceBoard in playerState.PieceBoards.Values)
+        Debug.Log("Current Board State:");
+        
+        for (int y = 7; y >=0; y--) // From 1st rank to 8th rank
         {
-            if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
+            string row = $"Row {y}: "; // Adjust for logging
+            for (int x = 0; x < 8; x++) // From a-file to h-file
             {
-                return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
+                int index = BitOps.GetIndex(y, x); // Calculate the index
+                string pieceChar = GetPieceAtIndex(index);
+                //row += pieceChar + "" + index + " "; // Add the piece character to the row
+                row += pieceChar + " "; // Add the piece character to the row
+            }
+            Debug.Log(row); // Log the row
+        }
+    }
+
+    private string GetPieceAtIndex(int index)
+    {
+        foreach (var playerState in gameState.PlayerStates)
+        {
+            foreach (var pieceBoard in playerState.PieceBoards.Values)
+            {
+                if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
+                {
+                    return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
+                }
             }
         }
+        return " o "; // Return a dot for empty squares
     }
-    return " o "; // Return a dot for empty squares
-}
 
 
 // ui
     Vector2Int GetIndexPosition(Vector2 pos)=>Utility.RoundVector2(pos/tileSize);
+
+    void DeselectPiece() { // Reset selected piece
+        selectedPiece = null;
+        originalPosition = default;
+    }
     void SelectPiece()
     {
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
@@ -206,14 +219,14 @@ private string GetPieceAtIndex(int index)
             originalPosition = GetIndexPosition(collision.gameObject.transform.position);
             int index = BitOps.GetIndex(originalPosition);
             if((gameState.OccupancyBoard & (BitOps.a1 << index)) == 0){
+                DeselectPiece(); //reset piece selection
                 Debug.Log("No piece at pos");
-                selectedPiece = null;
+                
             }
         }else{
             Debug.Log("Collision null OR no gameobject with name foud");
         }
-            
-            
+        
         if(selectedPiece == null){
             Debug.Log("selectedPiece null");
         }else{
@@ -226,54 +239,33 @@ private string GetPieceAtIndex(int index)
         if (selectedPiece != null)
             selectedPiece.transform.position = new Vector3(mousePosition.x, mousePosition.y, 0); // move piece with mouse
     }
-void ReleasePiece()
-{
-    Vector2Int targetPosition = GetIndexPosition(Utility.GetMouseWorldPosition());
-    int index = BitOps.GetIndex(targetPosition);
-
-    Debug.Log($"Attempting to move from {originalPosition} (Index: {BitOps.GetIndex(originalPosition)}) to {targetPosition} (Index: {index})");
-
-    // Check if the target position is valid (i.e., within bounds and not occupied by the player's own piece)
-    bool validMove = (gameState.OccupancyBoard & (BitOps.a1 << index)) == 0;
-
-    if (validMove)
-    {
-        // Get the original index of the selected piece
+    void ReleasePiece(){
+        Vector2Int targetPosition = GetIndexPosition(Utility.GetMouseWorldPosition());
+        int index = BitOps.GetIndex(targetPosition);
         int originalIndex = BitOps.GetIndex(originalPosition);
 
-        // get the bitboard for the piece to move
-        var playerState = gameState.PlayerStates[gameState.currentIndex];
-        var pieceBoard = playerState.PieceBoards[selectedPiece.name[0]]; // Assuming the piece name format is e.g., "Kw"
+        Debug.Log($"Attempting to move from {originalPosition} (Index: {originalIndex}) to {targetPosition} (Index: {index})");
 
-        // Update the bitboard
-        if(pieceBoard.CanMove(originalIndex, index)){
-            pieceBoard.Move(originalIndex, index);
-            gameState.UpdateBoard();
+        // Check if the target position is valid (i.e., within bounds and not occupied by the player's own piece)
+        PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
+        HashSet<int> pieceMoves = pieceBoard.ValidMoves(gameState.OccupancyBoard, originalIndex);
+        bool canMove = pieceBoard.CanMove(originalIndex, index) && pieceMoves.Contains(index);
 
-            // Move the piece visually
-            SetPosition(selectedPiece, targetPosition);
+        if (canMove){
+            // Execute the move
+            gameState.ExecuteMove(pieceBoard, originalIndex, index);
+            //uses action in GameState to auto update ui, Board is a listeneer
             Debug.Log($"Moved piece to {targetPosition} (Index: {index})");
-        }else{
-            // If the move isn't valid, reset to original position
-            SetPosition(selectedPiece, originalPosition);
+        } else{
+            // Reset to original position if the move isn't valid
+            UpdateSelectedPieceUI(originalPosition);
             Debug.Log("Invalid move, resetting position.");
         }
+        
+        // Log the board state after the move
+        LogBoard();
+        //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
     }
-    else
-    {
-        // If the move isn't valid, reset to original position
-        SetPosition(selectedPiece, originalPosition);
-        Debug.Log("Invalid move, resetting position.");
-    }
-
-    // Reset selected piece
-    selectedPiece = null;
-    originalPosition = default;
-
-    // Log the board state after the move
-    LogBoard();
-    //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
-}
 
 
     void HandleDragAndDrop(){

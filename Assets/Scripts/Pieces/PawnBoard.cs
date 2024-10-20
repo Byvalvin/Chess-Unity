@@ -12,7 +12,7 @@ public class PawnBoard : PieceBoard
 
     public override PieceBoard Clone() => new PawnBoard(this);
 
-    public override HashSet<int> ValidMoves(int index)
+    public override HashSet<int> ValidMoves(ulong fullBoard, int index)
     {
         Debug.Log("Valid moves for"+index);
         HashSet<int> validMoves = new HashSet<int>();
@@ -26,7 +26,7 @@ public class PawnBoard : PieceBoard
         }
 
         // First move: two squares
-        if (!FirstMoveMap.ContainsKey(index) || (FirstMoveMap.ContainsKey(index) && FirstMoveMap[index]))
+        if ( (FirstMoveMap.ContainsKey(index) && FirstMoveMap[index]))
         {
             int doubleForwardIndex = BitOps.ForwardMove(index, direction * 2);
             Debug.Log(doubleForwardIndex+"dfwd");
@@ -49,12 +49,12 @@ public class PawnBoard : PieceBoard
         int rightCaptureIndex = IsWhite 
             ? BitOps.Diagonal2Move(index, direction) // White: up-right
             : BitOps.Diagonal4Move(index, -direction); // Black: down-right
-
         if (BitOps.InBounds(rightCaptureIndex) && ((Bitboard & (BitOps.a1 << rightCaptureIndex)) != 0))
         {
             validMoves.Add(rightCaptureIndex);
         }
 
+        Debug.Log(leftCaptureIndex + " " + rightCaptureIndex);
         foreach (var item in validMoves)
         {
             Debug.Log("pawn move"+item);

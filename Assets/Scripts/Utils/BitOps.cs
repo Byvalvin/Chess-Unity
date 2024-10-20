@@ -10,6 +10,16 @@ public static class BitOps
     public static int GetIndex(int row, int col) => row * N + col; // Adjust for Unity's Y direction
     public static int GetIndex(Vector2Int position) => GetIndex(position.y, position.x);
 
+    // Method to get a Vector2Int from an index
+    public static Vector2Int GetPosition(int index)
+    {
+        int row = index / N;
+        int col = index % N;
+        return new Vector2Int(col, row); // Adjust for Unity's Y direction
+    }
+
+
+
     // Method to check if an index is within bounds
     public static bool InBounds(int index) => 0 <= index && index < N * N;
 

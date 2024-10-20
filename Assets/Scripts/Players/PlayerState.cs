@@ -33,6 +33,13 @@ public class PlayerState
     }
     public PlayerState Clone() => new PlayerState(this);
 
+    public bool RemovePiece(PieceBoard pieceBoard, int index){
+        if(PieceBoards[pieceBoard.Type]!=pieceBoard) return false; // not my piece board
+        if((pieceBoard.Bitboard & (BitOps.a1 << index)) == 0) return false; // no piece there
+        pieceBoard.RemovePiece(index);
+        return true; // Successfully removed the piece
+    }
+
 
 
 }
