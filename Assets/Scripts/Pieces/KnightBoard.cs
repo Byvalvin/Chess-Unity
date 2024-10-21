@@ -11,21 +11,23 @@ public class KnightBoard : PieceBoard
 
     public override PieceBoard Clone() => new KnightBoard(this);
 
-    public override HashSet<int> ValidMoves(ulong fullBoard, int index)
+    public override ulong ValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
-        HashSet<int> validMoves = new HashSet<int>();
+        ulong validMoves = 0UL;
 
+        // Knight moves (L-shape)
         int[] knightMoves = new int[]
         {
-            -17, -15, -10, -6, 6, 10, 15, 17 // All knight move offsets
+            -17, -15, 15, 17,  // Up and Down
+            -10, -6, 6, 10     // Left and Right
         };
 
         foreach (var move in knightMoves)
         {
-            int targetIndex = index + move;
-            if (BitOps.InBounds(targetIndex))
+            int newIndex = index + move;
+            if (BitOps.IsValidMove(index, newIndex) && ((friendBoard & (BitOps.a1 << newIndex)) == 0 || includeFriends)) // Not occupied by friendly piece
             {
-                validMoves.Add(targetIndex);
+                validMoves |= (BitOps.a1 << newIndex); // Add move
             }
         }
 

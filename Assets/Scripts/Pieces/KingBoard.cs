@@ -10,21 +10,24 @@ public class KingBoard : PieceBoard
     public KingBoard(KingBoard original) : base(original) { }
 
     public override PieceBoard Clone() => new KingBoard(this);
-    public override HashSet<int> ValidMoves(ulong fullBoard, int index)
-    {
-        HashSet<int> validMoves = new HashSet<int>();
 
-        int[] kingMoves = new int[]
-        {
-            -1, 1, -8, 8, -9, -7, 7, 9 // All king move offsets
-        };
+    public override ulong ValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
+    {
+        ulong validMoves = 0UL;
+
+        // King moves (one square in any direction)
+        int[] kingMoves = new int[] { -1, 1, -8, 8, -9, -7, 7, 9 };
 
         foreach (var move in kingMoves)
         {
-            int targetIndex = index + move;
-            if (BitOps.InBounds(targetIndex))
+            int newIndex = index + move;
+            if (BitOps.IsValidMove(index, newIndex))
             {
-                validMoves.Add(targetIndex);
+                ulong newBit = BitOps.a1 << newIndex;
+                if ((friendBoard & newBit) == 0 || includeFriends) // Not occupied by friendly piece
+                {
+                    validMoves |= newBit; // Add move
+                }
             }
         }
 

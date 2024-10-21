@@ -6,54 +6,66 @@ public abstract class PieceBoard
     public ulong Bitboard { get; set; }
     public char Type { get; set; }
     public bool IsWhite { get; set; }
-    protected Dictionary<int, bool> FirstMoveMap { get; set; }
+    protected HashSet<int> FirstMovers { get; set; }
+
+    protected Dictionary<int, ulong> ValidMovesMap;
 
     public PieceBoard(bool isWhite, ulong startingBitboard = 0)
     {
         IsWhite = isWhite;
         Bitboard = startingBitboard;
-        FirstMoveMap = new Dictionary<int, bool>();
+        FirstMovers = new HashSet<int>();
 
+        // set first moves
         if (startingBitboard != 0)
-        {
             for (int i = 0; i < 64; i++)
-            {
                 if ((startingBitboard & (BitOps.a1 << i)) != 0)
-                {
-                    FirstMoveMap[i] = true;
-                    Debug.Log(IsWhite + ": " +i+" "+FirstMoveMap[i]);
-                }
-            }
-        }
+                    FirstMovers.Add(i);
+            
+        
     }
 
-    public PieceBoard(PieceBoard original)
-    {
+    public PieceBoard(PieceBoard original){
         IsWhite = original.IsWhite;
         Bitboard = original.Bitboard;
-        FirstMoveMap = new Dictionary<int, bool>(original.FirstMoveMap);
+        FirstMovers = new HashSet<int>(original.FirstMovers);
     }
 
     public abstract PieceBoard Clone();
 
-    public abstract HashSet<int> ValidMoves(ulong fullBoard, int fromIndex);
+    public abstract ulong ValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false);
+    protected ulong CheckDirection(ulong friendBoard, ulong enemyBoard, int index, Func<int, int, int> moveFunc, bool includeFriends)
+    {
+        ulong directionMoves = 0UL;
+
+        for (int i = 1; i < 8; i++)
+        {
+            int newIndex = moveFunc(index, i);
+            if (!BitOps.IsValidMove(index, newIndex)) break;
+
+            ulong newBit = BitOps.a1 << newIndex;
+
+            if ((friendBoard & newBit) != 0 && !includeFriends) break; // Blocked by friendly piece
+            if ((enemyBoard & newBit) != 0 || (friendBoard & newBit) != 0 && includeFriends)
+            {
+                directionMoves |= newBit; // Add capture move
+                break; // Stop if occupied
+            }
+        }
+
+        return directionMoves;
+    }
     public virtual bool CanMove(int fromIndex, int toIndex){
         // Use the IsValidMove method to check the move
         return BitOps.IsValidMove(fromIndex, toIndex);
     }
  
-    public void Move(int fromIndex, int toIndex)
-    {
-        
+    public void Move(int fromIndex, int toIndex){
         Bitboard &= ~(BitOps.a1 << fromIndex);
         Bitboard |= (BitOps.a1 << toIndex);
 
-        if (FirstMoveMap.ContainsKey(fromIndex))
-        {
-            FirstMoveMap[fromIndex] = false;
-        }
-
-        
+        if (FirstMovers.Contains(fromIndex))
+            FirstMovers.Remove(fromIndex);
     }
 
     public void RemovePiece(int index){
@@ -62,17 +74,14 @@ public abstract class PieceBoard
         
         // Optionally, you might want to clean up any other related data structures
         // For instance, if you're tracking the position of pieces in a dictionary, you could remove that entry
-        if (FirstMoveMap.ContainsKey(index))
-        {
-            FirstMoveMap.Remove(index); // Remove any first move tracking for the captured piece
-        }
+        if (FirstMovers.Contains(index))
+            FirstMovers.Remove(index); // Remove any first move tracking for the captured piece
 
         // Log or handle any additional cleanup as necessary
         Debug.Log($"Removed piece from index {index}. Remaining bitboard: {Bitboard}");
     }
 
-    public static void PrintBitboard(ulong bitboard)
-    {
+    public static void PrintBitboard(ulong bitboard){
         // Convert the bitboard to a binary string and pad with leading zeros
         string binaryString = Convert.ToString((long)bitboard, 2).PadLeft(64, '0');
 

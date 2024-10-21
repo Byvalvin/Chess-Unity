@@ -60,8 +60,7 @@ public class Board : MonoBehaviour
         Camera.main.orthographicSize = (N * tileSize) / 2; // Adjust size based on board dimensions
     }
 
-    public void Initialize(GameState state)
-    {
+    public void Initialize(GameState state){
         gameState = state;
         CreateBoard(); // Initialize the board with pieces
 
@@ -70,27 +69,18 @@ public class Board : MonoBehaviour
         //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
     }
 
-    private void LoadSprites(int sheetN = 1)
-    {
+    private void LoadSprites(int sheetN = 1){
         // Load all sprites from the Pieces.png
         Sprite[] allSprites = Resources.LoadAll<Sprite>($"Sprites/Pieces{sheetN}"); // Adjust path if needed
 
         foreach (var sprite in allSprites)
-        {
-            // Use sprite name directly for the dictionary
-            if (!sprites.ContainsKey(sprite.name))
-            {
+            if (!sprites.ContainsKey(sprite.name)) // Use sprite name directly for the dictionary
                 sprites[sprite.name] = sprite; // Add to dictionary
-            }
-        }
     }
 
-    private void CreateTiles()
-    {
-        for (int y = 0; y < N; y++)
-        {
-            for (int x = 0; x < N; x++)
-            {
+    private void CreateTiles(){
+        for (int y = 0; y < N; y++){
+            for (int x = 0; x < N; x++){
                 // Create a quad for the tile
                 GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 tile.transform.position = new Vector3(tileSize*x, tileSize*y, 0); // Position the tile
@@ -106,21 +96,16 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void CreateBoard()
-    {
+    public void CreateBoard(){
         // Logic to update the visual board based on gameState's bitboards
-        foreach (var playerState in gameState.PlayerStates)
-        {
-            foreach (var pieceBoard in playerState.PieceBoards.Values)
-            {
+        foreach (var playerState in gameState.PlayerStates){
+            foreach (var pieceBoard in playerState.PieceBoards.Values){
                 // Check if the piece board has any pieces
                 if (pieceBoard.Bitboard == 0) continue;
 
                 // For each piece type, check its bitboard and place the pieces accordingly
-                for (int i = 0; i < 64; i++) // Loop through all 64 squares
-                {
-                    if ((pieceBoard.Bitboard & (BitOps.a1 << i)) != 0) // Check if the piece is present
-                    {
+                for (int i = 0; i < 64; i++){// Loop through all 64 squares
+                    if ((pieceBoard.Bitboard & (BitOps.a1 << i)) != 0){ // Check if the piece is present
                         int x = i % 8; // X position on the board
                         int y = i / 8; // 7 - (i / 8)
                         GameObject piece = CreatePiece(pieceBoard.Type, playerState.IsWhite);
@@ -131,15 +116,13 @@ public class Board : MonoBehaviour
         }
     }
 
-    private GameObject CreatePiece(char pieceType, bool isWhite)
-    {
+    private GameObject CreatePiece(char pieceType, bool isWhite){
         // Create a new GameObject for the piece
         GameObject piece = new GameObject($"{pieceType}{(isWhite?'w':'b')}_Piece");
 
         // Add a SpriteRenderer and assign the correct sprite based on pieceType
         SpriteRenderer spriteRenderer = piece.AddComponent<SpriteRenderer>();
-        if (sprites.TryGetValue($"{pieceTypeMap[pieceType]}", out Sprite baseSprite)) // Use char as string for key
-        {
+        if (sprites.TryGetValue($"{pieceTypeMap[pieceType]}", out Sprite baseSprite)){// Use char as string for key
             spriteRenderer.sprite = baseSprite; // Set the base piece sprite
             spriteRenderer.color = isWhite ? lightColour : darkColour; // Set color based on piece color
             piece.transform.localScale = new Vector3(tileSize*pieceScaleFactor, tileSize*pieceScaleFactor, 1); // Scale the piece
@@ -152,7 +135,6 @@ public class Board : MonoBehaviour
         collider.size = new Vector2(1/pieceScaleFactor, 1/pieceScaleFactor); // Match collider size to piece size
 
         //spriteRenderer.sortingOrder = 1; // Ensure pieces are rendered on top
-
         return piece;
     }
 
@@ -165,15 +147,12 @@ public class Board : MonoBehaviour
         DeselectPiece();
     }
 
-    public void LogBoard()
-    {
+    public void LogBoard(){
         Debug.Log("Current Board State:");
         
-        for (int y = 7; y >=0; y--) // From 1st rank to 8th rank
-        {
+        for (int y = 7; y >=0; y--){ // From 1st rank to 8th rank
             string row = $"Row {y}: "; // Adjust for logging
-            for (int x = 0; x < 8; x++) // From a-file to h-file
-            {
+            for (int x = 0; x < 8; x++) {// From a-file to h-file
                 int index = BitOps.GetIndex(y, x); // Calculate the index
                 string pieceChar = GetPieceAtIndex(index);
                 //row += pieceChar + "" + index + " "; // Add the piece character to the row
@@ -183,18 +162,11 @@ public class Board : MonoBehaviour
         }
     }
 
-    private string GetPieceAtIndex(int index)
-    {
+    private string GetPieceAtIndex(int index){
         foreach (var playerState in gameState.PlayerStates)
-        {
             foreach (var pieceBoard in playerState.PieceBoards.Values)
-            {
                 if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
-                {
                     return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
-                }
-            }
-        }
         return " o "; // Return a dot for empty squares
     }
 
@@ -206,8 +178,7 @@ public class Board : MonoBehaviour
         selectedPiece = null;
         originalPosition = default;
     }
-    void SelectPiece()
-    {
+    void SelectPiece(){
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         Collider2D collision = Physics2D.OverlapPoint(mousePosition);
 
@@ -227,11 +198,10 @@ public class Board : MonoBehaviour
             Debug.Log("Collision null OR no gameobject with name foud");
         }
         
-        if(selectedPiece == null){
+        if(selectedPiece == null)
             Debug.Log("selectedPiece null");
-        }else{
-            Debug.Log(selectedPiece);
-        }
+        else
+            Debug.Log(selectedPiece); 
     }
 
     void DragPiece(){
@@ -248,8 +218,8 @@ public class Board : MonoBehaviour
 
         // Check if the target position is valid (i.e., within bounds and not occupied by the player's own piece)
         PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
-        HashSet<int> pieceMoves = pieceBoard.ValidMoves(gameState.OccupancyBoard, originalIndex);
-        bool canMove = pieceBoard.CanMove(originalIndex, index) && pieceMoves.Contains(index);
+        ulong pieceMoves = pieceBoard.ValidMoves(gameState.PlayerStates[gameState.currentIndex].GetOccupancyBoard(), originalIndex, gameState.PlayerStates[1-gameState.currentIndex].GetOccupancyBoard());
+        bool canMove = pieceBoard.CanMove(originalIndex, index) && (pieceMoves & BitOps.a1<<index)!=0;
 
         if (canMove){
             // Execute the move
@@ -285,8 +255,7 @@ public class Board : MonoBehaviour
 
 
 
-    private void Awake()
-    {
+    private void Awake(){
         if (colourIndex == -1) // Generate once
             colourIndex = UnityEngine.Random.Range(0, LightColors.Length);
         lightColour = LightColors[colourIndex]; darkColour = DarkColors[colourIndex];
@@ -301,14 +270,12 @@ public class Board : MonoBehaviour
         CreateTiles(); // Create the visual tiles for the board
     }
 
-    private void Start()
-    {
+    private void Start(){
         // Any additional initialization can go here
         CenterCamera();
     }
 
-    private void Update()
-    {
+    private void Update(){
         HandleInput();
     }
 }

@@ -40,6 +40,19 @@ public class PlayerState
         return true; // Successfully removed the piece
     }
 
+    public ulong GetOccupancyBoard()
+    {
+        ulong occupancyBoard = 0UL;
+
+        foreach (var pieceBoard in PieceBoards.Values)
+        {
+            occupancyBoard |= pieceBoard.Bitboard; // Combine each piece's bitboard
+        }
+
+        return occupancyBoard; // Return the combined occupancy board
+    }
+
+
 
 
 }

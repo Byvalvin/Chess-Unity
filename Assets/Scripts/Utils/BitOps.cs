@@ -60,6 +60,13 @@ public static class BitOps
     }
 
     // Movement validation
+
+    // Check horizontal movement
+    public static bool isValidHorizontalMove(int fromRow, int fromCol, int toRow, int toCol) => fromRow==toRow && Math.Abs(fromCol - toCol) <= (N - 1); // Check that movement is not wrapping around the board
+    // Check vertical movement
+    public static bool isValidVerticalMove(int fromRow, int fromCol, int toRow, int toCol) => fromCol==toCol && Math.Abs(fromRow - toRow) <= (N - 1); // Check that movement is not wrapping around the board
+    // Diagonal movement (assuming a piece like a bishop or queen)
+    public static bool isValidDiagonalMove(int fromRow, int fromCol, int toRow, int toCol) => Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol); // Check that movement is not wrapping around the board
     public static bool IsValidMove(int fromIndex, int toIndex)
     {
         // Check if the target index is in bounds
@@ -71,20 +78,8 @@ public static class BitOps
         int toRow = toIndex / N;
         int toCol = toIndex % N;
 
-        // Check horizontal movement
-        if (fromRow == toRow)
-        {
-            // Check that movement is not wrapping around the board
-            return Math.Abs(fromCol - toCol) <= (N - 1);
-        }
+        return isValidHorizontalMove(fromRow, fromCol, toRow, toCol) || isValidVerticalMove(fromRow, fromCol, toRow, toCol) || isValidDiagonalMove(fromRow, fromCol, toRow, toCol);
 
-        // Check vertical movement
-        if (fromCol == toCol)
-        {
-            return Math.Abs(fromRow - toRow) <= (N - 1);
-        }
 
-        // Diagonal movement (assuming a piece like a bishop or queen)
-        return Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol);
     }
 }

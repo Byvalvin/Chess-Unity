@@ -32,12 +32,8 @@ public class GameState
 
     private void UpdateOccupancyBoard(PlayerState playerState)
     {
-        //OccupancyBoard = 0; // reset? no because the whole point is to not have to do both playerstates
-        // Combine the player's piece boards into the occupancy board
         foreach (var pieceBoard in playerState.PieceBoards.Values) // Access the values of the dictionary
-        {
             OccupancyBoard |= pieceBoard.Bitboard; // OR operation to combine bitboards
-        }
     }
 
     public void UpdateBoard(){
@@ -102,10 +98,5 @@ public class GameState
 
     }
 
-    // public bool ValidateMove(PieceBoard pieceBoard, int index){
-    //     // If the target position is occupied, check if it's an opponent's piece
-    //     PieceBoard opponentPieceBoard = GetPieceBoard(index, PlayerStates[1 - currentIndex]);
-    //     return opponentPieceBoard != null && opponentPieceBoard.IsWhite != pieceBoard.IsWhite;
-    // }
 
 }

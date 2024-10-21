@@ -11,37 +11,15 @@ public class BishopBoard : PieceBoard
 
     public override PieceBoard Clone() => new BishopBoard(this);
 
-    public override HashSet<int> ValidMoves(ulong fullBoard, int index)
+    public override ulong ValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
-        HashSet<int> validMoves = new HashSet<int>();
+        ulong validMoves = 0UL;
 
-        // Diagonal movements
-        for (int i = 1; i < 8; i++)
-        {
-            // Up-left
-            int upLeftIndex = BitOps.Diagonal1Move(index, i);
-            if (!BitOps.InBounds(upLeftIndex)) break;
-            validMoves.Add(upLeftIndex);
-            if ((Bitboard & (BitOps.a1 << upLeftIndex)) != 0) break;
-
-            // Up-right
-            int upRightIndex = BitOps.Diagonal2Move(index, i);
-            if (!BitOps.InBounds(upRightIndex)) break;
-            validMoves.Add(upRightIndex);
-            if ((Bitboard & (BitOps.a1 << upRightIndex)) != 0) break;
-
-            // Down-left
-            int downLeftIndex = BitOps.Diagonal3Move(index, i);
-            if (!BitOps.InBounds(downLeftIndex)) break;
-            validMoves.Add(downLeftIndex);
-            if ((Bitboard & (BitOps.a1 << downLeftIndex)) != 0) break;
-
-            // Down-right
-            int downRightIndex = BitOps.Diagonal4Move(index, i);
-            if (!BitOps.InBounds(downRightIndex)) break;
-            validMoves.Add(downRightIndex);
-            if ((Bitboard & (BitOps.a1 << downRightIndex)) != 0) break;
-        }
+        // Diagonal movements for bishops
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal1Move, includeFriends); // Up-left
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal2Move, includeFriends); // Up-right
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal3Move, includeFriends); // Down-left
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal4Move, includeFriends); // Down-right
 
         return validMoves;
     }
