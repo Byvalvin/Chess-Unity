@@ -2,6 +2,7 @@ public class Player
 {
     public PlayerState PlayerState { get; private set; }
 
+
     public Player(PlayerState playerState)
     {
         PlayerState = playerState;

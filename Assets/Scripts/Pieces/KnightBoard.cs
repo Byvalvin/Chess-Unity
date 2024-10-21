@@ -11,7 +11,7 @@ public class KnightBoard : PieceBoard
 
     public override PieceBoard Clone() => new KnightBoard(this);
 
-    public override ulong ValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
+    public override void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
         ulong validMoves = 0UL;
 
@@ -31,6 +31,6 @@ public class KnightBoard : PieceBoard
             }
         }
 
-        return validMoves;
+        ValidMovesMap[index] = validMoves; // can only handle 1 index at a time at least for now
     }
 }

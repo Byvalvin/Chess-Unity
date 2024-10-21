@@ -8,13 +8,16 @@ public abstract class PieceBoard
     public bool IsWhite { get; set; }
     protected HashSet<int> FirstMovers { get; set; }
 
-    protected Dictionary<int, ulong> ValidMovesMap;
+    public Dictionary<int, ulong> ValidMovesMap{get; protected set;}
+
+    public static Vector2Int purgatory = new Vector2Int(-100, -100);
 
     public PieceBoard(bool isWhite, ulong startingBitboard = 0)
     {
         IsWhite = isWhite;
         Bitboard = startingBitboard;
         FirstMovers = new HashSet<int>();
+        ValidMovesMap = new Dictionary<int, ulong>(); // will set later
 
         // set first moves
         if (startingBitboard != 0)
@@ -29,11 +32,12 @@ public abstract class PieceBoard
         IsWhite = original.IsWhite;
         Bitboard = original.Bitboard;
         FirstMovers = new HashSet<int>(original.FirstMovers);
+        ValidMovesMap = new Dictionary<int, ulong>(original.ValidMovesMap);
     }
 
     public abstract PieceBoard Clone();
 
-    public abstract ulong ValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false);
+    public abstract void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false);
     protected ulong CheckDirection(ulong friendBoard, ulong enemyBoard, int index, Func<int, int, int> moveFunc, bool includeFriends)
     {
         ulong directionMoves = 0UL;

@@ -12,39 +12,47 @@ public class PawnBoard : PieceBoard
 
     public override PieceBoard Clone() => new PawnBoard(this);
 
-    public override ulong ValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
+    public override void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
         ulong validMoves = 0UL;
         int direction = IsWhite ? 1 : -1;
 
         // Forward move
-        AddForwardMove(ref validMoves, index, direction, friendBoard);
+        bool canMoveFwd = AddForwardMove(ref validMoves, index, direction, friendBoard, enemyBoard); // cant double fwd if can mvoe forward
 
         // First move: two squares
-        if (FirstMovers.Contains(index))
+        if (canMoveFwd && FirstMovers.Contains(index))
         {
-            AddDoubleForwardMove(ref validMoves, index, direction, friendBoard);
+            AddDoubleForwardMove(ref validMoves, index, direction, friendBoard, enemyBoard);
         }
 
         // Diagonal captures
         AddDiagonalCaptures(ref validMoves, index, direction, friendBoard, enemyBoard);
 
-        return validMoves;
+        ValidMovesMap[index] = validMoves; // can only handle 1 index at a time at least for now
     }
 
-    private void AddForwardMove(ref ulong validMoves, int index, int direction, ulong friendBoard)
+    private bool AddForwardMove(ref ulong validMoves, int index, int direction, ulong friendBoard, ulong enemyBoard)
     {
         int forwardIndex = BitOps.ForwardMove(index, direction);
-        if (BitOps.InBounds(forwardIndex) && (friendBoard & (BitOps.a1 << forwardIndex)) == 0)
+        if (BitOps.InBounds(forwardIndex) 
+            && (friendBoard & (BitOps.a1 << forwardIndex)) == 0
+            && (enemyBoard & (BitOps.a1 << forwardIndex)) == 0
+        )
         {
             validMoves |= BitOps.a1 << forwardIndex; // Add valid forward move
+            return true;
         }
+        return false;
     }
 
-    private void AddDoubleForwardMove(ref ulong validMoves, int index, int direction, ulong friendBoard)
+    private void AddDoubleForwardMove(ref ulong validMoves, int index, int direction, ulong friendBoard, ulong enemyBoard)
     {
         int doubleForwardIndex = BitOps.ForwardMove(index, direction * 2);
-        if (BitOps.InBounds(doubleForwardIndex) && (friendBoard & (BitOps.a1 << doubleForwardIndex)) == 0)
+        if (BitOps.InBounds(doubleForwardIndex)
+            && (friendBoard & (BitOps.a1 << doubleForwardIndex)) == 0
+            && (enemyBoard & (BitOps.a1 << doubleForwardIndex)) == 0
+        )
         {
             validMoves |= BitOps.a1 << doubleForwardIndex; // Add valid double forward move
         }

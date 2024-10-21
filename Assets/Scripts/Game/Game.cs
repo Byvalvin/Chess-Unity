@@ -11,15 +11,17 @@ public class Game : MonoBehaviour
         gameState = new GameState(player1Type, player2Type);
         gameState.Initialize();
 
-        board = gameObject.AddComponent<Board>(); // Add the Board component
-        board.Initialize(gameState);
-
         players = new Player[2];
         players[0] = new Player(gameState.PlayerStates[0]);
         players[1] = new Player(gameState.PlayerStates[1]);
 
+        board = gameObject.AddComponent<Board>(); // Add the Board component
+        board.Initialize(gameState);
+
         // Additional setup as needed
     }
+
+
 
 
     void Start(){

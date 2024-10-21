@@ -3,7 +3,7 @@ using System;
 public class GameState
 {
     
-    public static event Action<Vector2Int> OnPieceMoved; // update the Board UI if there is one
+    public static event Action<Vector2Int, bool> OnPieceMoved; // update the Board UI if there is one
     public PlayerState[] PlayerStates { get; private set; } // Array of player states
     public ulong OccupancyBoard { get; private set; } // Combined occupancy board
     public int currentIndex = 0; // white to start
@@ -26,32 +26,36 @@ public class GameState
     public void Initialize()
     {
         UpdateBoard();
+        UpdateGameState();
     }
 
     public void SwitchPlayer()=>currentIndex = 1-currentIndex;
 
     private void UpdateOccupancyBoard(PlayerState playerState)
     {
-        foreach (var pieceBoard in playerState.PieceBoards.Values) // Access the values of the dictionary
-            OccupancyBoard |= pieceBoard.Bitboard; // OR operation to combine bitboards
+        OccupancyBoard |= playerState.OccupancyBoard; // OR operation to combine bitboards
     }
 
     public void UpdateBoard(){
+        // update player board
+        foreach (var playerState in PlayerStates)
+            playerState.UpdateOccupancyBoard();
+        
         OccupancyBoard = 0; // reset
-        foreach(PlayerState playerState in PlayerStates){
-            foreach(PieceBoard pieceBoard in playerState.PieceBoards.Values)
-                OccupancyBoard |= pieceBoard.Bitboard;
-        }
+        OccupancyBoard |= (PlayerStates[0].OccupancyBoard | PlayerStates[1].OccupancyBoard);
     }
 
-    private void MoveUpdate(int finalIndex){
+    private void MoveUpdate(int finalIndex, bool isCapture){
         
         //ALERT UI for Listeners(Board) to update
-        OnPieceMoved?.Invoke(BitOps.GetPosition(finalIndex));
+        OnPieceMoved?.Invoke(BitOps.GetPosition(finalIndex), isCapture);
 
         Debug.Log("move invoked updated");
+
+        // re-setup
         SwitchPlayer();
         UpdateBoard();
+        UpdateGameState();
     }
 
     public void ExecuteMove(PieceBoard pieceBoard, int originalIndex, int index){
@@ -68,7 +72,8 @@ public class GameState
         }
 
         pieceBoard.Move(originalIndex, index);
-        MoveUpdate(index);
+
+        MoveUpdate(index, isCapture);
     }
 
     public PieceBoard GetPieceBoard(int index, PlayerState givenPlayerState =null){
@@ -96,6 +101,34 @@ public class GameState
         }
         return opponentPieceBoard;
 
+    }
+
+    private void UpdateGameState(){
+        for(int i=0; i<64; i++){
+            ulong currBitPos = (BitOps.a1<<i);
+            
+            int playerIndex; //find correct playerstate
+            playerIndex = (currBitPos & PlayerStates[0].OccupancyBoard)!=0 ? 0 
+                        : (currBitPos & PlayerStates[1].OccupancyBoard)!=0 ? 1
+                        : -1;
+            PlayerState currPlayerState = playerIndex!=-1 ? PlayerStates[playerIndex] : null;
+            if(currPlayerState!=null){ // find correct PieceBoard
+                PieceBoard currPieceBoard = null;
+                foreach (PieceBoard pieceBoard in currPlayerState.PieceBoards.Values)
+                {
+                    if((pieceBoard.Bitboard & currBitPos)!=0){
+                        currPieceBoard = pieceBoard;
+                        break;
+                    }
+                }
+                if(currPieceBoard!=null){
+                    //Debug.Log(currPlayerState + " " + i + " " +currPieceBoard);
+                    currPieceBoard.ResetValidMoves(currPlayerState.OccupancyBoard, i, PlayerStates[1-playerIndex].OccupancyBoard);
+                }
+            }
+
+
+        }
     }
 
 

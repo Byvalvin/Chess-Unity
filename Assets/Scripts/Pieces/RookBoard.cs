@@ -11,7 +11,7 @@ public class RookBoard : PieceBoard
 
     public override PieceBoard Clone() => new RookBoard(this);
 
-    public override ulong ValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
+    public override void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
         ulong validMoves = 0UL;
 
@@ -21,6 +21,6 @@ public class RookBoard : PieceBoard
         validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.ForwardMove, includeFriends); // Up
         validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.BackwardMove, includeFriends); // Down
 
-        return validMoves;
+        ValidMovesMap[index] = validMoves; // can only handle 1 index at a time at least for now
     }
 }

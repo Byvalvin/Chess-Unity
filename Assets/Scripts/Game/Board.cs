@@ -49,7 +49,8 @@ public class Board : MonoBehaviour
     };
     float pieceScaleFactor; // Scale factor for pieces
     public static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>(); // Dictionary for sprites
-
+    public List<GameObject> WhitePieces{get; set;}
+    public List<GameObject> BlackPieces{get; set;}
 
     Vector2Int originalPosition;
     GameObject selectedPiece = null;
@@ -62,6 +63,9 @@ public class Board : MonoBehaviour
 
     public void Initialize(GameState state){
         gameState = state;
+        
+        WhitePieces = new List<GameObject>();
+        BlackPieces = new List<GameObject>();
         CreateBoard(); // Initialize the board with pieces
 
         GameState.OnPieceMoved += UpdateSelectedPieceUI; // auto update ui for bord after piece moves
@@ -110,6 +114,12 @@ public class Board : MonoBehaviour
                         int y = i / 8; // 7 - (i / 8)
                         GameObject piece = CreatePiece(pieceBoard.Type, playerState.IsWhite);
                         SetPosition(piece, x, y);
+
+                        // "give" piece to player for reference
+                        if(playerState.IsWhite)
+                            WhitePieces.Add(piece);
+                        else
+                            BlackPieces.Add(piece);
                     }
                 }
             }
@@ -140,17 +150,30 @@ public class Board : MonoBehaviour
 
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
     private void SetPosition(GameObject piece, Vector2Int position)=> SetPosition(piece, position.x, position.y);
-    private void UpdateSelectedPieceUI(Vector2Int finalPosition){
+    private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false){
         //ui update
+
+        // captures ui update
+        if(isCaptureMove){
+            List<GameObject> pieces = gameState.currentIndex==0?BlackPieces:WhitePieces;
+            GameObject targetPiece = pieces.FirstOrDefault(p => 
+                GetIndexPosition(p.transform.position) == finalPosition); // Check for any piece at the target position
+            if (targetPiece != null)
+                SetPosition(targetPiece, PieceBoard.purgatory);
+            
+        }
+
         SetPosition(selectedPiece, finalPosition);
         // reset piece selection
         DeselectPiece();
+
+
     }
 
     public void LogBoard(){
         Debug.Log("Current Board State:");
         
-        for (int y = 7; y >=0; y--){ // From 1st rank to 8th rank
+        for (int y = 7; y >= 0; y--){ // From 1st rank to 8th rank
             string row = $"Row {y}: "; // Adjust for logging
             for (int x = 0; x < 8; x++) {// From a-file to h-file
                 int index = BitOps.GetIndex(y, x); // Calculate the index
@@ -189,10 +212,11 @@ public class Board : MonoBehaviour
             selectedPiece = collision.gameObject;
             originalPosition = GetIndexPosition(collision.gameObject.transform.position);
             int index = BitOps.GetIndex(originalPosition);
-            if((gameState.OccupancyBoard & (BitOps.a1 << index)) == 0){
+            
+            if((gameState.OccupancyBoard & (BitOps.a1 << index)) == 0
+            || gameState.PlayerStates[gameState.currentIndex].IsWhite != (selectedPiece.name[1]=='w')){
                 DeselectPiece(); //reset piece selection
-                Debug.Log("No piece at pos");
-                
+                Debug.Log("No piece at pos OR selected piece is NOT the same colour as player to play");
             }
         }else{
             Debug.Log("Collision null OR no gameobject with name foud");
@@ -218,8 +242,14 @@ public class Board : MonoBehaviour
 
         // Check if the target position is valid (i.e., within bounds and not occupied by the player's own piece)
         PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
-        ulong pieceMoves = pieceBoard.ValidMoves(gameState.PlayerStates[gameState.currentIndex].GetOccupancyBoard(), originalIndex, gameState.PlayerStates[1-gameState.currentIndex].GetOccupancyBoard());
-        bool canMove = pieceBoard.CanMove(originalIndex, index) && (pieceMoves & BitOps.a1<<index)!=0;
+        ulong pieceMoves = pieceBoard.ValidMovesMap[originalIndex];
+        Debug.Log(pieceBoard.Type + " " + (pieceBoard.IsWhite?"w":"b") + originalIndex + " " + index + "moves");
+        for(int i=0; i<64; i++){
+            if((pieceMoves&BitOps.a1<<i)!=0)
+                Debug.Log(i);
+        }
+        bool canMove = pieceBoard.CanMove(originalIndex, index) 
+            && (pieceMoves & BitOps.a1<<index)!=0;
 
         if (canMove){
             // Execute the move
