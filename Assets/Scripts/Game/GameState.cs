@@ -132,7 +132,9 @@ public class GameState
                 if(kvpPiece.Key=='K')continue;
                 PieceBoard opponentPieceBoard = kvpPiece.Value;
                 foreach (int pieceIndex in opponentPieceBoard.ValidMovesMap.Keys){
-                    ulong opponentMoves = opponentPieceBoard.GetValidMoves(otherPlayer.OccupancyBoard, pieceIndex, currPlayer.OccupancyBoard, true);
+                    ulong enemyBoardExceptKingPos = currPlayer.OccupancyBoard & ~(currPlayer.PieceBoards['K'].Bitboard);
+                    ulong opponentMoves = opponentPieceBoard.GetValidMoves(otherPlayer.OccupancyBoard, pieceIndex, enemyBoardExceptKingPos, true);
+                    
                     kingMoves &= ~(opponentMoves);
                 }
             }

@@ -38,8 +38,8 @@ public abstract class PieceBoard
     public abstract PieceBoard Clone();
 
     public abstract ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false);
-    public virtual void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
-        => ValidMovesMap[index] = GetValidMoves(friendBoard, index, enemyBoard);
+    public virtual void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard)
+        => ValidMovesMap[index] = GetValidMoves(friendBoard, index, enemyBoard, false);
     protected ulong CheckDirection(ulong friendBoard, ulong enemyBoard, int index, Func<int, int, int> moveFunc, bool includeFriends)
     {
         ulong directionMoves = 0UL;
