@@ -103,6 +103,38 @@ public class GameState
 
     }
 
+    private void UpdateCheckStatus(){ // only need to do this fi rth eother player. The player who is playing after the current player
+        PlayerState otherPlayer=PlayerStates[1-currentIndex],
+                    currPlayer=PlayerStates[currentIndex];
+
+        ulong attacker = 0UL;
+        int attackerCount = 0;
+        foreach (var kvpPlayer in currPlayer.PieceBoards) // search for attacker of otherPlayer's King
+        {
+            if(kvpPlayer.Key=='K')continue; //Kings cant attack Kings
+
+            PieceBoard pieceBoard = kvpPlayer.Value;
+            if(attackerCount>=2)break;
+
+            foreach (var kvpPiece in pieceBoard.ValidMovesMap)
+            {
+                int potentialAttackerIndex = kvpPiece.Key;
+                ulong moves = kvpPiece.Value;
+                if((moves & otherPlayer.PieceBoards['K'].Bitboard)==1){ // attack on other player king
+                    attacker = BitOps.a1<<potentialAttackerIndex;
+                    attackerCount++;
+                }
+                if(attackerCount>=2){
+                    break;
+                }
+            }
+        }
+
+        otherPlayer.InCheck = attackerCount==1;
+        otherPlayer.DoubleCheck = attackerCount>1;
+        if(otherPlayer.IsInCheck) otherPlayer.KingAttacker=attacker;
+    }
+
     private void UpdateGameState(){
         for(int i=0; i<64; i++){
             ulong currBitPos = (BitOps.a1<<i);
@@ -129,6 +161,7 @@ public class GameState
 
 
         }
+        UpdateCheckStatus();
     }
 
 

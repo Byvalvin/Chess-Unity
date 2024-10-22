@@ -11,6 +11,12 @@ public class PlayerState
 
     public Dictionary<char, PieceBoard> PieceBoards { get; set; } // Dictionary of piece boards
 
+    public bool InCheck{get; set;}
+    public bool DoubleCheck{get; set;}
+    public bool IsInCheck => InCheck || DoubleCheck;
+
+    public ulong KingAttacker = 0UL;
+
     public PlayerState(string playerType, bool isWhite)
     {
         PlayerType = playerType;

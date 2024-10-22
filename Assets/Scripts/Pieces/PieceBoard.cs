@@ -45,16 +45,21 @@ public abstract class PieceBoard
         for (int i = 1; i < 8; i++)
         {
             int newIndex = moveFunc(index, i);
+            if(Type=='B')Debug.Log(!BitOps.IsValidMove(index, newIndex) + " cant moving this direction" + index +" to"+newIndex);
             if (!BitOps.IsValidMove(index, newIndex)) break;
 
             ulong newBit = BitOps.a1 << newIndex;
+             if(Type=='B')Debug.Log(((friendBoard & newBit) != 0 && !includeFriends) + " " +((enemyBoard & newBit) != 0 || (friendBoard & newBit) != 0 && includeFriends));
 
+             if(Type=='B')Debug.Log((((friendBoard | enemyBoard) & newBit)==0) + " " + ((enemyBoard & newBit) != 0) + " " + ((friendBoard & newBit) != 0 && includeFriends));
+             
             if ((friendBoard & newBit) != 0 && !includeFriends) break; // Blocked by friendly piece
-            if ((enemyBoard & newBit) != 0 || (friendBoard & newBit) != 0 && includeFriends)
+            if ( (enemyBoard & newBit)!=0  || ((friendBoard & newBit)!=0 && includeFriends)) 
             {
                 directionMoves |= newBit; // Add capture move
                 break; // Stop if occupied
             }
+            directionMoves |= newBit; //(friendBoard | enemyBoard) & newBit)==0 
         }
 
         return directionMoves;
@@ -68,6 +73,8 @@ public abstract class PieceBoard
         Bitboard &= ~(BitOps.a1 << fromIndex);
         Bitboard |= (BitOps.a1 << toIndex);
 
+        ValidMovesMap.Remove(fromIndex); // the piece is no longer there
+
         if (FirstMovers.Contains(fromIndex))
             FirstMovers.Remove(fromIndex);
     }
@@ -80,6 +87,9 @@ public abstract class PieceBoard
         // For instance, if you're tracking the position of pieces in a dictionary, you could remove that entry
         if (FirstMovers.Contains(index))
             FirstMovers.Remove(index); // Remove any first move tracking for the captured piece
+
+        // remove moves for removed piece
+        ValidMovesMap.Remove(index);
 
         // Log or handle any additional cleanup as necessary
         Debug.Log($"Removed piece from index {index}. Remaining bitboard: {Bitboard}");

@@ -248,8 +248,7 @@ public class Board : MonoBehaviour
             if((pieceMoves&BitOps.a1<<i)!=0)
                 Debug.Log(i);
         }
-        bool canMove = pieceBoard.CanMove(originalIndex, index) 
-            && (pieceMoves & BitOps.a1<<index)!=0;
+        bool canMove = (pieceMoves & BitOps.a1<<index)!=0;
 
         if (canMove){
             // Execute the move
