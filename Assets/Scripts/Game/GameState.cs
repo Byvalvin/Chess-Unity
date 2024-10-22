@@ -132,9 +132,13 @@ public class GameState
                 if(kvpPiece.Key=='K')continue;
                 PieceBoard opponentPieceBoard = kvpPiece.Value;
                 foreach (int pieceIndex in opponentPieceBoard.ValidMovesMap.Keys){
-                    ulong enemyBoardExceptKingPos = currPlayer.OccupancyBoard & ~(currPlayer.PieceBoards['K'].Bitboard);
-                    ulong opponentMoves = opponentPieceBoard.GetValidMoves(otherPlayer.OccupancyBoard, pieceIndex, enemyBoardExceptKingPos, true);
-                    
+                    ulong opponentMoves = 0UL;
+                    if(kvpPiece.Key=='P' && opponentPieceBoard is PawnBoard oppPawnBoard){
+                        opponentMoves = oppPawnBoard.GetAttackMoves();
+                    }else{
+                        ulong enemyBoardExceptKingPos = currPlayer.OccupancyBoard & ~(currPlayer.PieceBoards['K'].Bitboard);
+                        opponentMoves = opponentPieceBoard.GetValidMoves(otherPlayer.OccupancyBoard, pieceIndex, enemyBoardExceptKingPos, true);
+                    }
                     kingMoves &= ~(opponentMoves);
                 }
             }
