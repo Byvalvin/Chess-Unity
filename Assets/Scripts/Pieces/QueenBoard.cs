@@ -11,7 +11,7 @@ public class QueenBoard : PieceBoard
 
     public override PieceBoard Clone() => new QueenBoard(this);
 
-    public override void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
+    public override ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
         ulong validMoves = 0UL;
 
@@ -27,6 +27,6 @@ public class QueenBoard : PieceBoard
         validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal3Move, includeFriends); // Down-left
         validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal4Move, includeFriends); // Down-right
 
-        ValidMovesMap[index] = validMoves; // can only handle 1 index at a time at least for now
+        return validMoves; // can only handle 1 index at a time at least for now
     }
 }

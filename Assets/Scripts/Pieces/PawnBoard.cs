@@ -12,7 +12,7 @@ public class PawnBoard : PieceBoard
 
     public override PieceBoard Clone() => new PawnBoard(this);
 
-    public override void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
+    public override ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
         ulong validMoves = 0UL;
         int direction = IsWhite ? 1 : -1;
@@ -29,7 +29,7 @@ public class PawnBoard : PieceBoard
         // Diagonal captures
         AddDiagonalCaptures(ref validMoves, index, direction, friendBoard, enemyBoard);
 
-        ValidMovesMap[index] = validMoves; // can only handle 1 index at a time at least for now
+        return validMoves; // can only handle 1 index at a time at least for now
     }
 
     private bool AddForwardMove(ref ulong validMoves, int index, int direction, ulong friendBoard, ulong enemyBoard)

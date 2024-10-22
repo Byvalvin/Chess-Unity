@@ -57,6 +57,14 @@ public class PlayerState
             OccupancyBoard |= pieceBoard.Bitboard; // Combine each piece's bitboard
     }
 
+    public int GetKingIndex(){
+        for(int i=0; i<64; i++){
+            if((PieceBoards['K'].Bitboard & BitOps.a1<<i)!=0)
+                return i;
+        }
+        return -1;
+    }
+
 
 
 

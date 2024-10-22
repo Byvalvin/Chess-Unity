@@ -103,6 +103,44 @@ public class GameState
 
     }
 
+    private void Opposition(){
+        int p1KingIndex = PlayerStates[0].GetKingIndex(),
+            p2KingIndex = PlayerStates[1].GetKingIndex();
+        Debug.Log(p1KingIndex+"is king index1");
+        Debug.Log(p2KingIndex+"is king index2");
+        ulong opposition = PlayerStates[0].PieceBoards['K'].ValidMovesMap[p1KingIndex]
+                        & PlayerStates[1].PieceBoards['K'].ValidMovesMap[p2KingIndex];
+
+        PlayerStates[0].PieceBoards['K'].ValidMovesMap[p1KingIndex] &= ~opposition;
+        PlayerStates[1].PieceBoards['K'].ValidMovesMap[p2KingIndex] &= ~opposition;
+    }
+
+    private void UpdateKingAttack(){
+        for(int pi=0; pi<2; pi++){
+            PlayerState otherPlayer=PlayerStates[1-pi],
+                        currPlayer=PlayerStates[pi];
+
+            int kingIndex = currPlayer.GetKingIndex();
+            Debug.Log(kingIndex+"is king index");
+            if(kingIndex==-1){
+                Debug.LogError(currPlayer+"has no King!");
+                return;
+            }
+
+            ulong kingMoves = currPlayer.PieceBoards['K'].ValidMovesMap[kingIndex];
+            foreach (var kvpPiece in otherPlayer.PieceBoards){
+                if(kvpPiece.Key=='K')continue;
+                PieceBoard opponentPieceBoard = kvpPiece.Value;
+                foreach (int pieceIndex in opponentPieceBoard.ValidMovesMap.Keys){
+                    ulong opponentMoves = opponentPieceBoard.GetValidMoves(otherPlayer.OccupancyBoard, pieceIndex, currPlayer.OccupancyBoard, true);
+                    kingMoves &= ~(opponentMoves);
+                }
+            }
+            currPlayer.PieceBoards['K'].ValidMovesMap[kingIndex] = kingMoves;
+        }
+
+    }
+
     private void UpdateCheckStatus(){ // only need to do this fi rth eother player. The player who is playing after the current player
         PlayerState otherPlayer=PlayerStates[1-currentIndex],
                     currPlayer=PlayerStates[currentIndex];
@@ -120,7 +158,7 @@ public class GameState
             {
                 int potentialAttackerIndex = kvpPiece.Key;
                 ulong moves = kvpPiece.Value;
-                if((moves & otherPlayer.PieceBoards['K'].Bitboard)==1){ // attack on other player king
+                if((moves & otherPlayer.PieceBoards['K'].Bitboard)!=0){ // attack on other player king
                     attacker = BitOps.a1<<potentialAttackerIndex;
                     attackerCount++;
                 }
@@ -146,8 +184,7 @@ public class GameState
             PlayerState currPlayerState = playerIndex!=-1 ? PlayerStates[playerIndex] : null;
             if(currPlayerState!=null){ // find correct PieceBoard
                 PieceBoard currPieceBoard = null;
-                foreach (PieceBoard pieceBoard in currPlayerState.PieceBoards.Values)
-                {
+                foreach (PieceBoard pieceBoard in currPlayerState.PieceBoards.Values){
                     if((pieceBoard.Bitboard & currBitPos)!=0){
                         currPieceBoard = pieceBoard;
                         break;
@@ -155,13 +192,14 @@ public class GameState
                 }
                 if(currPieceBoard!=null){
                     //Debug.Log(currPlayerState + " " + i + " " +currPieceBoard);
-                    currPieceBoard.ResetValidMoves(currPlayerState.OccupancyBoard, i, PlayerStates[1-playerIndex].OccupancyBoard);
+                    ulong enemyBoardExceptKingPos = PlayerStates[1-playerIndex].OccupancyBoard & ~(PlayerStates[1-playerIndex].PieceBoards['K'].Bitboard);
+                    currPieceBoard.ResetValidMoves(currPlayerState.OccupancyBoard, i, enemyBoardExceptKingPos);
                 }
             }
-
-
         }
+        Opposition();
         UpdateCheckStatus();
+        UpdateKingAttack();
     }
 
 
