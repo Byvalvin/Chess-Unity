@@ -15,7 +15,7 @@ public class PlayerState
     public bool DoubleCheck{get; set;}
     public bool IsInCheck => InCheck || DoubleCheck;
 
-    public ulong KingAttacker = 0UL;
+    public int KingAttacker = -1;
 
     public PlayerState(string playerType, bool isWhite)
     {

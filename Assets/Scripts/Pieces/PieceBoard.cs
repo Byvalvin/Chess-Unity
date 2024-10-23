@@ -37,6 +37,8 @@ public abstract class PieceBoard
 
     public abstract PieceBoard Clone();
 
+    public ulong GetPieceAt(int index)=>BitOps.GetBitBoard(index, Bitboard);
+
     public abstract ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false);
     public virtual void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard)
         => ValidMovesMap[index] = GetValidMoves(friendBoard, index, enemyBoard, false);
@@ -47,13 +49,13 @@ public abstract class PieceBoard
         for (int i = 1; i < 8; i++)
         {
             int newIndex = moveFunc(index, i);
-            if(Type=='B')Debug.Log(!BitOps.IsValidMove(index, newIndex) + " cant moving this direction" + index +" to"+newIndex);
+            //if(Type=='B')Debug.Log(!BitOps.IsValidMove(index, newIndex) + " cant moving this direction" + index +" to"+newIndex);
             if (!BitOps.IsValidMove(index, newIndex)) break;
 
             ulong newBit = BitOps.a1 << newIndex;
-             if(Type=='B')Debug.Log(((friendBoard & newBit) != 0 && !includeFriends) + " " +((enemyBoard & newBit) != 0 || (friendBoard & newBit) != 0 && includeFriends));
+             //if(Type=='B')Debug.Log(((friendBoard & newBit) != 0 && !includeFriends) + " " +((enemyBoard & newBit) != 0 || (friendBoard & newBit) != 0 && includeFriends));
 
-             if(Type=='B')Debug.Log((((friendBoard | enemyBoard) & newBit)==0) + " " + ((enemyBoard & newBit) != 0) + " " + ((friendBoard & newBit) != 0 && includeFriends));
+             //if(Type=='B')Debug.Log((((friendBoard | enemyBoard) & newBit)==0) + " " + ((enemyBoard & newBit) != 0) + " " + ((friendBoard & newBit) != 0 && includeFriends));
              
             if ((friendBoard & newBit) != 0 && !includeFriends) break; // Blocked by friendly piece
             if ( (enemyBoard & newBit)!=0  || ((friendBoard & newBit)!=0 && includeFriends)) 

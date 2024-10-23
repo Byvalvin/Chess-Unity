@@ -59,7 +59,6 @@ public class GameState
     }
 
     public void ExecuteMove(PieceBoard pieceBoard, int originalIndex, int index){
-
         // Check if the target index is occupied
         bool isCapture = (OccupancyBoard & (BitOps.a1 << index)) != 0;
 
@@ -101,6 +100,60 @@ public class GameState
         }
         return opponentPieceBoard;
 
+    }
+
+    public ulong ValidateMoves(PieceBoard pieceboard, int index, ulong moves)
+    {
+        ulong filteredMoves = moves;
+        // Condition 1: If in double-check, only allow king's moves
+        if (PlayerStates[currentIndex].DoubleCheck){
+            return pieceboard.Type == 'K' ? moves : 0UL; // Only allow moves if the piece is the king
+        }
+        PlayerState currPlayer = PlayerStates[currentIndex];
+        PlayerState otherPlayer = PlayerStates[1 - currentIndex];
+        int kingIndex = PlayerStates[currentIndex].GetKingIndex();
+
+        // condition 2: checking, by KingAttacker
+        int kingAttackerIndex = currPlayer.KingAttacker;
+
+        if (kingAttackerIndex != -1)
+        {
+            ulong attackerPosition = BitOps.a1 << kingAttackerIndex;
+
+            // Check if the attacker is a Queen, Rook, or Bishop
+            if (otherPlayer.PieceBoards.TryGetValue('Q', out var queenBoard) && 
+                (queenBoard.Bitboard & attackerPosition) != 0 ||
+                otherPlayer.PieceBoards.TryGetValue('R', out var rookBoard) && 
+                (rookBoard.Bitboard & attackerPosition) != 0 ||
+                otherPlayer.PieceBoards.TryGetValue('B', out var bishopBoard) && 
+                (bishopBoard.Bitboard & attackerPosition) != 0)
+            {
+                // Get the direction of the attack
+                ulong path = BitOps.GetDirection(kingAttackerIndex, kingIndex);
+
+                // Only allow moves that block the attack or capture the attacker
+                filteredMoves &= (path | attackerPosition); // Keep only moves along the path or capturing the attacker
+            }
+            else if (otherPlayer.PieceBoards.TryGetValue('N', out var knightBoard) &&
+                    (knightBoard.Bitboard & attackerPosition) != 0)
+            {
+                // For knights, they can only capture
+                filteredMoves &= attackerPosition; // Only allow capturing the knight
+            }
+        }
+        
+
+        // condition 3: pinned pieces
+
+
+        return moves; // Return the filtered moves
+    }
+
+
+    public ulong GetMovesAllowed(PieceBoard pieceBoard, int index){
+        // include enpassant for validation
+        ulong moves = pieceBoard.ValidMovesMap[index];
+        return ValidateMoves(pieceBoard, index, moves);
     }
 
     private void Opposition(){
@@ -151,7 +204,7 @@ public class GameState
         PlayerState otherPlayer=PlayerStates[1-currentIndex],
                     currPlayer=PlayerStates[currentIndex];
 
-        ulong attacker = 0UL;
+        int attacker = -1;
         int attackerCount = 0;
         foreach (var kvpPlayer in currPlayer.PieceBoards) // search for attacker of otherPlayer's King
         {
@@ -165,7 +218,7 @@ public class GameState
                 int potentialAttackerIndex = kvpPiece.Key;
                 ulong moves = kvpPiece.Value;
                 if((moves & otherPlayer.PieceBoards['K'].Bitboard)!=0){ // attack on other player king
-                    attacker = BitOps.a1<<potentialAttackerIndex;
+                    attacker = potentialAttackerIndex;
                     attackerCount++;
                 }
                 if(attackerCount>=2){

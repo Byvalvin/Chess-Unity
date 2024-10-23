@@ -242,7 +242,8 @@ public class Board : MonoBehaviour
 
         // Check if the target position is valid (i.e., within bounds and not occupied by the player's own piece)
         PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
-        ulong pieceMoves = pieceBoard.ValidMovesMap[originalIndex];
+        //ulong pieceMoves = pieceBoard.ValidMovesMap[originalIndex];
+        ulong pieceMoves = gameState.GetMovesAllowed(pieceBoard, originalIndex);
         Debug.Log(pieceBoard.Type + " " + (pieceBoard.IsWhite?"w":"b") + originalIndex + " " + index + "moves");
         for(int i=0; i<64; i++){
             if((pieceMoves&BitOps.a1<<i)!=0)
@@ -255,6 +256,7 @@ public class Board : MonoBehaviour
             gameState.ExecuteMove(pieceBoard, originalIndex, index);
             //uses action in GameState to auto update ui, Board is a listeneer
             Debug.Log($"Moved piece to {targetPosition} (Index: {index})");
+            Debug.Log(gameState.PlayerStates[1-gameState.currentIndex].InCheck+" king check");
         } else{
             // Reset to original position if the move isn't valid
             UpdateSelectedPieceUI(originalPosition);

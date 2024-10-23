@@ -18,7 +18,7 @@ public static class BitOps
         return new Vector2Int(col, row); // Adjust for Unity's Y direction
     }
 
-
+    public static ulong GetBitBoard(int index, ulong bitboard=ulong.MaxValue)=> bitboard & (a1<<index);
 
     // Method to check if an index is within bounds
     public static bool InBounds(int index) => 0 <= index && index < N * N;
@@ -59,14 +59,63 @@ public static class BitOps
         return RightMove(BackwardMove(index, steps), steps); // Move down and right
     }
 
-    // Movement validation
+    // Method to check if two indices are in a straight line
+    public static bool IsSameLine(int fromIndex, int toIndex)
+    {
+        int fromRow = fromIndex / N;
+        int fromCol = fromIndex % N;
+        int toRow = toIndex / N;
+        int toCol = toIndex % N;
 
-    // Check horizontal movement
-    public static bool isValidHorizontalMove(int fromRow, int fromCol, int toRow, int toCol) => fromRow==toRow && Math.Abs(fromCol - toCol) <= (N - 1); // Check that movement is not wrapping around the board
-    // Check vertical movement
-    public static bool isValidVerticalMove(int fromRow, int fromCol, int toRow, int toCol) => fromCol==toCol && Math.Abs(fromRow - toRow) <= (N - 1); // Check that movement is not wrapping around the board
-    // Diagonal movement (assuming a piece like a bishop or queen)
-    public static bool isValidDiagonalMove(int fromRow, int fromCol, int toRow, int toCol) => Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol); // Check that movement is not wrapping around the board
+        return fromRow == toRow || fromCol == toCol || Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol);
+    }
+
+    // Get the direction (bitboard) from one index to another
+    /*
+    Same Row: For a move from index 0 to 7 (first row):
+It would set direction to 0xFE (all bits set from 0 to 6).
+Same Column: For a move from index 0 to 56 (first column):
+It would set direction to 0x0101010101010100 (setting bits for every first column position).
+Diagonal: For a move from index 0 to 63 (top-left to bottom-right):
+It would set direction to 0x8040201008040200 (all diagonal positions).
+    */
+    public static ulong GetDirection(int fromIndex, int toIndex)
+    {
+        ulong direction = 0UL;
+
+        if (fromIndex / N == toIndex / N) // Same row
+        {
+            int step = fromIndex < toIndex ? 1 : -1;
+            for (int i = fromIndex + step; i != toIndex; i += step)
+            {
+                direction |= a1 << i;
+            }
+        }
+        else if (fromIndex % N == toIndex % N) // Same column
+        {
+            int step = fromIndex < toIndex ? N : -N;
+            for (int i = fromIndex + step; i != toIndex; i += step)
+            {
+                direction |= a1 << i;
+            }
+        }
+        else if (Math.Abs(fromIndex / N - toIndex / N) == Math.Abs(fromIndex % N - toIndex % N)) // Diagonal
+        {
+            int rowStep = fromIndex / N < toIndex / N ? N : -N;
+            int colStep = fromIndex % N < toIndex % N ? 1 : -1;
+            int i = fromIndex + rowStep + colStep;
+
+            while (i != toIndex)
+            {
+                direction |= a1 << i;
+                i += rowStep + colStep;
+            }
+        }
+
+        return direction; // Return the direction bitboard
+    }
+
+    // Movement validation
     public static bool IsValidMove(int fromIndex, int toIndex)
     {
         // Check if the target index is in bounds
@@ -78,8 +127,20 @@ public static class BitOps
         int toRow = toIndex / N;
         int toCol = toIndex % N;
 
-        return isValidHorizontalMove(fromRow, fromCol, toRow, toCol) || isValidVerticalMove(fromRow, fromCol, toRow, toCol) || isValidDiagonalMove(fromRow, fromCol, toRow, toCol);
-
-
+        return isValidHorizontalMove(fromRow, fromCol, toRow, toCol) || 
+               isValidVerticalMove(fromRow, fromCol, toRow, toCol) || 
+               isValidDiagonalMove(fromRow, fromCol, toRow, toCol);
     }
+
+    // Check horizontal movement
+    public static bool isValidHorizontalMove(int fromRow, int fromCol, int toRow, int toCol) => 
+        fromRow == toRow && Math.Abs(fromCol - toCol) <= (N - 1); 
+
+    // Check vertical movement
+    public static bool isValidVerticalMove(int fromRow, int fromCol, int toRow, int toCol) => 
+        fromCol == toCol && Math.Abs(fromRow - toRow) <= (N - 1); 
+
+    // Diagonal movement
+    public static bool isValidDiagonalMove(int fromRow, int fromCol, int toRow, int toCol) => 
+        Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol); 
 }
