@@ -253,6 +253,13 @@ public class GameState
                     //Debug.Log(currPlayerState + " " + i + " " +currPieceBoard);
                     ulong enemyBoardExceptKingPos = PlayerStates[1-playerIndex].OccupancyBoard & ~(PlayerStates[1-playerIndex].PieceBoards['K'].Bitboard);
                     currPieceBoard.ResetValidMoves(currPlayerState.OccupancyBoard, i, enemyBoardExceptKingPos);
+
+                    if(currPieceBoard.Type=='N'){
+                        Debug.Log("This is a Knight"+currPlayerState.IsWhite);
+                        foreach (var item in currPieceBoard.ValidMovesMap){
+                            Debug.Log(item.Key + " " + item.Value);
+                        }
+                    }
                 }
             }
         }
