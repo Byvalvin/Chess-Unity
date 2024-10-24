@@ -237,8 +237,7 @@ public class GameState
         PlayerStates[1].PieceBoards['K'].ValidMovesMap[p2KingIndex] &= ~opposition;
     }
 
-    private void UpdateKingAttack(PlayerState playerState){
-        
+    private void UpdateKingAttack(PlayerState playerState){  
         PlayerState otherPlayer=PlayerStates[1-playerState.TurnIndex],
                     currPlayer=playerState;
 
@@ -252,21 +251,20 @@ public class GameState
         ulong kingMoves = currPlayer.PieceBoards['K'].ValidMovesMap[kingIndex];
         foreach (var kvpPiece in otherPlayer.PieceBoards){
             if(kvpPiece.Key=='K')continue;
+
             PieceBoard opponentPieceBoard = kvpPiece.Value;
-            foreach (int pieceIndex in opponentPieceBoard.ValidMovesMap.Keys){
-                ulong opponentMoves = 0UL;
-                if(kvpPiece.Key=='P' && opponentPieceBoard is PawnBoard oppPawnBoard){
-                    opponentMoves = oppPawnBoard.GetAttackMoves();
-                }else{
-                    ulong enemyBoardExceptKingPos = currPlayer.OccupancyBoard & ~(currPlayer.PieceBoards['K'].Bitboard);
-                    opponentMoves = opponentPieceBoard.GetValidMoves(otherPlayer.OccupancyBoard, pieceIndex, enemyBoardExceptKingPos, true);
-                }
-                kingMoves &= ~(opponentMoves);
-            }
+            ulong opponentMoves = 0UL;
+            if(kvpPiece.Key=='P' && opponentPieceBoard is PawnBoard oppPawnBoard){
+                opponentMoves = oppPawnBoard.GetAttackMoves();
+            }else{
+                ulong enemyBoardExceptKingPos = currPlayer.OccupancyBoard & ~(currPlayer.PieceBoards['K'].Bitboard);
+                foreach (int pieceIndex in opponentPieceBoard.ValidMovesMap.Keys)
+                    opponentMoves |= opponentPieceBoard.GetValidMoves(otherPlayer.OccupancyBoard, pieceIndex, enemyBoardExceptKingPos, true);
+            } 
+            kingMoves &= ~(opponentMoves);  
         }
         currPlayer.PieceBoards['K'].ValidMovesMap[kingIndex] = kingMoves;
         
-
     }
 
     private void UpdateCheckStatus(PlayerState playerState){ // only need to do this fi rth eother player. The player who is playing after the current player
@@ -275,13 +273,26 @@ public class GameState
 
         int attacker = -1;
         int attackerCount = 0;
+
+        // do pawns first
+        PawnBoard pawnBoard = currPlayer.PieceBoards['P'] as PawnBoard;
+        foreach (var kvpPiece in pawnBoard.ValidMovesMap){ // Pawns attack differently
+            int potentialAttackerIndex = kvpPiece.Key;
+            ulong moves = pawnBoard.GetAttackMove(potentialAttackerIndex);
+            if((moves & otherPlayer.PieceBoards['K'].Bitboard)!=0){ // attack on other player king
+                attacker = potentialAttackerIndex;
+                attackerCount++;
+            }
+
+        }
+
         foreach (var kvpPlayer in currPlayer.PieceBoards) // search for attacker of otherPlayer's King
         {
-            if(kvpPlayer.Key=='K')continue; //Kings cant attack Kings
+            if(attackerCount>=2) break;
+
+            if(kvpPlayer.Key=='K' || kvpPlayer.Key=='P') continue; //Kings cant attack Kings, already did pawns
 
             PieceBoard pieceBoard = kvpPlayer.Value;
-            if(attackerCount>=2)break;
-
             foreach (var kvpPiece in pieceBoard.ValidMovesMap)
             {
                 int potentialAttackerIndex = kvpPiece.Key;
@@ -290,9 +301,7 @@ public class GameState
                     attacker = potentialAttackerIndex;
                     attackerCount++;
                 }
-                if(attackerCount>=2){
-                    break;
-                }
+   
             }
         }
 
@@ -324,14 +333,6 @@ public class GameState
                     //Debug.Log(currPlayerState + " " + i + " " +currPieceBoard);
                     ulong enemyBoardExceptKingPos = PlayerStates[1-playerIndex].OccupancyBoard & ~(PlayerStates[1-playerIndex].PieceBoards['K'].Bitboard);
                     currPieceBoard.ResetValidMoves(currPlayerState.OccupancyBoard, i, enemyBoardExceptKingPos);
-                    /*
-                    if(currPieceBoard.Type=='N'){
-                        Debug.Log("This is a Knight"+currPlayerState.IsWhite);
-                        foreach (var item in currPieceBoard.ValidMovesMap){
-                            Debug.Log(item.Key + " " + item.Value);
-                        }
-                    }
-                    */
                 }
             }
         }

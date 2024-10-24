@@ -131,4 +131,26 @@ public class PawnBoard : PieceBoard
         }
         return allPawnCaptureMoves;
     }
+
+    public ulong GetAttackMove(int pawnIndex){
+        ulong pawnCaptureMoves = 0UL;
+        int direction = IsWhite ? 1 : -1;
+        int leftCaptureIndex = IsWhite
+            ? BitOps.Diagonal1Move(pawnIndex, direction) // White: up-left
+            : BitOps.Diagonal3Move(pawnIndex, -direction); // Black: down-left
+
+        if (BitOps.IsValidMove(pawnIndex, leftCaptureIndex)){
+            pawnCaptureMoves |= BitOps.a1 << leftCaptureIndex; // Add left capture move
+        }
+
+        int rightCaptureIndex = IsWhite
+            ? BitOps.Diagonal2Move(pawnIndex, direction) // White: up-right
+            : BitOps.Diagonal4Move(pawnIndex, -direction); // Black: down-right
+
+        if (BitOps.IsValidMove(pawnIndex, rightCaptureIndex)){
+            pawnCaptureMoves |= BitOps.a1 << rightCaptureIndex; // Add right capture move
+        }
+        return pawnCaptureMoves;
+
+    }
 }
