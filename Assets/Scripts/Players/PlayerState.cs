@@ -6,6 +6,7 @@ public class PlayerState
 {
     public string PlayerType { get; set; } // Type of player
     public bool IsWhite { get; set; } // True for white, false for black
+    public int TurnIndex{get; private set;} // 0 for white, 1 for black
     public const bool IsTop = false; // IsTop says who is at top of board; true->white at top
     public ulong OccupancyBoard{get; protected set;}
 
@@ -21,6 +22,7 @@ public class PlayerState
     {
         PlayerType = playerType;
         IsWhite = isWhite;
+        TurnIndex = IsWhite?0:1;
 
         PieceBoards = new Dictionary<char, PieceBoard>
         {

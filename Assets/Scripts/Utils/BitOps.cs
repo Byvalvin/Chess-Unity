@@ -143,4 +143,61 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
     // Diagonal movement
     public static bool isValidDiagonalMove(int fromRow, int fromCol, int toRow, int toCol) => 
         Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol); 
+
+    
+    public enum MovementType{
+        Diagonal,    
+        Horizontal,    
+        Vertical,
+        
+        Bishop,
+        
+        Rook,    
+        Any
+    }
+
+
+
+    public static ulong GetPathMask(int checkerIndex, int kingIndex, MovementType movementType){
+        ulong pathMask = 0;
+        int rowDiff = (kingIndex / 8) - (checkerIndex / 8);
+        int colDiff = (kingIndex % 8) - (checkerIndex % 8);
+        // Handle specific movement types
+        if (movementType == MovementType.Diagonal || movementType == MovementType.Bishop || movementType == MovementType.Any){
+            if (Math.Abs(rowDiff) == Math.Abs(colDiff)){
+                int stepRow = rowDiff > 0 ? 1 : -1;
+                int stepCol = colDiff > 0 ? 1 : -1;
+                for (int r = checkerIndex / 8 + stepRow, c = checkerIndex % 8 + stepCol; r != kingIndex / 8 || c != kingIndex % 8;r += stepRow, c += stepCol){
+                    int newIndex = r * 8 + c;                
+                    pathMask |= (1UL << newIndex);
+                }       
+            }   
+        }
+        if (movementType == MovementType.Horizontal || movementType == MovementType.Rook || movementType == MovementType.Any){    
+            if (checkerIndex / 8 == kingIndex / 8) // Same row        
+            {
+                int row = checkerIndex / 8;          
+                int step = (kingIndex % 8 > checkerIndex % 8) ? 1 : -1;
+                for (int c = (checkerIndex % 8) + step; c != kingIndex % 8; c += step){
+                    int newIndex = row * 8 + c;             
+                  pathMask |= (1UL << newIndex);       
+                }
+            }
+        }
+
+        if (movementType == MovementType.Vertical || movementType == MovementType.Rook || movementType == MovementType.Any){       
+            if (checkerIndex % 8 == kingIndex % 8) // Same column    
+            {            
+                int col = checkerIndex % 8;         
+                int step = (kingIndex / 8 > checkerIndex / 8) ? 1 : -1;
+                for (int r = (checkerIndex / 8) + step; r != kingIndex / 8; r += step){  
+                    int newIndex = r * 8 + col;            
+                    pathMask |= (1UL << newIndex);            
+                }
+            }
+        }
+
+
+        return pathMask; // Returns 0 if there is no valid path}
+    }
 }

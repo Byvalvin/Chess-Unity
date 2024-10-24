@@ -246,6 +246,11 @@ public class Board : MonoBehaviour
         ulong pieceMoves = gameState.GetMovesAllowed(pieceBoard, originalIndex);
         Debug.Log(pieceBoard.Type + " " + (pieceBoard.IsWhite?"w":"b") + originalIndex + " " + index + "moves");
         for(int i=0; i<64; i++){
+            if((pieceBoard.ValidMovesMap[originalIndex]&BitOps.a1<<i)!=0)
+                Debug.Log(i);
+        }
+        Debug.Log("-------------------");
+        for(int i=0; i<64; i++){
             if((pieceMoves&BitOps.a1<<i)!=0)
                 Debug.Log(i);
         }
@@ -264,7 +269,7 @@ public class Board : MonoBehaviour
         }
         
         // Log the board state after the move
-        LogBoard();
+        //LogBoard();
         //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
     }
 
