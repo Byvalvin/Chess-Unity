@@ -1,5 +1,7 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
+
 public class GameState
 {
     
@@ -130,6 +132,16 @@ public class GameState
         
 
         // Condition 3: (Handle pinned pieces if needed)
+        if(!isKing){
+            ulong pinPathAndAttackerPosition;
+            bool isPinned = CheckForPinnedPiece(pieceboard, index, kingIndex, PlayerStates[1 - currentIndex], out pinPathAndAttackerPosition);
+            
+            if (isPinned)
+            {
+                // Restrict moves to either capturing the attacker or moving back to the king
+                filteredMoves &= (pinPathAndAttackerPosition);
+            }
+        }
 
         return filteredMoves; // Return the filtered moves
     }
@@ -151,17 +163,61 @@ public class GameState
             }
         }
 
-        // // Handle knights separately since they can only capture
-        // if (otherPlayer.PieceBoards.TryGetValue('N', out var knightBoard) && 
-        //     (knightBoard.Bitboard & attackerPosition) != 0)
-        // {
-        //     // Return 0 or some other logic for knights if necessary
-        // }
-
         return 0UL; // No valid attacker found
     }
 
+    private bool IsLineValid(int pieceIndex, int kingIndex, char pieceType)
+    {
+        Vector2Int pieceColRow=BitOps.GetPosition(pieceIndex), kingColRow=BitOps.GetPosition(kingIndex);
+        int pieceRow=pieceColRow.y, pieceCol=pieceColRow.x,
+            kingRow=kingColRow.y, kingCol=kingColRow.x;
 
+        if (pieceType == 'Q')
+        {
+            // Queen can attack in straight lines (horizontal, vertical) or diagonally
+            return BitOps.isValidHorizontalMove(pieceRow, pieceCol, kingRow, kingCol) 
+                || BitOps.isValidVerticalMove(pieceRow, pieceCol, kingRow, kingCol) 
+                || BitOps.isValidDiagonalMove(pieceRow, pieceCol, kingRow, kingCol);
+        }
+        else if (pieceType == 'R')
+        {
+            // Rook can only attack in straight lines (horizontal or vertical)
+            return BitOps.isValidHorizontalMove(pieceRow, pieceCol, kingRow, kingCol)
+                || BitOps.isValidVerticalMove(pieceRow, pieceCol, kingRow, kingCol);
+        }
+        else if (pieceType == 'B')
+        {
+            // Bishop can only attack diagonally
+            return BitOps.isValidDiagonalMove(pieceRow, pieceCol, kingRow, kingCol);
+        }
+
+        return false; // Invalid piece type
+    }
+
+    private bool CheckForPinnedPiece(PieceBoard pieceboard, int pieceIndex, int kingIndex, PlayerState otherPlayer, out ulong pinnedMovement){
+        pinnedMovement = 0UL;
+
+        foreach (var kvpPiece in otherPlayer.PieceBoards){
+            if(new HashSet<char>{ 'Q', 'R', 'B' }.Contains(kvpPiece.Key)){ // only sliders
+                foreach (var kvpMoves in kvpPiece.Value.ValidMovesMap){
+                    if(IsLineValid(kvpMoves.Key, kingIndex, kvpPiece.Key)){ // if there is a path
+                        pinnedMovement=GetAttackPath(kvpMoves.Key, kingIndex, otherPlayer); //get the path
+                        ulong piecePosition=BitOps.a1 << pieceIndex;
+                        bool otherPieceOnPath = (OccupancyBoard & (pinnedMovement & ~(BitOps.a1<<kvpMoves.Key) & ~(piecePosition)))!=0;
+                        if(otherPieceOnPath){
+                            pinnedMovement=0UL; // reset, continue the search for a pinn
+                        }else{
+                            return (pinnedMovement&piecePosition)!=0; // if piece is indeed pinned
+                        }
+                        
+                    }
+                }
+            }
+            
+        }
+        
+        return false; // No attacker found
+    }
 
     public ulong GetMovesAllowed(PieceBoard pieceBoard, int index){
         // include enpassant for validation

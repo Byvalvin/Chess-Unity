@@ -197,6 +197,9 @@ public class Board : MonoBehaviour
 // ui
     Vector2Int GetIndexPosition(Vector2 pos)=>Utility.RoundVector2(pos/tileSize);
 
+    bool ValidTargetPosition(Vector2Int targetPosition)=>Utility.InBounds(targetPosition);
+
+    
     void DeselectPiece() { // Reset selected piece
         selectedPiece = null;
         originalPosition = default;
@@ -244,6 +247,7 @@ public class Board : MonoBehaviour
         PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
         //ulong pieceMoves = pieceBoard.ValidMovesMap[originalIndex];
         ulong pieceMoves = gameState.GetMovesAllowed(pieceBoard, originalIndex);
+        /*
         Debug.Log(pieceBoard.Type + " " + (pieceBoard.IsWhite?"w":"b") + originalIndex + " " + index + "moves");
         for(int i=0; i<64; i++){
             if((pieceBoard.ValidMovesMap[originalIndex]&BitOps.a1<<i)!=0)
@@ -254,7 +258,10 @@ public class Board : MonoBehaviour
             if((pieceMoves&BitOps.a1<<i)!=0)
                 Debug.Log(i);
         }
-        bool canMove = (pieceMoves & BitOps.a1<<index)!=0;
+        */
+        bool canMove = ValidTargetPosition(targetPosition) 
+                    && pieceBoard.CanMove(originalIndex, index) 
+                    && (pieceMoves & BitOps.a1<<index)!=0;
 
         if (canMove){
             // Execute the move

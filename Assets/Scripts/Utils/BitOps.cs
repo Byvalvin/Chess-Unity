@@ -67,7 +67,9 @@ public static class BitOps
         int toRow = toIndex / N;
         int toCol = toIndex % N;
 
-        return fromRow == toRow || fromCol == toCol || Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol);
+        return isValidHorizontalMove(fromRow, fromCol, toRow, toCol) || 
+               isValidVerticalMove(fromRow, fromCol, toRow, toCol) || 
+               isValidDiagonalMove(fromRow, fromCol, toRow, toCol);
     }
 
     // Get the direction (bitboard) from one index to another
@@ -128,8 +130,9 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
         int toCol = toIndex % N;
 
         return isValidHorizontalMove(fromRow, fromCol, toRow, toCol) || 
-               isValidVerticalMove(fromRow, fromCol, toRow, toCol) || 
-               isValidDiagonalMove(fromRow, fromCol, toRow, toCol);
+            isValidVerticalMove(fromRow, fromCol, toRow, toCol) || 
+            isValidDiagonalMove(fromRow, fromCol, toRow, toCol) || 
+            IsValidKnightMove(fromRow, fromCol, toRow, toCol);
     }
 
     // Check horizontal movement
@@ -144,7 +147,14 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
     public static bool isValidDiagonalMove(int fromRow, int fromCol, int toRow, int toCol) => 
         Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol); 
 
-    
+    // Check knight movement
+    public static bool IsValidKnightMove(int fromRow, int fromCol, int toRow, int toCol)
+    {
+        int rowDiff = Math.Abs(fromRow - toRow);
+        int colDiff = Math.Abs(fromCol - toCol);
+        return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
+    }
+
     public enum MovementType{
         Diagonal,    
         Horizontal,    

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+
 public abstract class PieceBoard
 {
     public ulong Bitboard { get; set; }

@@ -38,5 +38,6 @@ public static class Utility
     */
     public static Vector2Int RoundVector2(Vector2 position) => new Vector2Int((int)Mathf.Round(position.x), (int)Mathf.Round(position.y));
 
+    public static bool InBounds(Vector2Int position) => 0<=position.x && position.y<Board.N;
 
 }
