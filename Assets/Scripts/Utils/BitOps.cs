@@ -161,7 +161,6 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
         Vertical,
         
         Bishop,
-        
         Rook,    
         Any
     }
