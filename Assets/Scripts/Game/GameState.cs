@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class GameState
 {
     
-    public static event Action<Vector2Int, bool> OnPieceMoved; // update the Board UI if there is one
+    public static event Action<Vector2Int, bool, Vector2Int> OnPieceMoved; // update the Board UI if there is one
     public PlayerState[] PlayerStates { get; private set; } // Array of player states
     public ulong OccupancyBoard { get; private set; } // Combined occupancy board
     public int currentIndex = 0; // white to start
@@ -47,10 +47,10 @@ public class GameState
         OccupancyBoard |= (PlayerStates[0].OccupancyBoard | PlayerStates[1].OccupancyBoard);
     }
 
-    private void MoveUpdate(int finalIndex, bool isCapture){
+    private void MoveUpdate(int finalIndex, bool isCapture, int capturedPosition){
         
         //ALERT UI for Listeners(Board) to update
-        OnPieceMoved?.Invoke(BitOps.GetPosition(finalIndex), isCapture);
+        OnPieceMoved?.Invoke(BitOps.GetPosition(finalIndex), isCapture, BitOps.GetPosition(capturedPosition));
 
         Debug.Log("move invoked updated");
 
@@ -62,19 +62,32 @@ public class GameState
 
     public void ExecuteMove(PieceBoard pieceBoard, int originalIndex, int index){
         // Check if the target index is occupied
-        bool isCapture = (OccupancyBoard & (BitOps.a1 << index)) != 0;
+        bool isCapture = (OccupancyBoard & (BitOps.a1 << index)) != 0,
+            isEnPassantCapture = pieceBoard is PawnBoard pawnBoard 
+                            && PlayerStates[1 - currentIndex].PieceBoards['P'] is PawnBoard oppPawnBoard
+                            && Math.Abs(index - oppPawnBoard.enPassantablePawn)==Board.N
+                            && oppPawnBoard.canBeCapturedEnPassant;
+       
 
+        int removedPieceIndex = -1; // no removed piece
         if (isCapture) // already valifdated move by now
         {
             // Remove the piece from the opponent's board
             PieceBoard opponentPieceBoard = GetPieceBoard(index, PlayerStates[1 - currentIndex]);
             PlayerStates[1-currentIndex].RemovePiece(opponentPieceBoard, index);
             Debug.Log($"Captured opponent's piece at index {index}.");
+            removedPieceIndex = index;
+        }
+        else if(isEnPassantCapture)
+        {
+            PlayerStates[1-currentIndex].EnPassantChosen();
+            Debug.Log($"Captured opponent's piece enpassant {index}.");
+            removedPieceIndex = (PlayerStates[1-currentIndex].PieceBoards['P'] as PawnBoard).enPassantablePawn;
         }
 
         pieceBoard.Move(originalIndex, index);
 
-        MoveUpdate(index, isCapture);
+        MoveUpdate(index, isCapture || isEnPassantCapture, removedPieceIndex);
     }
 
     public PieceBoard GetPieceBoard(int index, PlayerState givenPlayerState =null){
@@ -225,6 +238,10 @@ public class GameState
         return ValidateMoves(pieceBoard, index, moves);
     }
 
+    private void ResetEnpassant(PlayerState playerState) => (playerState.PieceBoards['P'] as PawnBoard).ResetEnPassant();
+
+    
+
     private void Opposition(){
         int p1KingIndex = PlayerStates[0].GetKingIndex(),
             p2KingIndex = PlayerStates[1].GetKingIndex();
@@ -316,29 +333,33 @@ public class GameState
         for(int i=0; i<64; i++){
             ulong currBitPos = (BitOps.a1<<i);
             
-            int playerIndex; //find correct playerstate
-            playerIndex = (currBitPos & PlayerStates[0].OccupancyBoard)!=0 ? 0 
-                        : (currBitPos & PlayerStates[1].OccupancyBoard)!=0 ? 1
-                        : -1;
-            PlayerState currPlayerState = playerIndex!=-1 ? PlayerStates[playerIndex] : null;
-            if(currPlayerState!=null){ // find correct PieceBoard
-                PieceBoard currPieceBoard = null;
-                foreach (PieceBoard pieceBoard in currPlayerState.PieceBoards.Values){
-                    if((pieceBoard.Bitboard & currBitPos)!=0){
-                        currPieceBoard = pieceBoard;
-                        break;
-                    }
+            int playerIndex = (currBitPos & PlayerStates[0].OccupancyBoard)!=0 ? 0 
+                            : (currBitPos & PlayerStates[1].OccupancyBoard)!=0 ? 1
+                            : -1;
+            
+            if(playerIndex==-1) continue;
+
+            PlayerState currPlayerState = PlayerStates[playerIndex],
+                        otherPlayerState = PlayerStates[1-playerIndex];
+         
+            PieceBoard currPieceBoard = null; // find correct PieceBoard
+            foreach (PieceBoard pieceBoard in currPlayerState.PieceBoards.Values)
+                if((pieceBoard.Bitboard & currBitPos)!=0){
+                    currPieceBoard = pieceBoard;
+                    break;
                 }
-                if(currPieceBoard!=null){
-                    //Debug.Log(currPlayerState + " " + i + " " +currPieceBoard);
-                    ulong enemyBoardExceptKingPos = PlayerStates[1-playerIndex].OccupancyBoard & ~(PlayerStates[1-playerIndex].PieceBoards['K'].Bitboard);
-                    currPieceBoard.ResetValidMoves(currPlayerState.OccupancyBoard, i, enemyBoardExceptKingPos);
-                }
+            if(currPieceBoard!=null){
+                ulong enemyBoardExceptKingPos = otherPlayerState.OccupancyBoard & ~(otherPlayerState.PieceBoards['K'].Bitboard);
+                currPieceBoard.ResetValidMoves(currPlayerState.OccupancyBoard, i, currPieceBoard.Type=='P'?  otherPlayerState.OccupancyBoard:enemyBoardExceptKingPos);
             }
         }
+        if(PlayerStates[1-currentIndex].PieceBoards['P'] is PawnBoard oppPawnBoard && oppPawnBoard.canBeCapturedEnPassant)// add only when opp presents the chance once
+            (PlayerStates[currentIndex].PieceBoards['P'] as PawnBoard).AddEnPassant(oppPawnBoard);
+
         Opposition();
         foreach (PlayerState playerState in PlayerStates)
         {
+            ResetEnpassant(playerState);
             UpdateCheckStatus(playerState);
             UpdateKingAttack(playerState);
         }

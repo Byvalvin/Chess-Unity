@@ -74,7 +74,7 @@ public abstract class PieceBoard
         return BitOps.IsValidMove(fromIndex, toIndex);
     }
  
-    public void Move(int fromIndex, int toIndex){
+    public virtual void Move(int fromIndex, int toIndex){
         Bitboard &= ~(BitOps.a1 << fromIndex);
         Bitboard |= (BitOps.a1 << toIndex);
 

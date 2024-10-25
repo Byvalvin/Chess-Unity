@@ -150,17 +150,16 @@ public class Board : MonoBehaviour
 
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
     private void SetPosition(GameObject piece, Vector2Int position)=> SetPosition(piece, position.x, position.y);
-    private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false){
+    private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false, Vector2Int removedPiecePosition=default){
         //ui update
 
         // captures ui update
         if(isCaptureMove){
             List<GameObject> pieces = gameState.currentIndex==0?BlackPieces:WhitePieces;
             GameObject targetPiece = pieces.FirstOrDefault(p => 
-                GetIndexPosition(p.transform.position) == finalPosition); // Check for any piece at the target position
+                GetIndexPosition(p.transform.position) == removedPiecePosition); // Check for any piece at the target position
             if (targetPiece != null)
                 SetPosition(targetPiece, PieceBoard.purgatory);
-            
         }
 
         SetPosition(selectedPiece, finalPosition);
@@ -259,6 +258,7 @@ public class Board : MonoBehaviour
                 Debug.Log(i);
         }
         */
+
         bool canMove = ValidTargetPosition(targetPosition) 
                     && pieceBoard.CanMove(originalIndex, index) 
                     && (pieceMoves & BitOps.a1<<index)!=0;

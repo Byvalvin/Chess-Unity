@@ -52,6 +52,14 @@ public class PlayerState
 
         return true; // Successfully removed the piece
     }
+
+    public bool EnPassantChosen(){
+        if(PieceBoards['P'] is PawnBoard myPawnBoard)
+            return RemovePiece(myPawnBoard, myPawnBoard.enPassantablePawn);
+        return false;
+    }
+    
+    
     public void UpdateOccupancyBoard()
     {
         OccupancyBoard = 0UL;

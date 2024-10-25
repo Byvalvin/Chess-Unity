@@ -1,16 +1,35 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class PawnBoard : PieceBoard
 {
+    
+    public int enPassantablePawn;
+    protected int enPassantCounter;
+    public bool canBeCapturedEnPassant => enPassantCounter<2 && enPassantablePawn!=-1;
     public PawnBoard(bool isWhite, ulong startingBitboard = 0) : base(isWhite, startingBitboard)
     {
         Type = 'P';
+        enPassantablePawn = -1; // only one pawn can be capped enPassant at a time
+        enPassantCounter = 0;
     }
 
     public PawnBoard(PawnBoard original) : base(original) { }
 
     public override PieceBoard Clone() => new PawnBoard(this);
+
+    // Modify this method to set the en passant target when a pawn moves two squares
+    public override void Move(int fromIndex, int toIndex)
+    {
+        base.Move(fromIndex, toIndex);
+        
+        // Check if it's a two-square move
+        if (Math.Abs(fromIndex - toIndex) == 2 * BitOps.N){ // only possible for first double move
+            //enPassantablePawn = toIndex + (IsWhite ? -BitOps.N : BitOps.N); // Set the en passant target
+            enPassantablePawn = toIndex;
+        }
+    }
 
     public override ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
@@ -58,7 +77,7 @@ public class PawnBoard : PieceBoard
         }
     }
 
-    private void AddDiagonalCaptures(ref ulong validMoves, int index, int direction, ulong friendBoard, ulong enemyBoard, bool includeFriends=false)
+    public void AddDiagonalCaptures(ref ulong validMoves, int index, int direction, ulong friendBoard, ulong enemyBoard, bool includeFriends=false)
     {
         int leftCaptureIndex = IsWhite
             ? BitOps.Diagonal1Move(index, direction) // White: up-left
@@ -152,5 +171,53 @@ public class PawnBoard : PieceBoard
         }
         return pawnCaptureMoves;
 
+    }
+
+    public void AddEnPassant(PawnBoard opponentPawnBoard)
+    {
+        int direction = IsWhite ? 1 : -1;
+        List<(int pawnIndex, ulong enPassantMove)> movesToAdd = new List<(int, ulong)>();
+
+        foreach (int pawnIndex in ValidMovesMap.Keys)
+        {
+            // Check left en passant
+            int leftIndex = IsWhite ? BitOps.Diagonal1Move(pawnIndex, direction) : BitOps.Diagonal3Move(pawnIndex, -direction);
+            if (BitOps.IsValidMove(pawnIndex, leftIndex) 
+                && (Math.Abs(opponentPawnBoard.enPassantablePawn - leftIndex) == Board.N))
+            {
+                ulong enPassantMove = BitOps.a1 << leftIndex;
+                movesToAdd.Add((pawnIndex, enPassantMove));
+            }
+
+            // Check right en passant
+            int rightIndex = IsWhite ? BitOps.Diagonal2Move(pawnIndex, direction) : BitOps.Diagonal4Move(pawnIndex, -direction);
+            if (BitOps.IsValidMove(pawnIndex, rightIndex) 
+                && (Math.Abs(opponentPawnBoard.enPassantablePawn - rightIndex) == Board.N))
+            {
+                ulong enPassantMove = BitOps.a1 << rightIndex;
+                movesToAdd.Add((pawnIndex, enPassantMove));
+            }
+        }
+
+        // Apply the collected en passant moves
+        foreach (var (pawnIndex, enPassantMove) in movesToAdd)
+            ValidMovesMap[pawnIndex] |= enPassantMove;
+        
+    }
+
+
+    public void ResetEnPassant(bool pawnWasEnPassantCaptured = false){
+        if(pawnWasEnPassantCaptured){// early reset
+            enPassantCounter = 10; //reset for next pawn
+            //enPassantablePawn = -1; // Clear target if captured or moved
+            return;
+        }
+
+        if (canBeCapturedEnPassant){
+            enPassantCounter++;
+        }else{
+            enPassantCounter = 0; //reset for next pawn
+            enPassantablePawn = -1; // Clear target if captured or moved
+        }
     }
 }
