@@ -10,6 +10,8 @@ public class GameState
     public ulong OccupancyBoard { get; private set; } // Combined occupancy board
     public int currentIndex = 0; // white to start
 
+    public bool Gameover{get; private set;}
+
     public GameState(string player1Type, string player2Type)
     {
         PlayerStates = new PlayerState[2];
@@ -58,6 +60,15 @@ public class GameState
         SwitchPlayer();
         UpdateBoard();
         UpdateGameState();
+        Gameover = IsGameEnd();
+    }
+
+    public bool hasMoves(PlayerState player){
+        foreach (PieceBoard pieceBoard in player.PieceBoards.Values)
+            foreach (int pieceIndex in pieceBoard.ValidMovesMap.Keys)
+                if(GetMovesAllowed(pieceBoard, pieceIndex)!=0UL)
+                    return true;
+        return false;   
     }
 
     public void ExecuteMove(PieceBoard pieceBoard, int originalIndex, int index){
@@ -248,8 +259,8 @@ public class GameState
     private void Opposition(){
         int p1KingIndex = PlayerStates[0].GetKingIndex(),
             p2KingIndex = PlayerStates[1].GetKingIndex();
-        Debug.Log(p1KingIndex+"is king index1");
-        Debug.Log(p2KingIndex+"is king index2");
+        // Debug.Log(p1KingIndex+"is king index1");
+        // Debug.Log(p2KingIndex+"is king index2");
         ulong opposition = PlayerStates[0].PieceBoards['K'].ValidMovesMap[p1KingIndex]
                         & PlayerStates[1].PieceBoards['K'].ValidMovesMap[p2KingIndex];
 
@@ -262,9 +273,9 @@ public class GameState
                     currPlayer=playerState;
 
         int kingIndex = currPlayer.GetKingIndex();
-        Debug.Log(kingIndex+"is king index");
+        // Debug.Log(kingIndex+"is king index");
         if(kingIndex==-1){
-            Debug.LogError(currPlayer+"has no King!");
+            // Debug.LogError(currPlayer+"has no King!");
             return;
         }
 
@@ -358,7 +369,7 @@ public class GameState
         }
         if(PlayerStates[1-currentIndex].PieceBoards['P'] is PawnBoard oppPawnBoard && oppPawnBoard.canBeCapturedEnPassant)// add only when opp presents the chance once
             (PlayerStates[currentIndex].PieceBoards['P'] as PawnBoard).AddEnPassant(oppPawnBoard);
-        Debug.Log((PlayerStates[1].PieceBoards['P'] is PawnBoard oppPawnBoard2 && oppPawnBoard2.canBeCapturedEnPassant)+ " " +(PlayerStates[1].PieceBoards['P'] as PawnBoard).enPassantablePawn+" "+(PlayerStates[1].PieceBoards['P'] as PawnBoard).enPassantCounter);
+        // Debug.Log((PlayerStates[1].PieceBoards['P'] is PawnBoard oppPawnBoard2 && oppPawnBoard2.canBeCapturedEnPassant)+ " " +(PlayerStates[1].PieceBoards['P'] as PawnBoard).enPassantablePawn+" "+(PlayerStates[1].PieceBoards['P'] as PawnBoard).enPassantCounter);
         Opposition();
         foreach (PlayerState playerState in PlayerStates)
         {
@@ -368,6 +379,25 @@ public class GameState
         }
 
     }
+
+    public bool PlayerCheckmated(PlayerState player){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
+        if(!hasMoves(player)&& currentIndex==player.TurnIndex && player.IsInCheck){
+            Debug.Log($"GAME OVER:{player.PlayerType} IS CHECKMATED");
+            return true;
+        }
+        return false;
+    }
+    public bool CheckCheckmate()=> PlayerCheckmated(PlayerStates[0]) || PlayerCheckmated(PlayerStates[1]);
+
+    public bool PlayerStalemated(PlayerState player){
+        if(!hasMoves(player) && currentIndex==player.TurnIndex && !player.IsInCheck){
+            Debug.Log($"GAME OVER: DRAW-> {player.PlayerType} STALEMATED");
+            return true;
+        }
+        return false;
+    }
+    public bool CheckStalemate()=> PlayerStalemated(PlayerStates[0]) || PlayerStalemated(PlayerStates[1]);
+    public bool IsGameEnd()=>CheckCheckmate() || CheckStalemate();
 
 
 }

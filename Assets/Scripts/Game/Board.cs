@@ -224,16 +224,31 @@ public class Board : MonoBehaviour
             Debug.Log("Collision null OR no gameobject with name foud");
         }
         
-        if(selectedPiece == null)
-            Debug.Log("selectedPiece null");
-        else
-            Debug.Log(selectedPiece); 
+        // if(selectedPiece == null)
+        //     Debug.Log("selectedPiece null");
+        // else
+        //     Debug.Log(selectedPiece); 
     }
 
     void DragPiece(){
         Vector2 mousePosition = Utility.GetMouseWorldPosition();
         if (selectedPiece != null)
             selectedPiece.transform.position = new Vector3(mousePosition.x, mousePosition.y, 0); // move piece with mouse
+    }
+
+    void LogMoves(){
+                /*
+        Debug.Log(pieceBoard.Type + " " + (pieceBoard.IsWhite?"w":"b") + originalIndex + " " + index + "moves");
+        for(int i=0; i<64; i++){
+            if((pieceBoard.ValidMovesMap[originalIndex]&BitOps.a1<<i)!=0)
+                Debug.Log(i);
+        }
+        Debug.Log("-------------------");
+        for(int i=0; i<64; i++){
+            if((pieceMoves&BitOps.a1<<i)!=0)
+                Debug.Log(i);
+        }
+        */
     }
     void ReleasePiece(){
         Vector2Int targetPosition = GetIndexPosition(Utility.GetMouseWorldPosition());
@@ -246,18 +261,7 @@ public class Board : MonoBehaviour
         PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
         //ulong pieceMoves = pieceBoard.ValidMovesMap[originalIndex];
         ulong pieceMoves = gameState.GetMovesAllowed(pieceBoard, originalIndex);
-        /*
-        Debug.Log(pieceBoard.Type + " " + (pieceBoard.IsWhite?"w":"b") + originalIndex + " " + index + "moves");
-        for(int i=0; i<64; i++){
-            if((pieceBoard.ValidMovesMap[originalIndex]&BitOps.a1<<i)!=0)
-                Debug.Log(i);
-        }
-        Debug.Log("-------------------");
-        for(int i=0; i<64; i++){
-            if((pieceMoves&BitOps.a1<<i)!=0)
-                Debug.Log(i);
-        }
-        */
+
 
         bool canMove = ValidTargetPosition(targetPosition) 
                     && pieceBoard.CanMove(originalIndex, index) 
@@ -290,6 +294,8 @@ public class Board : MonoBehaviour
     }
     
     void HandleInput(){
+        if(gameState.Gameover) return; // dont handl user input
+
         if (Utility.MouseDown()) // Left mouse button
             SelectPiece();
         else if (selectedPiece != null)
