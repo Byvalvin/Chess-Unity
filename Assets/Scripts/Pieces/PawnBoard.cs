@@ -6,8 +6,8 @@ public class PawnBoard : PieceBoard
 {
     
     public int enPassantablePawn;
-    protected int enPassantCounter;
-    public bool canBeCapturedEnPassant => enPassantCounter<2 && enPassantablePawn!=-1;
+    public int enPassantCounter;
+    public bool canBeCapturedEnPassant => enPassantCounter<=1 && enPassantablePawn!=-1;
     public PawnBoard(bool isWhite, ulong startingBitboard = 0) : base(isWhite, startingBitboard)
     {
         Type = 'P';
@@ -205,19 +205,16 @@ public class PawnBoard : PieceBoard
         
     }
 
+    public void EnPassantReset(){
+        enPassantCounter = 0; //reset for next pawn
+        enPassantablePawn = -1; // Clear target if captured or moved
+    }
 
-    public void ResetEnPassant(bool pawnWasEnPassantCaptured = false){
-        if(pawnWasEnPassantCaptured){// early reset
-            enPassantCounter = 10; //reset for next pawn
-            //enPassantablePawn = -1; // Clear target if captured or moved
-            return;
-        }
-
+    public void ResetEnPassant(){
         if (canBeCapturedEnPassant){
             enPassantCounter++;
         }else{
-            enPassantCounter = 0; //reset for next pawn
-            enPassantablePawn = -1; // Clear target if captured or moved
+            EnPassantReset();
         }
     }
 }

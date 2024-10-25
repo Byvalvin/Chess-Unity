@@ -87,6 +87,9 @@ public class GameState
 
         pieceBoard.Move(originalIndex, index);
 
+        // reset enpassant after a move is made a poor fix but works for now
+        (PlayerStates[1 - currentIndex].PieceBoards['P'] as PawnBoard).EnPassantReset();
+
         MoveUpdate(index, isCapture || isEnPassantCapture, removedPieceIndex);
     }
 
@@ -355,7 +358,7 @@ public class GameState
         }
         if(PlayerStates[1-currentIndex].PieceBoards['P'] is PawnBoard oppPawnBoard && oppPawnBoard.canBeCapturedEnPassant)// add only when opp presents the chance once
             (PlayerStates[currentIndex].PieceBoards['P'] as PawnBoard).AddEnPassant(oppPawnBoard);
-
+        Debug.Log((PlayerStates[1].PieceBoards['P'] is PawnBoard oppPawnBoard2 && oppPawnBoard2.canBeCapturedEnPassant)+ " " +(PlayerStates[1].PieceBoards['P'] as PawnBoard).enPassantablePawn+" "+(PlayerStates[1].PieceBoards['P'] as PawnBoard).enPassantCounter);
         Opposition();
         foreach (PlayerState playerState in PlayerStates)
         {
