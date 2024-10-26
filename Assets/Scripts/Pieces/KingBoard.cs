@@ -38,18 +38,14 @@ public class KingBoard : PieceBoard
             // Check castling conditions
             if (IsWhite)
             {
-                Debug.Log("white castle");
                 ulong rookBitA=0x0000000000000080,
                     rookBitB=0x0000000000000001;
             
-                    if((friendBoard & rookBitA) != 0){// Check if the rook is present
-                        Debug.Log("white castle h1 rook");
+                    if((friendBoard & rookBitA) != 0)// Check if the rook is present
                         validMoves |= CheckCastling(occupancyBoard, rookBitA, new int[] { 5, 6 }); // Kingside
-                    }
-                    if((friendBoard & rookBitB) != 0){// Check if the rook is present
-                        Debug.Log("white castle a1 rook");
+                    if((friendBoard & rookBitB) != 0)// Check if the rook is present
                         validMoves |= CheckCastling(occupancyBoard, rookBitB, new int[] { 1, 2, 3 }); // Queenside
-                    }
+                    
                 
                 
             }
@@ -82,10 +78,11 @@ public class KingBoard : PieceBoard
         }
 
         // Determine the new position for the king after castling
-        ulong newKingPosition = (ulong)(IsWhite 
-            ? (rookBit == 0x0000000000000080 ? 1UL << 6 : 1UL << 2) // Kingside to g1 (index 6), Queenside to c1 (index 2)
-            : (rookBit == 0x0100000000000000 ? 1UL << 62 : 1UL << 58) // Kingside to g8 (index 62), Queenside to c8 (index 58)
-        ); 
+        // ulong newKingPosition = (ulong)(IsWhite 
+        //     ? (rookBit == 0x0000000000000080 ? 1UL << 6 : 1UL << 2) // Kingside to g1 (index 6), Queenside to c1 (index 2)
+        //     : (rookBit == 0x0100000000000000 ? 1UL << 62 : 1UL << 58) // Kingside to g8 (index 62), Queenside to c8 (index 58)
+        // ); 
+        ulong newKingPosition = BitOps.a1 << spaces[1]; 
 
         return newKingPosition; // Return the new king position
     }
