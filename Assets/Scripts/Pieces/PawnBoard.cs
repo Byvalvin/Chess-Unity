@@ -15,7 +15,10 @@ public class PawnBoard : PieceBoard
         enPassantCounter = 0;
     }
 
-    public PawnBoard(PawnBoard original) : base(original) { }
+    public PawnBoard(PawnBoard original) : base(original) {
+        enPassantablePawn = original.enPassantablePawn;
+        enPassantCounter = original.enPassantCounter;
+     }
 
     public override PieceBoard Clone() => new PawnBoard(this);
 

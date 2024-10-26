@@ -39,9 +39,16 @@ public class PlayerState
     public PlayerState(PlayerState original){
         PlayerType = original.PlayerType;
         IsWhite = original.IsWhite;
+        TurnIndex = original.TurnIndex;
+
         foreach(char type in original.PieceBoards.Keys)
             PieceBoards[type] = original.PieceBoards[type].Clone();
-        OccupancyBoard = original.OccupancyBoard;
+        
+        InCheck = original.InCheck;
+        DoubleCheck = original.DoubleCheck;
+        KingAttacker = original.KingAttacker;
+        
+        UpdateOccupancyBoard();
     }
     public PlayerState Clone() => new PlayerState(this);
 
@@ -74,8 +81,5 @@ public class PlayerState
         }
         return -1;
     }
-
-
-
 
 }

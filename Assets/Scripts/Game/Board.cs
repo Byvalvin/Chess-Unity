@@ -5,12 +5,14 @@ using System.Linq;
 public class Board : MonoBehaviour
 {
     private GameState gameState;
+
+
     public const int N = 8; // BOARDSIZE
     private GameObject[,] tiles = new GameObject[N, N]; // Array to hold tile references
     static float tileSize = 5.0f;
 
-    static int sheetN = 1; // The piece sheet we use
 
+    static int sheetN = 1; // The piece sheet we use
     static Dictionary<char, string> pieceTypeMap = new Dictionary<char, string>{
         {'K',"King"},
         {'Q',"Queen"},
@@ -41,6 +43,8 @@ public class Board : MonoBehaviour
     };
     static int colourIndex = -1; // Will generate same index for all pieces once
     Color lightColour, darkColour;
+    public static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>(); // Dictionary for sprites
+
 
     static Dictionary<int, float> pieceScaleMap = new Dictionary<int, float>
     {
@@ -48,7 +52,8 @@ public class Board : MonoBehaviour
         { 1, 1.25f },
     };
     float pieceScaleFactor; // Scale factor for pieces
-    public static Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>(); // Dictionary for sprites
+
+
     public List<GameObject> WhitePieces{get; set;}
     public List<GameObject> BlackPieces{get; set;}
 
@@ -71,6 +76,53 @@ public class Board : MonoBehaviour
         GameState.OnPieceMoved += UpdateSelectedPieceUI; // auto update ui for bord after piece moves
         LogBoard();
         //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
+    }
+
+    public void CreateBoard(){
+        // Logic to update the visual board based on gameState's bitboards
+        foreach (var playerState in gameState.PlayerStates){
+            foreach (var pieceBoard in playerState.PieceBoards.Values){
+                // Check if the piece board has any pieces
+                if (pieceBoard.Bitboard == 0) continue;
+
+                // For each piece type, check its bitboard and place the pieces accordingly
+                for (int i = 0; i < 64; i++){// Loop through all 64 squares
+                    if ((pieceBoard.Bitboard & (BitOps.a1 << i)) != 0){ // Check if the piece is present
+                        int x = i % 8; // X position on the board
+                        int y = i / 8; // 7 - (i / 8)
+                        GameObject piece = CreatePiece(pieceBoard.Type, playerState.IsWhite);
+                        SetPosition(piece, x, y);
+
+                        // "give" piece to player for reference
+                        if(playerState.IsWhite)
+                            WhitePieces.Add(piece);
+                        else
+                            BlackPieces.Add(piece);
+                    }
+                }
+            }
+        }
+    }
+    private string GetPieceAtIndex(int index){
+        foreach (var playerState in gameState.PlayerStates)
+            foreach (var pieceBoard in playerState.PieceBoards.Values)
+                if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
+                    return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
+        return " o "; // Return a dot for empty squares
+    }
+    public void LogBoard(){
+        Debug.Log("Current Board State:");
+        
+        for (int y = 7; y >= 0; y--){ // From 1st rank to 8th rank
+            string row = $"Row {y}: "; // Adjust for logging
+            for (int x = 0; x < 8; x++) {// From a-file to h-file
+                int index = BitOps.GetIndex(y, x); // Calculate the index
+                string pieceChar = GetPieceAtIndex(index);
+                //row += pieceChar + "" + index + " "; // Add the piece character to the row
+                row += pieceChar + " "; // Add the piece character to the row
+            }
+            Debug.Log(row); // Log the row
+        }
     }
 
     private void LoadSprites(int sheetN = 1){
@@ -100,31 +152,6 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void CreateBoard(){
-        // Logic to update the visual board based on gameState's bitboards
-        foreach (var playerState in gameState.PlayerStates){
-            foreach (var pieceBoard in playerState.PieceBoards.Values){
-                // Check if the piece board has any pieces
-                if (pieceBoard.Bitboard == 0) continue;
-
-                // For each piece type, check its bitboard and place the pieces accordingly
-                for (int i = 0; i < 64; i++){// Loop through all 64 squares
-                    if ((pieceBoard.Bitboard & (BitOps.a1 << i)) != 0){ // Check if the piece is present
-                        int x = i % 8; // X position on the board
-                        int y = i / 8; // 7 - (i / 8)
-                        GameObject piece = CreatePiece(pieceBoard.Type, playerState.IsWhite);
-                        SetPosition(piece, x, y);
-
-                        // "give" piece to player for reference
-                        if(playerState.IsWhite)
-                            WhitePieces.Add(piece);
-                        else
-                            BlackPieces.Add(piece);
-                    }
-                }
-            }
-        }
-    }
 
     private GameObject CreatePiece(char pieceType, bool isWhite){
         // Create a new GameObject for the piece
@@ -148,6 +175,10 @@ public class Board : MonoBehaviour
         return piece;
     }
 
+    
+
+    Vector2Int GetIndexPosition(Vector2 pos)=>Utility.RoundVector2(pos/tileSize);
+    bool ValidTargetPosition(Vector2Int targetPosition)=>Utility.InBounds(targetPosition);
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
     private void SetPosition(GameObject piece, Vector2Int position)=> SetPosition(piece, position.x, position.y);
     private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false, Vector2Int removedPiecePosition=default, bool isCastleMove=false, Vector2Int castledRookPosition=default){
@@ -163,53 +194,21 @@ public class Board : MonoBehaviour
         }
 
         //castle ui update
-        if(isCastleMove){
+        if(isCastleMove){ // moves the rook for castles since two pieces move
             List<GameObject> pieces = gameState.currentIndex==0?WhitePieces:BlackPieces;
             GameObject targetPiece = pieces.FirstOrDefault(p => 
                 GetIndexPosition(p.transform.position) == castledRookPosition); // Check for any piece at the target position
             if (targetPiece != null)
                 SetPosition(targetPiece, finalPosition);
-        }else{
+        }else{ // move the selected piece
             SetPosition(selectedPiece, finalPosition);
         }
 
-
         // reset piece selection
         DeselectPiece();
-
-
-    }
-
-    public void LogBoard(){
-        Debug.Log("Current Board State:");
-        
-        for (int y = 7; y >= 0; y--){ // From 1st rank to 8th rank
-            string row = $"Row {y}: "; // Adjust for logging
-            for (int x = 0; x < 8; x++) {// From a-file to h-file
-                int index = BitOps.GetIndex(y, x); // Calculate the index
-                string pieceChar = GetPieceAtIndex(index);
-                //row += pieceChar + "" + index + " "; // Add the piece character to the row
-                row += pieceChar + " "; // Add the piece character to the row
-            }
-            Debug.Log(row); // Log the row
-        }
-    }
-
-    private string GetPieceAtIndex(int index){
-        foreach (var playerState in gameState.PlayerStates)
-            foreach (var pieceBoard in playerState.PieceBoards.Values)
-                if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
-                    return $"{pieceBoard.Type}{(pieceBoard.IsWhite ? 'w' : 'b')}";
-        return " o "; // Return a dot for empty squares
     }
 
 
-// ui
-    Vector2Int GetIndexPosition(Vector2 pos)=>Utility.RoundVector2(pos/tileSize);
-
-    bool ValidTargetPosition(Vector2Int targetPosition)=>Utility.InBounds(targetPosition);
-
-    
     void DeselectPiece() { // Reset selected piece
         selectedPiece = null;
         originalPosition = default;
@@ -236,10 +235,6 @@ public class Board : MonoBehaviour
             Debug.Log("Collision null OR no gameobject with name foud");
         }
         
-        // if(selectedPiece == null)
-        //     Debug.Log("selectedPiece null");
-        // else
-        //     Debug.Log(selectedPiece); 
     }
 
     void DragPiece(){
