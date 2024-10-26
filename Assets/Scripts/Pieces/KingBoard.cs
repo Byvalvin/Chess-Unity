@@ -1,7 +1,25 @@
 using UnityEngine;
+
 public class KingBoard : PieceBoard
 {
-    public KingBoard(bool isWhite, ulong startingBitboard = 0) : base(isWhite, startingBitboard)
+    // Predefined castling masks for both white and black
+    // private static readonly ulong WhiteKingsideMask = (BitOps.a1 << 5) | (BitOps.a1 << 6); // f1, g1
+    // private static readonly ulong WhiteQueensideMask = (BitOps.a1 << 1) | (BitOps.a1 << 2) | (BitOps.a1 << 3); // b1, c1, d1
+    // private static readonly ulong BlackKingsideMask = (BitOps.a1 << 61) | (BitOps.a1 << 62); // f8, g8
+    // private static readonly ulong BlackQueensideMask = (BitOps.a1 << 57) | (BitOps.a1 << 58) | (BitOps.a1 << 59); // b8, c8, d8
+
+    public static readonly ulong WhiteKingsideMask = 0x0000000000000060,
+                                WhiteKingSideMove = 0x0000000000000040; // f1, g1'
+
+    public static readonly ulong WhiteQueensideMask = 0x000000000000000E,
+                                WhiteQueenSideMove = 0x0000000000000004; // b1, c1, d1
+    public static readonly ulong BlackKingsideMask = 0x6000000000000000,
+                                BlackKingSideMove = 0x4000000000000000; // f8, g8
+    public static readonly ulong BlackQueensideMask = 0x0E00000000000000,
+                                BlackQueenSideMove = 0x0400000000000000; // b8, c8, d8
+
+
+    public KingBoard(bool IsWhite, ulong startingBitboard = 0) : base(IsWhite, startingBitboard)
     {
         Type = 'K';
     }
@@ -30,39 +48,49 @@ public class KingBoard : PieceBoard
             }
         }
 
-        if(FirstMovers.Count!=0){ // onlay add castling mvoes if king hasnt made first mvoe
-            Debug.Log("in castle");
-            // Combine friend and enemy boards for occupancy checks
+        if (FirstMovers.Count != 0) // Only add castling moves if king hasn't moved
+        {
             ulong occupancyBoard = friendBoard | enemyBoard;
 
-            // Check castling conditions
-            if (IsWhite)
-            {
-                ulong rookBitA=0x0000000000000080,
-                    rookBitB=0x0000000000000001;
-            
-                    if((friendBoard & rookBitA) != 0)// Check if the rook is present
-                        validMoves |= CheckCastling(occupancyBoard, rookBitA, new int[] { 5, 6 }); // Kingside
-                    if((friendBoard & rookBitB) != 0)// Check if the rook is present
-                        validMoves |= CheckCastling(occupancyBoard, rookBitB, new int[] { 1, 2, 3 }); // Queenside
-                    
-                
-                
-            }
-            else
-            {
-                ulong rookBitA=0x0100000000000000,
-                    rookBitB=0x8000000000000000;
+            // Get castling moves
+            ulong castlingMoves = GetCastlingMoves(occupancyBoard, friendBoard);
 
-                if((friendBoard & rookBitA) != 0)// Check if the rook is present
-                    validMoves |= CheckCastling(occupancyBoard, rookBitA, new int[] { 61, 62 }); // Kingside
-                if((friendBoard & rookBitB) != 0)// Check if the rook is present
-                    validMoves |= CheckCastling(occupancyBoard, rookBitB, new int[] { 57, 58, 59 }); // Queenside
-            }
+            // add castling moves to validMoves, will filter in gamestate
+            validMoves |= castlingMoves;
         }
-        
 
         return validMoves; // Return all valid moves
+    }
+
+    public ulong GetCastlingMoves(ulong occupancyBoard, ulong friendBoard)
+    {
+        ulong castlingMoves = 0UL;
+
+        castlingMoves |= GetKingsideCastlingMoves(occupancyBoard, friendBoard);
+        castlingMoves |= GetQueensideCastlingMoves(occupancyBoard, friendBoard);
+
+        return castlingMoves; // Return the castling moves
+    }
+    
+
+    public ulong GetKingsideCastlingMoves(ulong occupancyBoard, ulong friendBoard)
+    {
+        ulong rookBit = (ulong)(IsWhite ? 0x0000000000000080 : 0x0100000000000000); // h1 or h8
+        if ((friendBoard & rookBit) != 0) // Check if the rook is present
+        {
+            return CheckCastling(occupancyBoard, rookBit, IsWhite? new int[] { 5, 6 } : new int[] { 61, 62 }); // Kingside
+        }
+        return 0; // No castling moves available
+    }
+
+    public ulong GetQueensideCastlingMoves(ulong occupancyBoard, ulong friendBoard)
+    {
+        ulong rookBit = IsWhite ? 0x0000000000000001 : 0x8000000000000000; // a1 or a8
+        if ((friendBoard & rookBit) != 0) // Check if the rook is present
+        {
+            return CheckCastling(occupancyBoard, rookBit, IsWhite ? new int[] { 1, 2, 3 } : new int[] { 57, 58, 59 }); // Queenside
+        }
+        return 0; // No castling moves available
     }
 
     private ulong CheckCastling(ulong occupancyBoard, ulong rookBit, int[] spaces)
@@ -72,21 +100,36 @@ public class KingBoard : PieceBoard
         {
             if ((occupancyBoard & (BitOps.a1 << space)) != 0)
             {
-                Debug.Log("white castle space blocked "+space);
+                Debug.Log("castle space blocked " + space);
                 return 0; // Space is not empty
             }
         }
 
         // Determine the new position for the king after castling
-        // ulong newKingPosition = (ulong)(IsWhite 
-        //     ? (rookBit == 0x0000000000000080 ? 1UL << 6 : 1UL << 2) // Kingside to g1 (index 6), Queenside to c1 (index 2)
-        //     : (rookBit == 0x0100000000000000 ? 1UL << 62 : 1UL << 58) // Kingside to g8 (index 62), Queenside to c8 (index 58)
-        // ); 
         ulong newKingPosition = BitOps.a1 << spaces[1]; 
 
         return newKingPosition; // Return the new king position
     }
+
+    // private ulong CheckCastling(ulong occupancyBoard, ulong rookBit)
+    // {
+    //     // Check that all spaces between the king and rook are empty
+    //     foreach (int space in spaces)
+    //     {
+    //         if ((occupancyBoard & (BitOps.a1 << space)) != 0)
+    //         {
+    //             Debug.Log("castle space blocked " + space);
+    //             return 0; // Space is not empty
+    //         }
+    //     }
+
+    //     // Determine the new position for the king after castling
+    //     ulong newKingPosition = BitOps.a1 << spaces[1]; 
+
+    //     return newKingPosition; // Return the new king position
+    // }
 }
+
 
 
 /*

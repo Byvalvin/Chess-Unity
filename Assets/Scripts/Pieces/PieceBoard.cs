@@ -7,7 +7,7 @@ public abstract class PieceBoard
     public ulong Bitboard { get; set; }
     public char Type { get; set; }
     public bool IsWhite { get; set; }
-    protected HashSet<int> FirstMovers { get; set; }
+    public HashSet<int> FirstMovers { get; protected set; }
 
     public Dictionary<int, ulong> ValidMovesMap{get; protected set;}
 

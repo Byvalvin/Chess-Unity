@@ -216,7 +216,8 @@ public class Board : MonoBehaviour
             int index = BitOps.GetIndex(originalPosition);
             
             if((gameState.OccupancyBoard & (BitOps.a1 << index)) == 0
-            || gameState.PlayerStates[gameState.currentIndex].IsWhite != (selectedPiece.name[1]=='w')){
+            || gameState.PlayerStates[gameState.currentIndex].IsWhite != (selectedPiece.name[1]=='w')
+            ){
                 DeselectPiece(); //reset piece selection
                 Debug.Log("No piece at pos OR selected piece is NOT the same colour as player to play");
             }
@@ -261,7 +262,6 @@ public class Board : MonoBehaviour
         PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
         //ulong pieceMoves = pieceBoard.ValidMovesMap[originalIndex];
         ulong pieceMoves = gameState.GetMovesAllowed(pieceBoard, originalIndex);
-
 
         bool canMove = ValidTargetPosition(targetPosition) 
                     && pieceBoard.CanMove(originalIndex, index) 
