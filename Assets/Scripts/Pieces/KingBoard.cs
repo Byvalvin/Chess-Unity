@@ -100,7 +100,7 @@ public class KingBoard : PieceBoard
         {
             if ((occupancyBoard & (BitOps.a1 << space)) != 0)
             {
-                Debug.Log("castle space blocked " + space);
+                //Debug.Log("castle space blocked " + space);
                 return 0; // Space is not empty
             }
         }

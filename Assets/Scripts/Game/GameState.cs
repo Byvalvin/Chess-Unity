@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class GameState
 {
     
-    public static event Action<Vector2Int, bool, Vector2Int> OnPieceMoved; // update the Board UI if there is one
+    public static event Action<Vector2Int, bool, Vector2Int, bool, Vector2Int> OnPieceMoved; // update the Board UI if there is one
     public PlayerState[] PlayerStates { get; private set; } // Array of player states
     public ulong OccupancyBoard { get; private set; } // Combined occupancy board
     public int currentIndex = 0; // white to start
@@ -49,18 +49,17 @@ public class GameState
         OccupancyBoard |= (PlayerStates[0].OccupancyBoard | PlayerStates[1].OccupancyBoard);
     }
 
-    private void MoveUpdate(int finalIndex, bool isCapture, int capturedPosition){
+    private void MoveUpdate(int finalIndex, bool isCapture=false, int capturedPosition=-1, bool isCastle=false, int castledRookPosition=-1){
         
         //ALERT UI for Listeners(Board) to update
-        OnPieceMoved?.Invoke(BitOps.GetPosition(finalIndex), isCapture, BitOps.GetPosition(capturedPosition));
+        OnPieceMoved?.Invoke(BitOps.GetPosition(finalIndex),
+            isCapture, BitOps.GetPosition(capturedPosition),
+            isCastle, BitOps.GetPosition(castledRookPosition)
+        );
 
         Debug.Log("move invoked updated");
 
-        // re-setup
-        SwitchPlayer();
-        UpdateBoard();
-        UpdateGameState();
-        Gameover = IsGameEnd();
+
     }
 
     public bool hasMoves(PlayerState player){
@@ -80,7 +79,10 @@ public class GameState
                             && Math.Abs(index - oppPawnBoard.enPassantablePawn)==Board.N
                             && Math.Abs(originalPosition.x - BitOps.GetPosition(oppPawnBoard.enPassantablePawn).x)==1
                             && Math.Abs(originalPosition.y - BitOps.GetPosition(oppPawnBoard.enPassantablePawn).y)==0
-                            && oppPawnBoard.canBeCapturedEnPassant;
+                            && oppPawnBoard.canBeCapturedEnPassant,
+            
+            isCastle = pieceBoard is KingBoard kingBoard
+                        && Math.Abs(originalIndex-index)==2;
        
 
         int removedPieceIndex = -1; // no removed piece
@@ -100,11 +102,31 @@ public class GameState
         }
 
         pieceBoard.Move(originalIndex, index);
-
-        // reset enpassant after a move is made a poor fix but works for now
-        (PlayerStates[1 - currentIndex].PieceBoards['P'] as PawnBoard).EnPassantReset();
-
         MoveUpdate(index, isCapture || isEnPassantCapture, removedPieceIndex);
+
+        if(isCastle){// also find and move the correct rook
+            int rookOriginalPosition, rookFinalPosition;
+            if(PlayerStates[currentIndex].IsWhite){
+                rookOriginalPosition = index==2 ? 0:7;
+                rookFinalPosition = index==2 ? 3:5;
+            }else{
+                rookOriginalPosition = index==58 ? 56:63;
+                rookFinalPosition = index==58 ? 59:61;
+            }
+            PlayerStates[currentIndex].PieceBoards['R'].Move(rookOriginalPosition, rookFinalPosition);
+            MoveUpdate(rookFinalPosition,
+                isCapture:false, removedPieceIndex,
+                isCastle:true, castledRookPosition:rookOriginalPosition
+            );
+
+        }
+
+        // re-setup
+        (PlayerStates[1 - currentIndex].PieceBoards['P'] as PawnBoard).EnPassantReset(); // reset enpassant after a move is made a poor fix but works for now
+        SwitchPlayer();
+        UpdateBoard();
+        UpdateGameState();
+        Gameover = IsGameEnd();
     }
 
     public PieceBoard GetPieceBoard(int index, PlayerState givenPlayerState =null){

@@ -150,7 +150,7 @@ public class Board : MonoBehaviour
 
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
     private void SetPosition(GameObject piece, Vector2Int position)=> SetPosition(piece, position.x, position.y);
-    private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false, Vector2Int removedPiecePosition=default){
+    private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false, Vector2Int removedPiecePosition=default, bool isCastleMove=false, Vector2Int castledRookPosition=default){
         //ui update
 
         // captures ui update
@@ -162,7 +162,18 @@ public class Board : MonoBehaviour
                 SetPosition(targetPiece, PieceBoard.purgatory);
         }
 
-        SetPosition(selectedPiece, finalPosition);
+        //castle ui update
+        if(isCastleMove){
+            List<GameObject> pieces = gameState.currentIndex==0?WhitePieces:BlackPieces;
+            GameObject targetPiece = pieces.FirstOrDefault(p => 
+                GetIndexPosition(p.transform.position) == castledRookPosition); // Check for any piece at the target position
+            if (targetPiece != null)
+                SetPosition(targetPiece, finalPosition);
+        }else{
+            SetPosition(selectedPiece, finalPosition);
+        }
+
+
         // reset piece selection
         DeselectPiece();
 
