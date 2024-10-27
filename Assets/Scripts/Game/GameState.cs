@@ -155,7 +155,7 @@ public class GameState
 
         if(IsPromotion(pieceBoard, index)){
             if(PromoteTo!='\0'){
-                Debug.Log("Promotion!"+PromoteTo);
+                //Debug.Log("Promotion!"+PromoteTo);
                 // remove piece from this pawn pieceBoard
                 pieceBoard.RemovePiece(index);
                 // update pieceBoard 

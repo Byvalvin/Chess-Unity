@@ -158,7 +158,7 @@ public class PromotionUI : MonoBehaviour
     }
 
     private void SelectPiece(char pieceType){
-        Debug.Log("selecting "+pieceType+" "+promotionTilePosition);
+        //Debug.Log("selecting "+pieceType+" "+promotionTilePosition);
         onPromotionSelected?.Invoke(promotionTilePosition, pieceType, promotedPawnBoard);
         ClosePanel();
     }

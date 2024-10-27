@@ -58,7 +58,7 @@ public class Board : MonoBehaviour
     public List<GameObject> BlackPieces{get; set;}
 
     Vector2Int originalPosition;
-    GameObject selectedPiece = null;
+    GameObject selectedPiece = null, promotedPawn = null;
 
     // promotion
     private bool isPromotionInProgress = false;
@@ -207,16 +207,15 @@ public class Board : MonoBehaviour
                 SetPosition(targetPiece, finalPosition);
         }else{ // move the selected piece
             if(isPromotion){
-                Debug.Log("actually in prmomtoion");
                 bool forWhite = gameState.PlayerStates[gameState.currentIndex].IsWhite;
                 // remove promotePawn
-                Debug.Log(selectedPiece+"btw is the selected piece");
-                List<GameObject> pieces = forWhite? WhitePieces:BlackPieces;
-                SetPosition(selectedPiece, PieceBoard.heavenORhell);
+                SetPosition(promotedPawn, PieceBoard.heavenORhell);
+                promotedPawn = null; // reset promoted pawn
 
                 // add new piece
                 GameObject replacementPiece = CreatePiece(gameState.PromoteTo, forWhite);
                 SetPosition(replacementPiece, finalPosition);
+                List<GameObject> pieces = forWhite? WhitePieces:BlackPieces;
                 pieces.Add(replacementPiece);
 
             }else{
@@ -255,12 +254,12 @@ public class Board : MonoBehaviour
             Debug.Log("Collision null OR no gameobject with name foud");
         }
         
-        if(selectedPiece!=null){
-            Debug.Log("selectedPiece = "+selectedPiece);
+        // if(selectedPiece!=null){
+        //     Debug.Log("selectedPiece = "+selectedPiece);
 
-        }else{
-            Debug.Log("selectedPiece = null");
-        }
+        // }else{
+        //     Debug.Log("selectedPiece = null");
+        // }
     }
 
     void DragPiece(){
@@ -295,9 +294,7 @@ public class Board : MonoBehaviour
         );
     }
     private void OnPromotionSelected(Vector2Int targetPosition, char pieceType, PieceBoard promotedPawnBoard){
-        Debug.Log("selected "+pieceType+" "+targetPosition+"in on promo seleccted");
         // Update the promoteTo variable in GameState
-        Debug.Log("selectedPiece: "+selectedPiece);
         gameState.PlayerStates[gameState.currentIndex].PromoteTo = pieceType; // for bot vs player
         gameState.PromoteTo = pieceType;
         if(gameState.PromoteTo!='\0'){
@@ -333,6 +330,7 @@ public class Board : MonoBehaviour
             if(GameState.IsPromotion(pieceBoard, index)){
                 //show promotion ui
                 isPromotionInProgress = true;
+                promotedPawn = selectedPiece;
                 ShowPromotionOptions(pieceBoard, targetPosition);
 
             }else{
