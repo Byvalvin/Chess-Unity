@@ -11,7 +11,8 @@ public abstract class PieceBoard
 
     public Dictionary<int, ulong> ValidMovesMap{get; protected set;}
 
-    public static Vector2Int purgatory = new Vector2Int(-100, -100);
+    public static Vector2Int purgatory = new Vector2Int(-100, -100),
+                            heavenORhell = new Vector2Int(100, 100);
 
     public PieceBoard(bool isWhite, ulong startingBitboard = 0)
     {
@@ -99,6 +100,33 @@ public abstract class PieceBoard
         // Log or handle any additional cleanup as necessary
         Debug.Log($"Removed piece from index {index}. Remaining bitboard: {Bitboard}");
     }
+
+    public virtual void AddPiece(int index) {
+    if (!BitOps.InBounds(index)) {
+        Debug.LogError("Index out of bounds.");
+        return;
+    }
+
+    // Check if there is already a piece at the given index
+    if (GetPieceAt(index) != 0) {
+        Debug.LogError("There is already a piece at this index.");
+        return;
+    }
+
+    // Update the Bitboard to add the new piece
+    Bitboard |= (BitOps.a1 << index);
+    
+    // Track first move if applicable
+    //FirstMovers.Add(index);
+    
+    // You might want to also update ValidMovesMap here if necessary
+    // For example, you can initialize it with some valid moves for the new piece
+    // ValidMovesMap[index] = GetValidMoves(Bitboard, index); // You need to implement this logic based on your piece type
+
+    
+    Debug.Log($"Added {Type} at index {index}. Current bitboard: {Bitboard}");
+}
+
 
     public static void PrintBitboard(ulong bitboard){
         // Convert the bitboard to a binary string and pad with leading zeros

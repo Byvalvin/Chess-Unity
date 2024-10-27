@@ -60,6 +60,9 @@ public class Board : MonoBehaviour
     Vector2Int originalPosition;
     GameObject selectedPiece = null;
 
+    // promotion
+    private bool isPromotionInProgress = false;
+
     private void CenterCamera(){
         Camera.main.transform.position = new Vector3((N - 1) * tileSize / 2, (N - 1) * tileSize / 2, -1);
         Camera.main.orthographic = true; // Ensure it's set to Orthographic
@@ -125,13 +128,14 @@ public class Board : MonoBehaviour
         }
     }
 
-    private void LoadSprites(int sheetN = 1){
+    private Dictionary<string, Sprite> LoadSprites(int sheetN = 1){
         // Load all sprites from the Pieces.png
         Sprite[] allSprites = Resources.LoadAll<Sprite>($"Sprites/Pieces{sheetN}"); // Adjust path if needed
 
         foreach (var sprite in allSprites)
             if (!sprites.ContainsKey(sprite.name)) // Use sprite name directly for the dictionary
                 sprites[sprite.name] = sprite; // Add to dictionary
+        return sprites;
     }
 
     private void CreateTiles(){
@@ -174,6 +178,7 @@ public class Board : MonoBehaviour
         //spriteRenderer.sortingOrder = 1; // Ensure pieces are rendered on top
         return piece;
     }
+    GameObject GetTile(Vector2Int promotionTileLocation)=>tiles[promotionTileLocation.x, promotionTileLocation.y];
 
     
 
@@ -181,7 +186,7 @@ public class Board : MonoBehaviour
     bool ValidTargetPosition(Vector2Int targetPosition)=>Utility.InBounds(targetPosition);
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
     private void SetPosition(GameObject piece, Vector2Int position)=> SetPosition(piece, position.x, position.y);
-    private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false, Vector2Int removedPiecePosition=default, bool isCastleMove=false, Vector2Int castledRookPosition=default){
+    private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false, Vector2Int removedPiecePosition=default, bool isCastleMove=false, Vector2Int castledRookPosition=default, bool isPromotion=false){
         //ui update
 
         // captures ui update
@@ -201,9 +206,24 @@ public class Board : MonoBehaviour
             if (targetPiece != null)
                 SetPosition(targetPiece, finalPosition);
         }else{ // move the selected piece
-            SetPosition(selectedPiece, finalPosition);
-        }
+            if(isPromotion){
+                Debug.Log("actually in prmomtoion");
+                bool forWhite = gameState.PlayerStates[gameState.currentIndex].IsWhite;
+                // remove promotePawn
+                Debug.Log(selectedPiece+"btw is the selected piece");
+                List<GameObject> pieces = forWhite? WhitePieces:BlackPieces;
+                SetPosition(selectedPiece, PieceBoard.heavenORhell);
 
+                // add new piece
+                GameObject replacementPiece = CreatePiece(gameState.PromoteTo, forWhite);
+                SetPosition(replacementPiece, finalPosition);
+                pieces.Add(replacementPiece);
+
+            }else{
+                SetPosition(selectedPiece, finalPosition);
+            }
+        }
+        
         // reset piece selection
         DeselectPiece();
     }
@@ -235,6 +255,12 @@ public class Board : MonoBehaviour
             Debug.Log("Collision null OR no gameobject with name foud");
         }
         
+        if(selectedPiece!=null){
+            Debug.Log("selectedPiece = "+selectedPiece);
+
+        }else{
+            Debug.Log("selectedPiece = null");
+        }
     }
 
     void DragPiece(){
@@ -257,6 +283,36 @@ public class Board : MonoBehaviour
         }
         */
     }
+    public void ShowPromotionOptions(PieceBoard pieceBoard, Vector2Int promotionPosition){
+        PromotionUI promotionUI = gameObject.AddComponent<PromotionUI>();
+        GameObject promotionTile = GetTile(promotionPosition);
+        promotionUI.Show(OnPromotionSelected,
+                        promotionPosition,
+                        new Vector2(tileSize,tileSize),
+                        promotionTile.GetComponent<Renderer>().material.color,
+                        selectedPiece.GetComponent<SpriteRenderer>().color,
+                        pieceBoard
+        );
+    }
+    private void OnPromotionSelected(Vector2Int targetPosition, char pieceType, PieceBoard promotedPawnBoard){
+        Debug.Log("selected "+pieceType+" "+targetPosition+"in on promo seleccted");
+        // Update the promoteTo variable in GameState
+        Debug.Log("selectedPiece: "+selectedPiece);
+        gameState.PlayerStates[gameState.currentIndex].PromoteTo = pieceType; // for bot vs player
+        gameState.PromoteTo = pieceType;
+        if(gameState.PromoteTo!='\0'){
+            int index = BitOps.GetIndex(targetPosition),
+                originalIndex = BitOps.GetIndex(originalPosition);
+            //PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
+            PieceBoard pieceBoard = promotedPawnBoard;
+            gameState.ExecuteMove(pieceBoard, originalIndex, index);
+        }else{
+            // Reset to original position if the move wasnt made
+            UpdateSelectedPieceUI(originalPosition);
+        }
+        // Reset the promotion state
+        isPromotionInProgress = false; // Reset after promotion is handled
+    }
     void ReleasePiece(){
         Vector2Int targetPosition = GetIndexPosition(Utility.GetMouseWorldPosition());
         int index = BitOps.GetIndex(targetPosition);
@@ -274,11 +330,18 @@ public class Board : MonoBehaviour
                     && (pieceMoves & BitOps.a1<<index)!=0;
 
         if (canMove){
-            // Execute the move
-            gameState.ExecuteMove(pieceBoard, originalIndex, index);
-            //uses action in GameState to auto update ui, Board is a listeneer
-            Debug.Log($"Moved piece to {targetPosition} (Index: {index})");
-            Debug.Log(gameState.PlayerStates[1-gameState.currentIndex].InCheck+" king check");
+            if(GameState.IsPromotion(pieceBoard, index)){
+                //show promotion ui
+                isPromotionInProgress = true;
+                ShowPromotionOptions(pieceBoard, targetPosition);
+
+            }else{
+                // Execute the move
+                gameState.ExecuteMove(pieceBoard, originalIndex, index);
+                //uses action in GameState to auto update ui, Board is a listeneer
+                Debug.Log($"Moved piece to {targetPosition} (Index: {index})");
+                Debug.Log(gameState.PlayerStates[1-gameState.currentIndex].InCheck+" king check");
+            }
         } else{
             // Reset to original position if the move isn't valid
             UpdateSelectedPieceUI(originalPosition);
@@ -305,7 +368,8 @@ public class Board : MonoBehaviour
         if (Utility.MouseDown()) // Left mouse button
             SelectPiece();
         else if (selectedPiece != null)
-            HandleDragAndDrop();
+            if(!isPromotionInProgress) // can use drag and drop while promoting
+                HandleDragAndDrop();
     }
 
 

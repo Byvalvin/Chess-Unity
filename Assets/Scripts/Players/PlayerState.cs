@@ -10,6 +10,8 @@ public class PlayerState
     public const bool IsTop = false; // IsTop says who is at top of board; true->white at top
     public ulong OccupancyBoard{get; protected set;}
 
+    public char PromoteTo{get; set;}
+
     public Dictionary<char, PieceBoard> PieceBoards { get; set; } // Dictionary of piece boards
 
     public bool InCheck{get; set;}

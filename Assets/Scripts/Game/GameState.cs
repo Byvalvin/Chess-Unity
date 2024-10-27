@@ -5,11 +5,12 @@ using System.Collections.Generic;
 public class GameState
 {
     
-    public static event Action<Vector2Int, bool, Vector2Int, bool, Vector2Int> OnPieceMoved; // update the Board UI if there is one
+    public static event Action<Vector2Int, bool, Vector2Int, bool, Vector2Int, bool> OnPieceMoved; // update the Board UI if there is one
     public PlayerState[] PlayerStates { get; private set; } // Array of player states
     public ulong OccupancyBoard { get; private set; } // Combined occupancy board
     public int currentIndex = 0; // white to start
 
+    public char PromoteTo{get; set;}
     public bool Gameover{get; private set;}
 
     public GameState(string player1Type, string player2Type)
@@ -24,7 +25,7 @@ public class GameState
         PlayerStates[0] = original.PlayerStates[0].Clone();
         PlayerStates[1] = original.PlayerStates[1].Clone();
         currentIndex = original.currentIndex;
-        
+
         Initialize();
     }
     public GameState Clone() => new GameState(this);
@@ -82,12 +83,13 @@ public class GameState
     }
 
 
-    private void MoveUpdate(int finalIndex, bool isCapture=false, int capturedPosition=-1, bool isCastle=false, int castledRookPosition=-1){
+    private void MoveUpdate(int finalIndex, bool isCapture=false, int capturedPosition=-1, bool isCastle=false, int castledRookPosition=-1, bool isPromotion=false){
         
         //ALERT UI for Listeners(Board) to update
         OnPieceMoved?.Invoke(BitOps.GetPosition(finalIndex),
             isCapture, BitOps.GetPosition(capturedPosition),
-            isCastle, BitOps.GetPosition(castledRookPosition)
+            isCastle, BitOps.GetPosition(castledRookPosition),
+            isPromotion
         );
 
         Debug.Log("move invoked updated");
@@ -151,28 +153,48 @@ public class GameState
             removedPieceIndex = (PlayerStates[1-currentIndex].PieceBoards['P'] as PawnBoard).enPassantablePawn;
         }
 
-        pieceBoard.Move(originalIndex, index);
-        MoveUpdate(index, isCapture || isEnPassantCapture, removedPieceIndex);
+        if(IsPromotion(pieceBoard, index)){
+            if(PromoteTo!='\0'){
+                Debug.Log("Promotion!"+PromoteTo);
+                // remove piece from this pawn pieceBoard
+                pieceBoard.RemovePiece(index);
+                // update pieceBoard 
 
-        if(isCastle){// also find and move the correct rook
-            int rookOriginalPosition, rookFinalPosition;
-            if(PlayerStates[currentIndex].IsWhite){
-                rookOriginalPosition = index==2 ? 0:7;
-                rookFinalPosition = index==2 ? 3:5;
-            }else{
-                rookOriginalPosition = index==58 ? 56:63;
-                rookFinalPosition = index==58 ? 59:61;
+                // add to selected pieceboard
+                PlayerStates[currentIndex].PieceBoards[PromoteTo].AddPiece(index);
+                // update pieceBpard
+                // create piece ui
+
+                MoveUpdate(index,isPromotion:true);
             }
-            PlayerStates[currentIndex].PieceBoards['R'].Move(rookOriginalPosition, rookFinalPosition);
-            MoveUpdate(rookFinalPosition,
-                isCapture:false, removedPieceIndex,
-                isCastle:true, castledRookPosition:rookOriginalPosition
-            );
 
+        }else{
+            pieceBoard.Move(originalIndex, index);
+            MoveUpdate(index, isCapture || isEnPassantCapture, removedPieceIndex);
+
+            if(isCastle){// also find and move the correct rook
+                int rookOriginalPosition, rookFinalPosition;
+                if(PlayerStates[currentIndex].IsWhite){
+                    rookOriginalPosition = index==2 ? 0:7;
+                    rookFinalPosition = index==2 ? 3:5;
+                }else{
+                    rookOriginalPosition = index==58 ? 56:63;
+                    rookFinalPosition = index==58 ? 59:61;
+                }
+                PlayerStates[currentIndex].PieceBoards['R'].Move(rookOriginalPosition, rookFinalPosition);
+                MoveUpdate(rookFinalPosition,
+                    isCapture:false, removedPieceIndex,
+                    isCastle:true, castledRookPosition:rookOriginalPosition
+                );
+
+            }
         }
 
         // re-setup
         (PlayerStates[1 - currentIndex].PieceBoards['P'] as PawnBoard).EnPassantReset(); // reset enpassant after a move is made a poor fix but works for now
+        PromoteTo='\0';
+        PlayerStates[currentIndex].PromoteTo='\0';
+
         SwitchPlayer();
         UpdateBoard();
         UpdateGameState();
@@ -313,11 +335,14 @@ public class GameState
                 foreach (var kvpMoves in kvpPiece.Value.ValidMovesMap){
                     if(IsLineValid(kvpMoves.Key, kingIndex, kvpPiece.Key)){ // if there is a path
                         pinnedMovement=GetAttackPath(kvpMoves.Key, kingIndex, otherPlayer); //get the path
-                        ulong piecePosition=BitOps.a1 << pieceIndex;
-                        bool otherPieceOnPath = (OccupancyBoard & (pinnedMovement & ~(BitOps.a1<<kvpMoves.Key) & ~(piecePosition)))!=0;
+                        ulong piecePosition=BitOps.a1 << pieceIndex,
+                            attackerPosition=BitOps.a1 << kvpMoves.Key;
+
+                        bool otherPieceOnPath = (OccupancyBoard & (pinnedMovement & ~(attackerPosition) & ~(piecePosition)))!=0;
                         if(otherPieceOnPath){
                             pinnedMovement=0UL; // reset, continue the search for a pinn
                         }else{
+                            pinnedMovement |= attackerPosition;
                             return (pinnedMovement&piecePosition)!=0; // if piece is indeed pinned
                         }
                         
@@ -444,6 +469,11 @@ public class GameState
         }
 
     }
+
+    // prootion
+    public static bool IsPromotion(PieceBoard pieceBoard, int targetIndex)
+        => pieceBoard is PawnBoard 
+            && (pieceBoard.IsWhite?(56<=targetIndex&&targetIndex<=63):(0<=targetIndex&&targetIndex<=7));
 
     // Game end
     public bool PlayerCheckmated(PlayerState player){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
