@@ -16,7 +16,7 @@ public class PromotionUI : MonoBehaviour
     public float pieceScale = 1f; // Variable to scale the piece buttons down. Adjust this value to scale pieces down
     //string[] pieceTypes = { "Queen", "Rook", "Bishop", "Knight" }; // Define the types of pieces that can be promoted to. Customize as needed
     char[] pieceTypes = { 'Q', 'R', 'B', 'N' }; // Define the types of pieces that can be promoted to. Customize as needed
-    Dictionary<char, string> pieceTypeMap = new Dictionary<char, string>{ 
+    Dictionary<char, string> pieceTypeMap = new Dictionary<char, string>{ //primarily for getting the correct sprites
         {'Q',"Queen"}, {'R',"Rook"}, {'B',"Bishop"}, {'N',"Knight"} 
     }; // Define the types of pieces that can be promoted to. Customize as needed
 
