@@ -302,7 +302,7 @@ public class GameState
                 (board.Bitboard & attackerPosition) != 0)
             {
                 return BitOps.GetPathMask(kingAttackerIndex, kingIndex, 
-                    pieceType == 'Q' ? BitOps.MovementType.Any :
+                    pieceType == 'Q' ? BitOps.MovementType.Queen :
                     pieceType == 'R' ? BitOps.MovementType.Rook :
                     BitOps.MovementType.Bishop);
             }

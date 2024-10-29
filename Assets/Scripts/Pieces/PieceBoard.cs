@@ -45,7 +45,7 @@ public abstract class PieceBoard
     public abstract ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false);
     public virtual void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard)
         => ValidMovesMap[index] = GetValidMoves(friendBoard, index, enemyBoard, false);
-    protected ulong CheckDirection(ulong friendBoard, ulong enemyBoard, int index, Func<int, int, int> moveFunc, bool includeFriends)
+    protected ulong CheckDirection(ulong friendBoard, ulong enemyBoard, int index, Func<int, int, int> moveFunc, bool includeFriends, BitOps.MovementType movement)
     {
         ulong directionMoves = 0UL;
 
@@ -53,7 +53,7 @@ public abstract class PieceBoard
         {
             int newIndex = moveFunc(index, i);
             //if(Type=='B')Debug.Log(!BitOps.IsValidMove(index, newIndex) + " cant moving this direction" + index +" to"+newIndex);
-            if (!BitOps.IsValidMove(index, newIndex)) break;
+            if (!BitOps.IsValidMove(index, newIndex, movement)) break;
 
             ulong newBit = BitOps.a1 << newIndex;
              //if(Type=='B')Debug.Log(((friendBoard & newBit) != 0 && !includeFriends) + " " +((enemyBoard & newBit) != 0 || (friendBoard & newBit) != 0 && includeFriends));

@@ -16,16 +16,16 @@ public class QueenBoard : PieceBoard
         ulong validMoves = 0UL;
 
         // Rook-like movements (horizontal and vertical)
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.RightMove, includeFriends); // Right
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.LeftMove, includeFriends);  // Left
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.ForwardMove, includeFriends); // Up
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.BackwardMove, includeFriends); // Down
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.RightMove, includeFriends, BitOps.MovementType.Rook); // Right
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.LeftMove, includeFriends, BitOps.MovementType.Rook);  // Left
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.ForwardMove, includeFriends, BitOps.MovementType.Rook); // Up
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.BackwardMove, includeFriends, BitOps.MovementType.Rook); // Down
 
         // Bishop-like movements (diagonal)
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal1Move, includeFriends); // Up-left
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal2Move, includeFriends); // Up-right
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal3Move, includeFriends); // Down-left
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal4Move, includeFriends); // Down-right
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal1Move, includeFriends, BitOps.MovementType.Bishop); // Up-left
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal2Move, includeFriends, BitOps.MovementType.Bishop); // Up-right
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal3Move, includeFriends, BitOps.MovementType.Bishop); // Down-left
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal4Move, includeFriends, BitOps.MovementType.Bishop); // Down-right
 
         return validMoves; // can only handle 1 index at a time at least for now
     }

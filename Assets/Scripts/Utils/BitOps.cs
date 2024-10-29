@@ -24,16 +24,28 @@ public static class BitOps
     public static bool InBounds(int index) => 0 <= index && index < N * N;
 
     // Move squares forward
-    public static int ForwardMove(int index, int steps = 1) => InBounds(index)? index + (N * steps) : -1;
+    public static int ForwardMove(int index, int steps = 1){
+        int newIndex = index + (N * steps);
+        return InBounds(index) && InBounds(newIndex) && isValidVerticalMove(index, newIndex)? newIndex : -1;
+    } 
 
     // Move squares backward
-    public static int BackwardMove(int index, int steps = 1) => InBounds(index)? index - (N * steps) : -1;
+    public static int BackwardMove(int index, int steps = 1){ 
+        int newIndex = index - (N * steps);
+        return InBounds(index) && InBounds(newIndex) && isValidVerticalMove(index, newIndex)? newIndex : -1;
+    }
 
     // Move squares left
-    public static int LeftMove(int index, int steps = 1) => InBounds(index)? index - steps : -1;
+    public static int LeftMove(int index, int steps = 1){ 
+        int newIndex = index - steps;
+        return InBounds(index) && InBounds(newIndex) && isValidHorizontalMove(index, newIndex)? newIndex : -1;
+    }
 
     // Move squares right
-    public static int RightMove(int index, int steps = 1) => InBounds(index)? index + steps : -1;
+    public static int RightMove(int index, int steps = 1) {
+        int newIndex = index + steps;
+        return InBounds(index) && InBounds(newIndex) && isValidHorizontalMove(index, newIndex)? newIndex : -1;
+    }
 
     // Move diagonally up-left
     public static int Diagonal1Move(int index, int steps = 1) 
@@ -126,7 +138,7 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
     }
 
     // Movement validation
-    public static bool IsValidMove(int fromIndex, int toIndex)
+    public static bool IsValidMove(int fromIndex, int toIndex, MovementType mtype = MovementType.All)
     {
         // Check if the target index is in bounds
         if (!InBounds(toIndex)) return false;
@@ -137,19 +149,52 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
         int toRow = toIndex / N;
         int toCol = toIndex % N;
 
-        return isValidHorizontalMove(fromRow, fromCol, toRow, toCol) || 
-            isValidVerticalMove(fromRow, fromCol, toRow, toCol) || 
-            isValidDiagonalMove(fromRow, fromCol, toRow, toCol) || 
-            IsValidKnightMove(fromRow, fromCol, toRow, toCol);
+        bool validHorz = isValidHorizontalMove(fromRow, fromCol, toRow, toCol),
+            validVert = isValidVerticalMove(fromRow, fromCol, toRow, toCol),
+            validDiag = isValidDiagonalMove(fromRow, fromCol, toRow, toCol),
+            validKnight = IsValidKnightMove(fromRow, fromCol, toRow, toCol);
+
+        return mtype switch{
+            MovementType.Diagonal=>validDiag,
+            MovementType.Horizontal=>validHorz,
+            MovementType.Vertical=>validVert,
+            MovementType.NonDiagonal=>validVert || validHorz,
+            MovementType.Pawn=>validVert || validDiag,
+            MovementType.Knight=>validKnight,
+            MovementType.Bishop=>validDiag,
+            MovementType.Rook=>validHorz || validVert,
+            MovementType.Queen=>validVert || validDiag || validHorz,
+            MovementType.King=>validHorz || validVert || validDiag,
+            MovementType.All=>validHorz || validVert || validDiag || validKnight,
+            _=>throw new ArgumentOutOfRangeException(nameof(mtype), mtype, null)
+        };
+
+
     }
 
     // Check horizontal movement
     public static bool isValidHorizontalMove(int fromRow, int fromCol, int toRow, int toCol) => 
         fromRow == toRow && Math.Abs(fromCol - toCol) <= (N - 1); 
+    public static bool isValidHorizontalMove(int fromIndex, int toIndex){
+        // Calculate the row and column of both indices
+        int fromRow = fromIndex / N;
+        int fromCol = fromIndex % N;
+        int toRow = toIndex / N;
+        int toCol = toIndex % N;
+        return isValidHorizontalMove(fromRow, fromCol, toRow, toCol); 
+    }
 
     // Check vertical movement
     public static bool isValidVerticalMove(int fromRow, int fromCol, int toRow, int toCol) => 
         fromCol == toCol && Math.Abs(fromRow - toRow) <= (N - 1); 
+    public static bool isValidVerticalMove(int fromIndex, int toIndex){
+        // Calculate the row and column of both indices
+        int fromRow = fromIndex / N;
+        int fromCol = fromIndex % N;
+        int toRow = toIndex / N;
+        int toCol = toIndex % N;
+        return isValidVerticalMove(fromRow, fromCol, toRow, toCol);
+    }
 
     // Diagonal movement
     public static bool isValidDiagonalMove(int fromRow, int fromCol, int toRow, int toCol) => 
@@ -161,7 +206,7 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
         int fromCol = fromIndex % N;
         int toRow = toIndex / N;
         int toCol = toIndex % N;
-        return Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol); 
+        return isValidDiagonalMove(fromRow, fromCol, toRow, toCol); 
     }
 
     // Check knight movement
@@ -171,15 +216,28 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
         int colDiff = Math.Abs(fromCol - toCol);
         return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
     }
+    public static bool IsValidKnightMove(int fromIndex, int toIndex){
+        // Calculate the row and column of both indices
+        int fromRow = fromIndex / N;
+        int fromCol = fromIndex % N;
+        int toRow = toIndex / N;
+        int toCol = toIndex % N;
+        return IsValidKnightMove(fromRow, fromCol, toRow, toCol);
+    }
 
     public enum MovementType{
         Diagonal,    
         Horizontal,    
         Vertical,
+        NonDiagonal,
         
+        Pawn,
+        Knight,
         Bishop,
-        Rook,    
-        Any
+        Rook, 
+        Queen,
+        King,
+        All,
     }
 
 
@@ -189,7 +247,7 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
         int rowDiff = (kingIndex / 8) - (checkerIndex / 8);
         int colDiff = (kingIndex % 8) - (checkerIndex % 8);
         // Handle specific movement types
-        if (movementType == MovementType.Diagonal || movementType == MovementType.Bishop || movementType == MovementType.Any){
+        if (movementType == MovementType.Diagonal || movementType == MovementType.Bishop || movementType == MovementType.Queen){
             if (Math.Abs(rowDiff) == Math.Abs(colDiff)){
                 int stepRow = rowDiff > 0 ? 1 : -1;
                 int stepCol = colDiff > 0 ? 1 : -1;
@@ -199,7 +257,7 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
                 }       
             }   
         }
-        if (movementType == MovementType.Horizontal || movementType == MovementType.Rook || movementType == MovementType.Any){    
+        if (movementType == MovementType.Horizontal || movementType == MovementType.Rook || movementType == MovementType.Queen || movementType == MovementType.NonDiagonal){    
             if (checkerIndex / 8 == kingIndex / 8) // Same row        
             {
                 int row = checkerIndex / 8;          
@@ -211,7 +269,7 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
             }
         }
 
-        if (movementType == MovementType.Vertical || movementType == MovementType.Rook || movementType == MovementType.Any){       
+        if (movementType == MovementType.Vertical || movementType == MovementType.Rook || movementType == MovementType.Queen || movementType == MovementType.NonDiagonal){       
             if (checkerIndex % 8 == kingIndex % 8) // Same column    
             {            
                 int col = checkerIndex % 8;         

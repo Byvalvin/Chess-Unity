@@ -16,10 +16,10 @@ public class BishopBoard : PieceBoard
         ulong validMoves = 0UL;
 
         // Diagonal movements for bishops
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal1Move, includeFriends); // Up-left
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal2Move, includeFriends); // Up-right
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal3Move, includeFriends); // Down-left
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal4Move, includeFriends); // Down-right
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal1Move, includeFriends, BitOps.MovementType.Bishop); // Up-left
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal2Move, includeFriends, BitOps.MovementType.Bishop); // Up-right
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal3Move, includeFriends, BitOps.MovementType.Bishop); // Down-left
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.Diagonal4Move, includeFriends, BitOps.MovementType.Bishop); // Down-right
 
         return validMoves; // can only handle 1 index at a time at least for now
     }

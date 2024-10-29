@@ -16,10 +16,10 @@ public class RookBoard : PieceBoard
         ulong validMoves = 0UL;
 
         // Horizontal and vertical movements
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.RightMove, includeFriends); // Right
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.LeftMove, includeFriends);  // Left
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.ForwardMove, includeFriends); // Up
-        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.BackwardMove, includeFriends); // Down
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.RightMove, includeFriends, BitOps.MovementType.Rook); // Right
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.LeftMove, includeFriends, BitOps.MovementType.Rook);  // Left
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.ForwardMove, includeFriends, BitOps.MovementType.Rook); // Up
+        validMoves |= CheckDirection(friendBoard, enemyBoard, index, BitOps.BackwardMove, includeFriends, BitOps.MovementType.Rook); // Down
 
         return validMoves; // can only handle 1 index at a time at least for now
     }

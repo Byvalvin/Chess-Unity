@@ -57,7 +57,7 @@ public class PawnBoard : PieceBoard
     private bool AddForwardMove(ref ulong validMoves, int index, int direction, ulong friendBoard, ulong enemyBoard)
     {
         int forwardIndex = BitOps.ForwardMove(index, direction);
-        if (BitOps.IsValidMove(index, forwardIndex) 
+        if (BitOps.IsValidMove(index, forwardIndex, BitOps.MovementType.Pawn) 
             && (friendBoard & (BitOps.a1 << forwardIndex)) == 0
             && (enemyBoard & (BitOps.a1 << forwardIndex)) == 0
         )
@@ -71,7 +71,7 @@ public class PawnBoard : PieceBoard
     private void AddDoubleForwardMove(ref ulong validMoves, int index, int direction, ulong friendBoard, ulong enemyBoard)
     {
         int doubleForwardIndex = BitOps.ForwardMove(index, direction * 2);
-        if (BitOps.IsValidMove(index, doubleForwardIndex)
+        if (BitOps.IsValidMove(index, doubleForwardIndex, BitOps.MovementType.Pawn)
             && (friendBoard & (BitOps.a1 << doubleForwardIndex)) == 0
             && (enemyBoard & (BitOps.a1 << doubleForwardIndex)) == 0
         )
@@ -86,7 +86,7 @@ public class PawnBoard : PieceBoard
             ? BitOps.Diagonal1Move(index, direction) // White: up-left
             : BitOps.Diagonal3Move(index, -direction); // Black: down-left
 
-        if (BitOps.IsValidMove(index, leftCaptureIndex) 
+        if (BitOps.IsValidMove(index, leftCaptureIndex, BitOps.MovementType.Pawn) 
             && ( (enemyBoard & (BitOps.a1 << leftCaptureIndex)) != 0
                 || ( 
                     (friendBoard & (BitOps.a1 << leftCaptureIndex))!=0 && includeFriends
@@ -101,7 +101,7 @@ public class PawnBoard : PieceBoard
             ? BitOps.Diagonal2Move(index, direction) // White: up-right
             : BitOps.Diagonal4Move(index, -direction); // Black: down-right
 
-        if (BitOps.IsValidMove(index, rightCaptureIndex)
+        if (BitOps.IsValidMove(index, rightCaptureIndex, BitOps.MovementType.Pawn)
             && ( (enemyBoard & (BitOps.a1 << rightCaptureIndex)) != 0
                 || (
                     (friendBoard & (BitOps.a1 << rightCaptureIndex))!=0 && includeFriends
@@ -139,7 +139,7 @@ public class PawnBoard : PieceBoard
                 ? BitOps.Diagonal1Move(pawnIndex, direction) // White: up-left
                 : BitOps.Diagonal3Move(pawnIndex, -direction); // Black: down-left
 
-            if (BitOps.IsValidMove(pawnIndex, leftCaptureIndex)){
+            if (BitOps.IsValidMove(pawnIndex, leftCaptureIndex, BitOps.MovementType.Pawn)){
                 allPawnCaptureMoves |= BitOps.a1 << leftCaptureIndex; // Add left capture move
             }
 
@@ -147,7 +147,7 @@ public class PawnBoard : PieceBoard
                 ? BitOps.Diagonal2Move(pawnIndex, direction) // White: up-right
                 : BitOps.Diagonal4Move(pawnIndex, -direction); // Black: down-right
 
-            if (BitOps.IsValidMove(pawnIndex, rightCaptureIndex)){
+            if (BitOps.IsValidMove(pawnIndex, rightCaptureIndex, BitOps.MovementType.Pawn)){
                 allPawnCaptureMoves |= BitOps.a1 << rightCaptureIndex; // Add right capture move
             }
         }
@@ -161,7 +161,7 @@ public class PawnBoard : PieceBoard
             ? BitOps.Diagonal1Move(pawnIndex, direction) // White: up-left
             : BitOps.Diagonal3Move(pawnIndex, -direction); // Black: down-left
 
-        if (BitOps.IsValidMove(pawnIndex, leftCaptureIndex)){
+        if (BitOps.IsValidMove(pawnIndex, leftCaptureIndex, BitOps.MovementType.Pawn)){
             pawnCaptureMoves |= BitOps.a1 << leftCaptureIndex; // Add left capture move
         }
 
@@ -169,7 +169,7 @@ public class PawnBoard : PieceBoard
             ? BitOps.Diagonal2Move(pawnIndex, direction) // White: up-right
             : BitOps.Diagonal4Move(pawnIndex, -direction); // Black: down-right
 
-        if (BitOps.IsValidMove(pawnIndex, rightCaptureIndex)){
+        if (BitOps.IsValidMove(pawnIndex, rightCaptureIndex, BitOps.MovementType.Pawn)){
             pawnCaptureMoves |= BitOps.a1 << rightCaptureIndex; // Add right capture move
         }
         return pawnCaptureMoves;
@@ -185,7 +185,7 @@ public class PawnBoard : PieceBoard
         {
             // Check left en passant
             int leftIndex = IsWhite ? BitOps.Diagonal1Move(pawnIndex, direction) : BitOps.Diagonal3Move(pawnIndex, -direction);
-            if (BitOps.IsValidMove(pawnIndex, leftIndex) 
+            if (BitOps.IsValidMove(pawnIndex, leftIndex, BitOps.MovementType.Pawn) 
                 && (Math.Abs(opponentPawnBoard.enPassantablePawn - leftIndex) == Board.N))
             {
                 ulong enPassantMove = BitOps.a1 << leftIndex;
@@ -194,7 +194,7 @@ public class PawnBoard : PieceBoard
 
             // Check right en passant
             int rightIndex = IsWhite ? BitOps.Diagonal2Move(pawnIndex, direction) : BitOps.Diagonal4Move(pawnIndex, -direction);
-            if (BitOps.IsValidMove(pawnIndex, rightIndex) 
+            if (BitOps.IsValidMove(pawnIndex, rightIndex, BitOps.MovementType.Pawn) 
                 && (Math.Abs(opponentPawnBoard.enPassantablePawn - rightIndex) == Board.N))
             {
                 ulong enPassantMove = BitOps.a1 << rightIndex;

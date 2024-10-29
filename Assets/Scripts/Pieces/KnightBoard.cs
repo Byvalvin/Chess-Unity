@@ -18,14 +18,23 @@ public class KnightBoard : PieceBoard
         // Knight moves (L-shape)
         int[] knightMoves = new int[]
         {
-            -17, -15, 15, 17,  // Up and Down
-            -10, -6, 6, 10     // Left and Right
+            // Two squares forward, then one left/right
+            2 * BitOps.N + 1,  // Up-Left 17
+            2 * BitOps.N - 1,  // Up-Right 15 
+            -2 * BitOps.N + 1, // Down-Left -15
+            -2 * BitOps.N - 1, // Down-Right -17
+
+            // Two squares left/right, then one forward/backward
+            1 * BitOps.N + 2,  // Left-Up 10
+            1 * BitOps.N - 2,  // Left-Down 6
+            -1 * BitOps.N + 2, // Right-Up -6
+            -1 * BitOps.N - 2  // Right-Down -10
         };
 
         foreach (var move in knightMoves)
         {
             int newIndex = index + move;
-            if (BitOps.InBounds(newIndex) && ((friendBoard & (BitOps.a1 << newIndex)) == 0 || includeFriends)) // Not occupied by friendly piece
+            if (BitOps.InBounds(newIndex) && BitOps.IsValidKnightMove(index, newIndex) && ((friendBoard & (BitOps.a1 << newIndex)) == 0 || includeFriends)) // Not occupied by friendly piece
             {
                 validMoves |= (BitOps.a1 << newIndex); // Add move
             }

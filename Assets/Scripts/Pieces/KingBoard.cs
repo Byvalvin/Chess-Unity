@@ -1,4 +1,6 @@
 using UnityEngine;
+using System;
+
 
 public class KingBoard : PieceBoard
 {
@@ -32,18 +34,27 @@ public class KingBoard : PieceBoard
     {
         ulong validMoves = 0UL;
 
-        // King moves (one square in any direction)
-        int[] kingMoves = new int[] { -1, 1, -8, 8, -9, -7, 7, 9 };
-
-        foreach (var move in kingMoves)
+        // Array of movement functions to check
+        Func<int, int, int>[] moveFunctions = new Func<int, int, int>[]
         {
-            int newIndex = index + move;
-            if (BitOps.IsValidMove(index, newIndex))
+            BitOps.ForwardMove,
+            BitOps.BackwardMove,
+            BitOps.LeftMove,
+            BitOps.RightMove,
+            BitOps.Diagonal1Move,
+            BitOps.Diagonal2Move,
+            BitOps.Diagonal3Move,
+            BitOps.Diagonal4Move
+        };
+
+        foreach (var moveFunc in moveFunctions){
+            int newIndex = moveFunc(index, 1); // one in each dir
+            if (BitOps.IsValidMove(index, newIndex, BitOps.MovementType.King))
             {
                 ulong newBit = BitOps.a1 << newIndex;
-                if ((friendBoard & newBit) == 0 || includeFriends) // Not occupied by friendly piece
+                if ((friendBoard & newBit) == 0 || includeFriends)
                 {
-                    validMoves |= newBit; // Add move
+                    validMoves |= newBit;
                 }
             }
         }
