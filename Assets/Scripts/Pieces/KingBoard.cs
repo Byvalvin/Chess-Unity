@@ -19,6 +19,19 @@ public class KingBoard : PieceBoard
                                 BlackKingSideMove = 0x4000000000000000; // f8, g8
     public static readonly ulong BlackQueensideMask = 0x0E00000000000000,
                                 BlackQueenSideMove = 0x0400000000000000; // b8, c8, d8
+    
+    // Array of movement functions to check
+    static Func<int, int, int>[] moveFunctions = new Func<int, int, int>[]
+    {
+        BitOps.ForwardMove,
+        BitOps.BackwardMove,
+        BitOps.LeftMove,
+        BitOps.RightMove,
+        BitOps.Diagonal1Move,
+        BitOps.Diagonal2Move,
+        BitOps.Diagonal3Move,
+        BitOps.Diagonal4Move
+    };
 
 
     public KingBoard(bool IsWhite, ulong startingBitboard = 0) : base(IsWhite, startingBitboard)
@@ -33,19 +46,6 @@ public class KingBoard : PieceBoard
     public override ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
         ulong validMoves = 0UL;
-
-        // Array of movement functions to check
-        Func<int, int, int>[] moveFunctions = new Func<int, int, int>[]
-        {
-            BitOps.ForwardMove,
-            BitOps.BackwardMove,
-            BitOps.LeftMove,
-            BitOps.RightMove,
-            BitOps.Diagonal1Move,
-            BitOps.Diagonal2Move,
-            BitOps.Diagonal3Move,
-            BitOps.Diagonal4Move
-        };
 
         foreach (var moveFunc in moveFunctions){
             int newIndex = moveFunc(index, 1); // one in each dir
@@ -73,6 +73,21 @@ public class KingBoard : PieceBoard
         return validMoves; // Return all valid moves
     }
 
+    public ulong GetAttackMoves(){ // all valid king attack mvoes so defense is proper
+        ulong allKingMoves = 0UL;
+
+        var enumerator = ValidMovesMap.GetEnumerator();
+        enumerator.MoveNext();
+        int kingIndex = enumerator.Current.Key;
+
+        foreach (var moveFunc in moveFunctions){
+            int newIndex = moveFunc(kingIndex, 1); // one in each dir
+            if (BitOps.IsValidMove(kingIndex, newIndex, BitOps.MovementType.King))
+                allKingMoves |= BitOps.a1 << newIndex;    
+        }
+        return allKingMoves;
+    }
+
     public ulong GetCastlingMoves(ulong occupancyBoard, ulong friendBoard)
     {
         ulong castlingMoves = 0UL;
@@ -85,8 +100,6 @@ public class KingBoard : PieceBoard
 
     public ulong GetCastlingMoves() =>  IsWhite? (WhiteKingSideMove | WhiteQueenSideMove) : (BlackKingSideMove | BlackQueenSideMove); 
     
-    
-
     public ulong GetKingsideCastlingMoves(ulong occupancyBoard, ulong friendBoard)
     {
         ulong rookBit = (ulong)(IsWhite ? 0x0000000000000080 : 0x8000000000000000); // h1 or h8

@@ -70,9 +70,10 @@ public class GameState
         ulong opponentMoves = 0UL;
         PlayerState otherPlayer = PlayerStates[1-player.TurnIndex]; //the other player
         foreach (var kvpPiece in player.PieceBoards){
-            if(kvpPiece.Key=='K')continue;
             PieceBoard opponentPieceBoard = kvpPiece.Value;
-            if(kvpPiece.Key=='P' && opponentPieceBoard is PawnBoard oppPawnBoard){
+            if(kvpPiece.Key=='K' && opponentPieceBoard is KingBoard oppKingBoard){
+                opponentMoves |= oppKingBoard.GetAttackMoves();
+            }else if(kvpPiece.Key=='P' && opponentPieceBoard is PawnBoard oppPawnBoard){
                 opponentMoves |= oppPawnBoard.GetAttackMoves();
             }else{
                 ulong enemyBoardExceptKingPos = otherPlayer.OccupancyBoard & ~(otherPlayer.PieceBoards['K'].Bitboard);
@@ -440,12 +441,9 @@ public class GameState
 
         otherPlayer.InCheck = attackerCount==1;
         otherPlayer.DoubleCheck = attackerCount>1;
-        if(otherPlayer.IsInCheck){
-            otherPlayer.KingAttacker=attacker;
-        }else{
-            otherPlayer.KingAttacker=-1; // reset attacker
-        }
 
+        otherPlayer.KingAttacker=attacker;
+        
         Debug.Log("Player Check Update: "+otherPlayer.PlayerType +" is in check?: "+otherPlayer.InCheck + " "+ otherPlayer.DoubleCheck + " " +otherPlayer.IsInCheck + "by attackker at " + attacker);
     }
 
@@ -473,9 +471,11 @@ public class GameState
                 currPieceBoard.ResetValidMoves(currPlayerState.OccupancyBoard, i, currPieceBoard.Type=='P'?  otherPlayerState.OccupancyBoard:enemyBoardExceptKingPos);
             }
         }
+
         if(PlayerStates[1-currentIndex].PieceBoards['P'] is PawnBoard oppPawnBoard && oppPawnBoard.canBeCapturedEnPassant)// add only when opp presents the chance once
             (PlayerStates[currentIndex].PieceBoards['P'] as PawnBoard).AddEnPassant(oppPawnBoard);
         // Debug.Log((PlayerStates[1].PieceBoards['P'] is PawnBoard oppPawnBoard2 && oppPawnBoard2.canBeCapturedEnPassant)+ " " +(PlayerStates[1].PieceBoards['P'] as PawnBoard).enPassantablePawn+" "+(PlayerStates[1].PieceBoards['P'] as PawnBoard).enPassantCounter);
+        
         Opposition();
         foreach (PlayerState playerState in PlayerStates)
         {
