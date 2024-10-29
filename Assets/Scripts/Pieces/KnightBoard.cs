@@ -34,7 +34,10 @@ public class KnightBoard : PieceBoard
         foreach (var move in knightMoves)
         {
             int newIndex = index + move;
-            if (BitOps.InBounds(newIndex) && BitOps.IsValidKnightMove(index, newIndex) && ((friendBoard & (BitOps.a1 << newIndex)) == 0 || includeFriends)) // Not occupied by friendly piece
+            if (BitOps.InBounds(newIndex) 
+                && BitOps.IsValidKnightMove(index, newIndex) 
+                && ((friendBoard & (BitOps.a1 << newIndex)) == 0 || includeFriends)
+            ) // Not occupied by friendly piece
             {
                 validMoves |= (BitOps.a1 << newIndex); // Add move
             }
