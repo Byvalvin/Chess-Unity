@@ -31,6 +31,7 @@ public abstract class PieceBoard
     }
 
     public PieceBoard(PieceBoard original){
+        Type = original.Type;
         IsWhite = original.IsWhite;
         Bitboard = original.Bitboard;
         FirstMovers = new HashSet<int>(original.FirstMovers);

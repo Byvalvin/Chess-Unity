@@ -71,11 +71,14 @@ public class KingBoard : PieceBoard
 
         return castlingMoves; // Return the castling moves
     }
+
+    public ulong GetCastlingMoves() =>  IsWhite? (WhiteKingSideMove | WhiteQueenSideMove) : (BlackKingSideMove | BlackQueenSideMove); 
+    
     
 
     public ulong GetKingsideCastlingMoves(ulong occupancyBoard, ulong friendBoard)
     {
-        ulong rookBit = (ulong)(IsWhite ? 0x0000000000000080 : 0x0100000000000000); // h1 or h8
+        ulong rookBit = (ulong)(IsWhite ? 0x0000000000000080 : 0x8000000000000000); // h1 or h8
         if ((friendBoard & rookBit) != 0) // Check if the rook is present
         {
             return CheckCastling(occupancyBoard, rookBit, IsWhite? new int[] { 5, 6 } : new int[] { 61, 62 }); // Kingside
@@ -85,7 +88,7 @@ public class KingBoard : PieceBoard
 
     public ulong GetQueensideCastlingMoves(ulong occupancyBoard, ulong friendBoard)
     {
-        ulong rookBit = IsWhite ? 0x0000000000000001 : 0x8000000000000000; // a1 or a8
+        ulong rookBit = (ulong)(IsWhite ? 0x0000000000000001 : 0x0100000000000000); // a1 or a8
         if ((friendBoard & rookBit) != 0) // Check if the rook is present
         {
             return CheckCastling(occupancyBoard, rookBit, IsWhite ? new int[] { 1, 2, 3 } : new int[] { 57, 58, 59 }); // Queenside
@@ -111,6 +114,29 @@ public class KingBoard : PieceBoard
         return newKingPosition; // Return the new king position
     }
 
+    public ulong GetKingsideCastlingMove() => FirstMovers.Count != 0? IsWhite? WhiteKingSideMove : BlackKingSideMove
+                                                :
+                                                0;
+    public ulong GetQueensideCastlingMove() => FirstMovers.Count != 0? IsWhite? WhiteQueenSideMove : BlackQueenSideMove
+                                                :
+                                                0;
+    public ulong GetKingsideCastlingMove(ulong occupancyBoard) => ( occupancyBoard & (IsWhite? WhiteKingsideMask:BlackKingsideMask) )==0? GetKingsideCastlingMove()                
+                                                :
+                                                0;
+    public ulong GetQueensideCastlingMove(ulong occupancyBoard) => ( occupancyBoard & (IsWhite? WhiteQueensideMask:BlackQueensideMask) )==0? GetQueensideCastlingMove()
+                                                :
+                                                0;
+
+    private ulong CheckKingSideCastling(ulong occupancyBoard) 
+        => (occupancyBoard & ~(IsWhite?WhiteKingsideMask:BlackKingsideMask))==0 ? 
+                (GetKingsideCastlingMove()) : 0;
+    private ulong CheckQueenSideCastling(ulong occupancyBoard) 
+        => (occupancyBoard & ~(IsWhite?WhiteQueensideMask:BlackQueensideMask))==0 ? 
+                (GetQueensideCastlingMove()) : 0;
+    
+
+    
+
     // private ulong CheckCastling(ulong occupancyBoard, ulong rookBit)
     // {
     //     // Check that all spaces between the king and rook are empty
@@ -129,6 +155,7 @@ public class KingBoard : PieceBoard
     //     return newKingPosition; // Return the new king position
     // }
 }
+
 
 
 

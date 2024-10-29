@@ -35,7 +35,6 @@ public class PlayerState
             { 'R', new RookBoard(isWhite, IsTop==IsWhite ? (ulong)0x8100000000000000 : (ulong)0x0000000000000081) }, // Rooks
             { 'P', new PawnBoard(isWhite, IsTop==IsWhite ? (ulong)0x00FF000000000000 : (ulong)0x000000000000FF00) }  // Pawns
         };
-
         UpdateOccupancyBoard();
     }
     public PlayerState(PlayerState original){
@@ -49,6 +48,8 @@ public class PlayerState
         InCheck = original.InCheck;
         DoubleCheck = original.DoubleCheck;
         KingAttacker = original.KingAttacker;
+
+        PromoteTo = original.PromoteTo;
         
         UpdateOccupancyBoard();
     }

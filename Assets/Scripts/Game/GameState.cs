@@ -25,6 +25,7 @@ public class GameState
         PlayerStates[0] = original.PlayerStates[0].Clone();
         PlayerStates[1] = original.PlayerStates[1].Clone();
         currentIndex = original.currentIndex;
+        PromoteTo = original.PromoteTo;
 
         Initialize();
     }
@@ -157,7 +158,7 @@ public class GameState
             if(PromoteTo!='\0'){
                 //Debug.Log("Promotion!"+PromoteTo);
                 // remove piece from this pawn pieceBoard
-                pieceBoard.RemovePiece(index);
+                pieceBoard.RemovePiece(originalIndex);
                 // update pieceBoard 
 
                 // add to selected pieceboard
@@ -229,7 +230,14 @@ public class GameState
                 filteredMoves &= (path | attackerPosition);
             }else if(isKing){ //Handle castling
                 // remove all castling moves since king in check
-                filteredMoves &= ~((pieceboard as KingBoard).GetCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard));
+                //filteredMoves &= ~((pieceboard as KingBoard).GetCastlingMoves());
+                ulong kingCastleMove = (pieceboard as KingBoard).GetKingsideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard),
+                    queenCastleMove = (pieceboard as KingBoard).GetQueensideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard);
+
+                if((filteredMoves & kingCastleMove)!=0)
+                    filteredMoves &= ~(kingCastleMove);
+                if((filteredMoves & queenCastleMove)!=0)
+                    filteredMoves &= ~(queenCastleMove);
                 return filteredMoves;
             }
         }
@@ -248,8 +256,6 @@ public class GameState
         }else{ //is King,  hnadle castling.
             ulong KingSideSquares = currPlayer.IsWhite? KingBoard.WhiteKingsideMask : KingBoard.BlackKingsideMask,
                 QueenSideSquares = currPlayer.IsWhite? KingBoard.WhiteQueensideMask : KingBoard.BlackQueensideMask;
-            ulong KingSideMove = currPlayer.IsWhite? KingBoard.WhiteKingSideMove : KingBoard.BlackKingSideMove,
-                QueenSideMove = currPlayer.IsWhite? KingBoard.WhiteQueenSideMove : KingBoard.BlackQueenSideMove;
             
             //Make sure rook exists
             //(currPlayer.PieceBoards['R'].Bitboard & BitOps.a1<<0) != 0;
@@ -258,18 +264,24 @@ public class GameState
             //make sure no opp piece atatcks spaces between king abd rook
 
             ulong allAttackedSquares = GetAllAttackMoves(PlayerStates[1-currentIndex]);
+            ulong kingCastleMove = (pieceboard as KingBoard).GetKingsideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard),
+                queenCastleMove = (pieceboard as KingBoard).GetQueensideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard);
             // check KingSide
-            if(!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 7:63))
-            ||((KingSideSquares & allAttackedSquares) != 0)
+            if((filteredMoves & kingCastleMove)!=0 
+            &&  (!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 7:63))
+                ||((KingSideSquares & allAttackedSquares) != 0)
+                )
             ){
-                filteredMoves &= ~(KingSideMove); // remove the castle move
+                filteredMoves &= ~(kingCastleMove); // remove the castle move
             }
 
             // check QueenSide
-            if(!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 0:56))
-            ||((QueenSideSquares & allAttackedSquares) != 0)
+            if((filteredMoves & queenCastleMove)!=0
+            &&  (!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 0:56))
+                ||((QueenSideSquares & allAttackedSquares) != 0)
+                )
             ){
-                filteredMoves &= ~(QueenSideMove); // remove the castle move
+                filteredMoves &= ~(queenCastleMove); // remove the castle move
             }
         }
 
@@ -428,9 +440,13 @@ public class GameState
 
         otherPlayer.InCheck = attackerCount==1;
         otherPlayer.DoubleCheck = attackerCount>1;
-        if(otherPlayer.IsInCheck) otherPlayer.KingAttacker=attacker;
+        if(otherPlayer.IsInCheck){
+            otherPlayer.KingAttacker=attacker;
+        }else{
+            otherPlayer.KingAttacker=-1; // reset attacker
+        }
 
-        Debug.Log(otherPlayer.PlayerType +" is in check?: "+otherPlayer.InCheck + " "+ otherPlayer.DoubleCheck + " " +otherPlayer.IsInCheck + "by attackker at " + attacker);
+        Debug.Log("Player Check Update: "+otherPlayer.PlayerType +" is in check?: "+otherPlayer.InCheck + " "+ otherPlayer.DoubleCheck + " " +otherPlayer.IsInCheck + "by attackker at " + attacker);
     }
 
     private void UpdateGameState(){
@@ -467,6 +483,8 @@ public class GameState
             UpdateCheckStatus(playerState);
             UpdateKingAttack(playerState);
         }
+        Debug.Log("Bigger Upadte: "+ PlayerStates[0].PlayerType + " "+ PlayerStates[0].IsInCheck + " " + PlayerStates[0].KingAttacker);
+        Debug.Log("Bigger Upadte: "+ PlayerStates[1].PlayerType + " "+ PlayerStates[1].IsInCheck + " " + PlayerStates[1].KingAttacker);
 
     }
 

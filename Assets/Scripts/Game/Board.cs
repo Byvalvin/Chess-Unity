@@ -57,7 +57,7 @@ public class Board : MonoBehaviour
     public List<GameObject> WhitePieces{get; set;}
     public List<GameObject> BlackPieces{get; set;}
 
-    Vector2Int originalPosition;
+    Vector2Int originalPosition, originalPromotedPawnPosition;
     GameObject selectedPiece = null, promotedPawn = null;
 
     // promotion
@@ -181,9 +181,9 @@ public class Board : MonoBehaviour
     GameObject GetTile(Vector2Int promotionTileLocation)=>tiles[promotionTileLocation.x, promotionTileLocation.y];
 
     
-
+    public bool InBounds(Vector2Int position) => Utility.InBounds(position, 0, Board.N);
     Vector2Int GetIndexPosition(Vector2 pos)=>Utility.RoundVector2(pos/tileSize);
-    bool ValidTargetPosition(Vector2Int targetPosition)=>Utility.InBounds(targetPosition);
+    bool ValidTargetPosition(Vector2Int targetPosition)=>InBounds(targetPosition);
     private void SetPosition(GameObject piece, int x, int y)=>piece.transform.position = new Vector3(tileSize*x, tileSize*y, 0);
     private void SetPosition(GameObject piece, Vector2Int position)=> SetPosition(piece, position.x, position.y);
     private void UpdateSelectedPieceUI(Vector2Int finalPosition, bool isCaptureMove=false, Vector2Int removedPiecePosition=default, bool isCastleMove=false, Vector2Int castledRookPosition=default, bool isPromotion=false){
@@ -253,7 +253,6 @@ public class Board : MonoBehaviour
         }else{
             Debug.Log("Collision null OR no gameobject with name foud");
         }
-        
         // if(selectedPiece!=null){
         //     Debug.Log("selectedPiece = "+selectedPiece);
 
@@ -299,7 +298,7 @@ public class Board : MonoBehaviour
         gameState.PromoteTo = pieceType;
         if(gameState.PromoteTo!='\0'){
             int index = BitOps.GetIndex(targetPosition),
-                originalIndex = BitOps.GetIndex(originalPosition);
+                originalIndex = BitOps.GetIndex(originalPromotedPawnPosition);
             //PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
             PieceBoard pieceBoard = promotedPawnBoard;
             gameState.ExecuteMove(pieceBoard, originalIndex, index);
@@ -331,6 +330,7 @@ public class Board : MonoBehaviour
                 //show promotion ui
                 isPromotionInProgress = true;
                 promotedPawn = selectedPiece;
+                originalPromotedPawnPosition = originalPosition;
                 ShowPromotionOptions(pieceBoard, targetPosition);
 
             }else{

@@ -24,39 +24,47 @@ public static class BitOps
     public static bool InBounds(int index) => 0 <= index && index < N * N;
 
     // Move squares forward
-    public static int ForwardMove(int index, int steps = 1) => index + (N * steps);
+    public static int ForwardMove(int index, int steps = 1) => InBounds(index)? index + (N * steps) : -1;
 
     // Move squares backward
-    public static int BackwardMove(int index, int steps = 1) => index - (N * steps);
+    public static int BackwardMove(int index, int steps = 1) => InBounds(index)? index - (N * steps) : -1;
 
     // Move squares left
-    public static int LeftMove(int index, int steps = 1) => index - steps;
+    public static int LeftMove(int index, int steps = 1) => InBounds(index)? index - steps : -1;
 
     // Move squares right
-    public static int RightMove(int index, int steps = 1) => index + steps;
+    public static int RightMove(int index, int steps = 1) => InBounds(index)? index + steps : -1;
 
     // Move diagonally up-left
     public static int Diagonal1Move(int index, int steps = 1) 
     {
-        return LeftMove(ForwardMove(index, steps), steps); // Move up and left
+        int fwd = ForwardMove(index, steps),
+            lfwd = LeftMove(fwd, steps);
+        return InBounds(index) && InBounds(fwd) && isValidDiagonalMove(index, lfwd)? lfwd : -1; // Move up and left
     }
 
     // Move diagonally up-right
     public static int Diagonal2Move(int index, int steps = 1) 
     {
-        return RightMove(ForwardMove(index, steps), steps); // Move up and right
+        int fwd = ForwardMove(index, steps),
+            rfwd = RightMove(fwd, steps);
+        return InBounds(index) && InBounds(fwd) && isValidDiagonalMove(index, rfwd)? rfwd : -1; // Move up and right
     }
 
     // Move diagonally down-left
     public static int Diagonal3Move(int index, int steps = 1) 
     {
-        return LeftMove(BackwardMove(index, steps), steps); // Move down and left
+        int bck = BackwardMove(index, steps),
+            lbck = LeftMove(bck, steps);
+        return InBounds(index) && InBounds(bck) && isValidDiagonalMove(index, lbck)? lbck : -1; // Move down and left
     }
 
     // Move diagonally down-right
     public static int Diagonal4Move(int index, int steps = 1) 
     {
-        return RightMove(BackwardMove(index, steps), steps); // Move down and right
+        int bck = BackwardMove(index, steps),
+            rbck = RightMove(bck, steps);
+        return InBounds(index) && InBounds(bck) && isValidDiagonalMove(index, rbck)?  rbck : -1; // Move down and right
     }
 
     // Method to check if two indices are in a straight line
@@ -146,6 +154,15 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
     // Diagonal movement
     public static bool isValidDiagonalMove(int fromRow, int fromCol, int toRow, int toCol) => 
         Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol); 
+    // Diagonal movement 2
+    public static bool isValidDiagonalMove(int fromIndex, int toIndex){
+        // Calculate the row and column of both indices
+        int fromRow = fromIndex / N;
+        int fromCol = fromIndex % N;
+        int toRow = toIndex / N;
+        int toCol = toIndex % N;
+        return Math.Abs(fromRow - toRow) == Math.Abs(fromCol - toCol); 
+    }
 
     // Check knight movement
     public static bool IsValidKnightMove(int fromRow, int fromCol, int toRow, int toCol)
