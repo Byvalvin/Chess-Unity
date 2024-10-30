@@ -10,7 +10,7 @@ public class Bot : Player
 
 public abstract class BotState : PlayerState
 {
-    public GameState CurrentGame{get; protected set;}
+    public GameState CurrentGame{get; set;}
     // Transposition table
     protected Dictionary<string, int> TT = new Dictionary<string, int>();
 
@@ -22,9 +22,26 @@ public abstract class BotState : PlayerState
     public abstract override PlayerState Clone();
 
     public virtual Vector2Int GetMove(){
-        return new Vector2Int(8,16);
+        
+
+        Dictionary<int, ulong> moveMap = new Dictionary<int, ulong>();
+        foreach (PieceBoard pieceBoard in PieceBoards.Values){
+            foreach (var kvp in pieceBoard.ValidMovesMap)
+            {
+                ulong validMoves = CurrentGame.GetMovesAllowed(pieceBoard, kvp.Key);
+                if(validMoves!=0) moveMap[kvp.Key] = validMoves;
+            }
+            
+        }
+
+        // call the thing that determines the mvoe to play given all the valid mvoes of all pieces
+        Vector2Int completeMove = Evaluate(moveMap);
+    
+        return completeMove;
     }
     protected virtual int EvaluateMove(int fromIndex, int toIndex, GameState clone)=>1;// placeholder assumes all moves are equal but diff bots will have diff scoring
     
-
+    protected virtual Vector2Int Evaluate(Dictionary<int, ulong> moveMap){
+        return new Vector2Int(8,16);
+    }
 }

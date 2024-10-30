@@ -22,6 +22,11 @@ public class GameState
    
         PlayerStates[0] = Objects.CreatePlayerState(player1Type.Trim(), player1Name.Trim(), true); // First player is white
         PlayerStates[1] = Objects.CreatePlayerState(player2Type.Trim(), player2Name.Trim(), false); // Second player is black
+        if (PlayerStates[0] is BotState botState1)
+            botState1.CurrentGame = this;
+        if (PlayerStates[1] is BotState botState2)
+            botState2.CurrentGame = this;
+
         OccupancyBoard = 0; // Initialize occupancy board
 
     }
@@ -526,6 +531,7 @@ public class GameState
         
         if(IsPromotion(pieceToMove, toIndex)){
             // set promotedPawn for any listener
+            PromoteTo = PlayerStates[currentIndex].PromoteTo;
         }
 
         ExecuteMove(pieceToMove, fromIndex, toIndex);

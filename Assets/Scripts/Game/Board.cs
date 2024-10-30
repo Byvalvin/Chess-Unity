@@ -311,12 +311,20 @@ public class Board : MonoBehaviour
     }
 
     void BotMove(){
-        Vector2Int fromTo = (gameState.PlayerStates[gameState.currentIndex] as BotState).GetMove();
-        Debug.Log(fromTo+" for the pbot");
+        PlayerState currPlayer = gameState.PlayerStates[gameState.currentIndex];
+        Vector2Int fromTo = (currPlayer as BotState).GetMove();
+        originalPosition = BitOps.GetPosition(fromTo.x);
+
         // setselected Piece
         List<GameObject> pieces = gameState.currentIndex==0?WhitePieces:BlackPieces;
+
         selectedPiece = pieces.FirstOrDefault(p => 
-                GetIndexPosition(p.transform.position) == BitOps.GetPosition(fromTo.x)); // Check for any piece at the target position
+                GetIndexPosition(p.transform.position) == originalPosition); // Check for any piece at the target position
+
+        if(GameState.IsPromotion(gameState.GetPieceBoard(fromTo.x, currPlayer), fromTo.y)){
+            promotedPawn = selectedPiece;
+            originalPromotedPawnPosition = originalPosition;
+        }
         gameState.MakeBotMove(fromTo.x, fromTo.y);
     }
     void ReleasePiece(){
