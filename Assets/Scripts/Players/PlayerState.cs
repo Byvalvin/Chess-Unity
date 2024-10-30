@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerState
 {
     public string PlayerType { get; set; } // Type of player
+    public string PlayerName { get; set; } // Name of player
     public bool IsWhite { get; set; } // True for white, false for black
     public int TurnIndex{get; private set;} // 0 for white, 1 for black
     public const bool IsTop = false; // IsTop says who is at top of board; true->white at top
@@ -20,9 +21,11 @@ public class PlayerState
 
     public int KingAttacker = -1;
 
-    public PlayerState(string playerType, bool isWhite)
+    public PlayerState(string playerName, bool isWhite)
     {
-        PlayerType = playerType;
+        PlayerType = "Player";
+
+        PlayerName = playerName;
         IsWhite = isWhite;
         TurnIndex = IsWhite?0:1;
 
@@ -53,7 +56,7 @@ public class PlayerState
         
         UpdateOccupancyBoard();
     }
-    public PlayerState Clone() => new PlayerState(this);
+    public virtual PlayerState Clone() => new PlayerState(this);
 
     public bool RemovePiece(PieceBoard pieceBoard, int index){
         if(PieceBoards[pieceBoard.Type]!=pieceBoard) return false; // not my piece board

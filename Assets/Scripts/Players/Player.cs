@@ -1,12 +1,8 @@
-public class Player
+using UnityEngine;
+
+public class Player : MonoBehaviour
 {
-    public PlayerState PlayerState { get; private set; }
-
-
-    public Player(PlayerState playerState)
-    {
-        PlayerState = playerState;
-    }
+    public PlayerState State { get;  set; }
 
     // Add methods for player actions, like making a move, if needed
 }

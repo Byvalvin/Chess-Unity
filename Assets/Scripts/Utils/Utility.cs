@@ -19,7 +19,7 @@ public static class Utility
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         return new Vector2(mousePos.x, mousePos.y);
     }
-    
+
     /*
     get if the user released the left-click button down
     */

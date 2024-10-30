@@ -13,11 +13,15 @@ public class GameState
     public char PromoteTo{get; set;}
     public bool Gameover{get; private set;}
 
-    public GameState(string player1Type, string player2Type)
+    public GameState(
+        string player1Type, string player1Name,
+        string player2Type, string player2Name
+    )
     {
         PlayerStates = new PlayerState[2];
-        PlayerStates[0] = new PlayerState(player1Type.Trim(), true);  // First player is white
-        PlayerStates[1] = new PlayerState(player2Type.Trim(), false); // Second player is black
+   
+        PlayerStates[0] = Objects.CreatePlayerState(player1Type.Trim(), player1Name.Trim(), true); // First player is white
+        PlayerStates[1] = Objects.CreatePlayerState(player2Type.Trim(), player2Name.Trim(), false); // Second player is black
         OccupancyBoard = 0; // Initialize occupancy board
 
     }
@@ -513,5 +517,17 @@ public class GameState
     public bool CheckStalemate()=> PlayerStalemated(PlayerStates[0]) || PlayerStalemated(PlayerStates[1]);
     public bool IsGameEnd()=>CheckCheckmate() || CheckStalemate();
 
+    // For Bots
+    public void MakeBotMove(int fromIndex, int toIndex){
 
+        // find the piece at from
+        PieceBoard pieceToMove = GetPieceBoard(fromIndex, PlayerStates[currentIndex]);
+        // set selectedPiece for any listener
+        
+        if(IsPromotion(pieceToMove, toIndex)){
+            // set promotedPawn for any listener
+        }
+
+        ExecuteMove(pieceToMove, fromIndex, toIndex);
+    }
 }

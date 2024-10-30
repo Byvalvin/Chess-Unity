@@ -309,6 +309,16 @@ public class Board : MonoBehaviour
         // Reset the promotion state
         isPromotionInProgress = false; // Reset after promotion is handled
     }
+
+    void BotMove(){
+        Vector2Int fromTo = (gameState.PlayerStates[gameState.currentIndex] as BotState).GetMove();
+        Debug.Log(fromTo+" for the pbot");
+        // setselected Piece
+        List<GameObject> pieces = gameState.currentIndex==0?WhitePieces:BlackPieces;
+        selectedPiece = pieces.FirstOrDefault(p => 
+                GetIndexPosition(p.transform.position) == BitOps.GetPosition(fromTo.x)); // Check for any piece at the target position
+        gameState.MakeBotMove(fromTo.x, fromTo.y);
+    }
     void ReleasePiece(){
         Vector2Int targetPosition = GetIndexPosition(Utility.GetMouseWorldPosition());
         int index = BitOps.GetIndex(targetPosition);
@@ -362,6 +372,11 @@ public class Board : MonoBehaviour
     
     void HandleInput(){
         if(gameState.Gameover) return; // dont handl user input
+
+        if(gameState.PlayerStates[gameState.currentIndex] is BotState bot){
+            BotMove();
+            return;
+        }
 
         if (Utility.MouseDown()) // Left mouse button
             SelectPiece();
