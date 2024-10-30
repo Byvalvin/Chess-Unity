@@ -186,7 +186,9 @@ public class PawnBoard : PieceBoard
             // Check left en passant
             int leftIndex = IsWhite ? BitOps.Diagonal1Move(pawnIndex, direction) : BitOps.Diagonal3Move(pawnIndex, -direction);
             if (BitOps.IsValidMove(pawnIndex, leftIndex, BitOps.MovementType.Pawn) 
-                && (Math.Abs(opponentPawnBoard.enPassantablePawn - leftIndex) == Board.N))
+                && (Math.Abs(opponentPawnBoard.enPassantablePawn - leftIndex) == Board.N)
+                && (Math.Abs(pawnIndex - opponentPawnBoard.enPassantablePawn)==1)
+            )
             {
                 ulong enPassantMove = BitOps.a1 << leftIndex;
                 movesToAdd.Add((pawnIndex, enPassantMove));
@@ -195,7 +197,10 @@ public class PawnBoard : PieceBoard
             // Check right en passant
             int rightIndex = IsWhite ? BitOps.Diagonal2Move(pawnIndex, direction) : BitOps.Diagonal4Move(pawnIndex, -direction);
             if (BitOps.IsValidMove(pawnIndex, rightIndex, BitOps.MovementType.Pawn) 
-                && (Math.Abs(opponentPawnBoard.enPassantablePawn - rightIndex) == Board.N))
+                && (Math.Abs(opponentPawnBoard.enPassantablePawn - rightIndex) == Board.N)
+                && (Math.Abs(pawnIndex - opponentPawnBoard.enPassantablePawn)==1)
+            )
+
             {
                 ulong enPassantMove = BitOps.a1 << rightIndex;
                 movesToAdd.Add((pawnIndex, enPassantMove));

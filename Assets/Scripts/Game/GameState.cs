@@ -31,8 +31,10 @@ public class GameState
 
     }
     public GameState(GameState original){
+        PlayerStates = new PlayerState[2];
         PlayerStates[0] = original.PlayerStates[0].Clone();
         PlayerStates[1] = original.PlayerStates[1].Clone();
+        
         currentIndex = original.currentIndex;
         PromoteTo = original.PromoteTo;
 

@@ -41,12 +41,14 @@ public class PlayerState
         UpdateOccupancyBoard();
     }
     public PlayerState(PlayerState original){
-        PlayerType = original.PlayerType;
+        PlayerName = original.PlayerName;
         IsWhite = original.IsWhite;
         TurnIndex = original.TurnIndex;
 
+        PieceBoards = new Dictionary<char, PieceBoard>();
         foreach(char type in original.PieceBoards.Keys)
             PieceBoards[type] = original.PieceBoards[type].Clone();
+        
         
         InCheck = original.InCheck;
         DoubleCheck = original.DoubleCheck;
