@@ -34,7 +34,7 @@ public class GameState
         PlayerStates = new PlayerState[2];
         PlayerStates[0] = original.PlayerStates[0].Clone();
         PlayerStates[1] = original.PlayerStates[1].Clone();
-        
+
         currentIndex = original.currentIndex;
         PromoteTo = original.PromoteTo;
 
@@ -227,36 +227,10 @@ public class GameState
             return  isKing ? moves : 0UL;
         }
 
-        
-        int kingIndex = currPlayer.GetKingIndex();
-        int kingAttackerIndex = currPlayer.KingAttacker;
-
-        // Condition 2: Check for king attacker
-        if(PlayerStates[currentIndex].InCheck){
-            if (kingAttackerIndex != -1 && !isKing)
-            {
-                ulong attackerPosition = BitOps.a1 << kingAttackerIndex;
-                ulong path = GetAttackPath(kingAttackerIndex, kingIndex, PlayerStates[1 - currentIndex]);
-
-                // Only allow moves that block the attack or capture the attacker
-                filteredMoves &= (path | attackerPosition);
-            }else if(isKing){ //Handle castling
-                // remove all castling moves since king in check
-                //filteredMoves &= ~((pieceboard as KingBoard).GetCastlingMoves());
-                ulong kingCastleMove = (pieceboard as KingBoard).GetKingsideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard),
-                    queenCastleMove = (pieceboard as KingBoard).GetQueensideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard);
-
-                if((filteredMoves & kingCastleMove)!=0)
-                    filteredMoves &= ~(kingCastleMove);
-                if((filteredMoves & queenCastleMove)!=0)
-                    filteredMoves &= ~(queenCastleMove);
-                return filteredMoves;
-            }
-        }
-        
-
         // Condition 3: (Handle pinned pieces if needed)
+        int kingIndex = currPlayer.GetKingIndex();
         if(!isKing){
+
             ulong pinPathAndAttackerPosition;
             bool isPinned = CheckForPinnedPiece(pieceboard, index, kingIndex, PlayerStates[1 - currentIndex], out pinPathAndAttackerPosition);
             
@@ -297,11 +271,34 @@ public class GameState
             }
         }
 
+
+        // Condition 2: Check for king attacker
+        int kingAttackerIndex = currPlayer.KingAttacker;
+
+        if(PlayerStates[currentIndex].InCheck){
+            if (kingAttackerIndex != -1 && !isKing)
+            {
+                ulong attackerPosition = BitOps.a1 << kingAttackerIndex;
+                ulong path = GetAttackPath(kingAttackerIndex, kingIndex, PlayerStates[1 - currentIndex]);
+
+                // Only allow moves that block the attack or capture the attacker
+                filteredMoves &= (path | attackerPosition);
+            }else if(isKing){ //Handle castling
+                // remove all castling moves since king in check
+                //filteredMoves &= ~((pieceboard as KingBoard).GetCastlingMoves());
+                ulong kingCastleMove = (pieceboard as KingBoard).GetKingsideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard),
+                    queenCastleMove = (pieceboard as KingBoard).GetQueensideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard);
+
+                if((filteredMoves & kingCastleMove)!=0)
+                    filteredMoves &= ~(kingCastleMove);
+                if((filteredMoves & queenCastleMove)!=0)
+                    filteredMoves &= ~(queenCastleMove);
+                return filteredMoves;
+            }
+        }
+        
         return filteredMoves; // Return the filtered moves
     }
-
-
-
 
     private ulong GetAttackPath(int kingAttackerIndex, int kingIndex, PlayerState otherPlayer)
     {
@@ -353,7 +350,6 @@ public class GameState
 
     private bool CheckForPinnedPiece(PieceBoard pieceboard, int pieceIndex, int kingIndex, PlayerState otherPlayer, out ulong pinnedMovement){
         pinnedMovement = 0UL;
-
         foreach (var kvpPiece in otherPlayer.PieceBoards){
             if(new HashSet<char>{ 'Q', 'R', 'B' }.Contains(kvpPiece.Key)){ // only sliders
                 foreach (var kvpMoves in kvpPiece.Value.ValidMovesMap){
@@ -361,13 +357,19 @@ public class GameState
                         pinnedMovement=GetAttackPath(kvpMoves.Key, kingIndex, otherPlayer); //get the path
                         ulong piecePosition=BitOps.a1 << pieceIndex,
                             attackerPosition=BitOps.a1 << kvpMoves.Key;
-
+                        // Debug.Log(pieceIndex + " " + kvpMoves.Key + " "+ pinnedMovement);
                         bool otherPieceOnPath = (OccupancyBoard & (pinnedMovement & ~(attackerPosition) & ~(piecePosition)))!=0;
                         if(otherPieceOnPath){
                             pinnedMovement=0UL; // reset, continue the search for a pinn
                         }else{
                             pinnedMovement |= attackerPosition;
-                            return (pinnedMovement&piecePosition)!=0; // if piece is indeed pinned
+                            bool pinned = (pinnedMovement&piecePosition)!=0;
+                            if(pinned){
+                                return true; // if piece is indeed pinned, no need to continue search
+                            }else{
+                                pinnedMovement = 0UL; // continue searching
+                            }
+                            
                         }
                         
                     }
@@ -375,7 +377,6 @@ public class GameState
             }
             
         }
-        
         return false; // No attacker found
     }
 
