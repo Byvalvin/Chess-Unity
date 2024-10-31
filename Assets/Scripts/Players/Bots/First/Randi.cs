@@ -37,7 +37,7 @@ public class RandiState : BotState
             while (allTo != 0)
             {
                 ulong bit = allTo & (~(allTo - 1)); // Isolate the rightmost set bit
-                int toIndex = BitScan(bit); // Get the index of the isolated bit
+                int toIndex = BitOps.BitScan(bit); // Get the index of the isolated bit
                 
                 // Add the move to the list
                 validMoves.Add(new Vector2Int(from, toIndex));

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class GameState
 {
     
-    public static event Action<Vector2Int, bool, Vector2Int, bool, Vector2Int, bool> OnPieceMoved; // update the Board UI if there is one
+    public event Action<Vector2Int, bool, Vector2Int, bool, Vector2Int, bool> OnPieceMoved; // update the Board UI if there is one
     public PlayerState[] PlayerStates { get; private set; } // Array of player states
     public ulong OccupancyBoard { get; private set; } // Combined occupancy board
     public int currentIndex = 0; // white to start

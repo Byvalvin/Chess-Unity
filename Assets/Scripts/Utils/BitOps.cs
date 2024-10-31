@@ -284,4 +284,33 @@ It would set direction to 0x8040201008040200 (all diagonal positions).
 
         return pathMask; // Returns 0 if there is no valid path}
     }
+
+
+    // for Move evalutation
+    public static int BitScan(ulong bit)
+    {
+        if (bit == 0)
+        {
+            throw new ArgumentException("Input must be a non-zero bit.");
+        }
+
+        int index = 0;
+        while ((bit & 1) == 0)
+        {
+            bit >>= 1; // Shift right to examine the next bit
+            index++;
+        }
+        return index;
+    }
+    public static int CountSetBits(ulong bitboard)
+    {
+        int count = 0;
+        while (bitboard > 0)
+        {
+            count++;
+            bitboard &= (bitboard - 1); // Remove the least significant bit set
+        }
+        return count;
+    }
+
 }

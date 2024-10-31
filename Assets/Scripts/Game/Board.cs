@@ -76,7 +76,7 @@ public class Board : MonoBehaviour
         BlackPieces = new List<GameObject>();
         CreateBoard(); // Initialize the board with pieces
 
-        GameState.OnPieceMoved += UpdateSelectedPieceUI; // auto update ui for bord after piece moves
+        state.OnPieceMoved += UpdateSelectedPieceUI; // auto update ui for bord after piece moves
         LogBoard();
         //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
     }
@@ -313,6 +313,7 @@ public class Board : MonoBehaviour
     void BotMove(){
         PlayerState currPlayer = gameState.PlayerStates[gameState.currentIndex];
         Vector2Int fromTo = (currPlayer as BotState).GetMove();
+        Debug.Log(fromTo+currPlayer.PlayerName+" "+currPlayer);
         originalPosition = BitOps.GetPosition(fromTo.x);
 
         // setselected Piece
