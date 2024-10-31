@@ -26,7 +26,7 @@ public class AggressorState : BotState
 
         // 1. Capture Bonus
         ulong toBitBoard = BitOps.a1 << toIndex;
-        if ((toBitBoard & CurrentGame.OccupancyBoard)!=0)
+        if ((toBitBoard & CurrentGame.PlayerStates[1-TurnIndex].OccupancyBoard)!=0)
         {
             PieceBoard targetPiece = CurrentGame.GetPieceBoard(toIndex, CurrentGame.PlayerStates[1-TurnIndex]);
             score += EvaluateCapture(targetPiece, toBitBoard);
@@ -34,11 +34,13 @@ public class AggressorState : BotState
 
         // evaluate clone score
         clone.MakeBotMove(fromIndex, toIndex);
-        score += EvaluateGameState(clone);
 
         // piece safety
         PieceBoard movingPiece = CurrentGame.GetPieceBoard(fromIndex, CurrentGame.PlayerStates[TurnIndex]);
         score += EvaluatePieceSafety(movingPiece.Type, clone, BitOps.GetBitBoard(fromIndex), BitOps.GetBitBoard(toIndex));
+
+        score += EvaluateGameState(clone);
+
 
 
         return score;
@@ -57,8 +59,10 @@ public class AggressorState : BotState
         // mobility
         score += EvaluateMobility(gameState);
 
-
         score += 2 * (EvaluateMaterial(gameState, TurnIndex) - EvaluateMaterial(gameState, 1-TurnIndex));
+
+        // 6. King Attacks
+        score += EvaluateKingThreat(gameState);
 
         score += AdjustAggressiveness(score);
 
@@ -86,10 +90,17 @@ public class AggressorState : BotState
 
         int nDefenders = CountDefenders(CurrentGame, toBitboard);
         int nAttackers = CountAttackers(CurrentGame, toBitboard); // Including the moving piece
-        score += AggressiveBoost * (nAttackers - nDefenders);
+        score += (AggressiveBoost * (nAttackers - nDefenders));
 
         return score;
     }
+    private int EvaluateKingThreat(GameState clone)
+    {
+        int checkBonus = clone.PlayerStates[1 - TurnIndex].IsInCheck? 20:0;
+        return KingTiles(clone) + checkBonus;
+    }
+
+    
     
 
 }

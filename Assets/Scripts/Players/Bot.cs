@@ -23,6 +23,7 @@ public abstract class BotState : PlayerState
     };
             // Define center squares
     protected const ulong centerSquares = 0x0000001818000000; // e4, e5, d4, d5
+    private const int KingTileValue = 3;
 
 
 
@@ -127,10 +128,17 @@ public abstract class BotState : PlayerState
         // This can be expanded based on specific criteria
         if (currPlayer.IsInCheck)
         {
-            score -= 10; // Penalize for being in check
+            score -= 5; // Penalize for being in check
         }
 
         return score;
+    }
+
+    protected int KingTiles(GameState gameState){
+        PlayerState oppPlayer = gameState.PlayerStates[1 - TurnIndex];
+        KingBoard opposingKing = (oppPlayer.PieceBoards['K'] as KingBoard);
+        int tileCount = BitOps.CountSetBits(opposingKing.ValidMovesMap[oppPlayer.GetKingIndex()]);
+        return KingTileValue * (8 - tileCount);
     }
 
     // Example: Function to evaluate center control
