@@ -11,7 +11,7 @@ public class Levi : Bot
 
 public class LeviState : BotState
 {
-    private const int MaxDepth = 3,
+    private const int MaxDepth = 4,
                     KingThreatPenalty = 10,
                     CaptureScoreMultiplier = 2,
                     PieceProtectionReward = 5;
@@ -23,24 +23,30 @@ public class LeviState : BotState
 
     protected override int EvaluateMove(int fromIndex, int toIndex, GameState clone){
         clone.MakeBotMove(fromIndex, toIndex);
-        return Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, IsWhite);
+        int movescore = Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite);
+        Debug.Log("Scoring| "+ fromIndex + " to" + toIndex + ": " + movescore);
+        return movescore;
     }
     private bool IsGameOver(GameState gameState){
         // Implement logic to determine if the game is over (checkmate, stalemate, etc.)
         return gameState.IsGameEnd(); // Placeholder
     }
     private int Minimax(GameState gameState, int depth, int alpha, int beta, bool maximizingPlayer){
-        string hashKey = gameState.Hash(); // Generate the hash for the current game state
+        //string hashKey = gameState.HashA(); // Generate the hash for the current game state
+        //ulong hashKey = gameState.HashB(); // Generate the hash for the current game state
+        /*
         Debug.Log(maximizingPlayer+" "+depth + " "+ alpha + " " + beta);
         Debug.Log(TT + "for tt" + hashKey);
+        */
+        /*
         foreach (var item in TT){
-            Debug.Log(item.Key + " " + item.Value);
+            Debug.Log("Hasing: "+ item.Key + " " + item.Value);
         }
         
         // Check if we have already evaluated this game state
         if (TT.TryGetValue(hashKey, out int cachedValue))
             return cachedValue; // Return the cached evaluation
-        
+        */
         if (depth == 0 || IsGameOver(gameState))
             return EvaluateGameState(gameState);
 
@@ -48,7 +54,7 @@ public class LeviState : BotState
         if (maximizingPlayer == IsWhite){
             int maxEval = int.MinValue;
             foreach (var move in GenerateAllMoves(gameState, TurnIndex)){
-                Debug.Log(move);
+                //Debug.Log(move);
                 GameState clonedGame = gameState.Clone();
                 clonedGame.MakeBotMove(move.x, move.y);
                 eval = Minimax(clonedGame, depth - 1, alpha, beta, !IsWhite);
@@ -76,7 +82,7 @@ public class LeviState : BotState
         }
 
         // Store the evaluation in the transposition table
-        TT[hashKey] = eval;
+        //TT[hashKey] = eval;
 
         return eval;
     }
@@ -159,13 +165,13 @@ public class LeviState : BotState
         {
             foreach (int pieceIndex in pieceBoard.ValidMovesMap.Keys)
             {
-                Debug.Log(pieceIndex+"is piece index "+pieceBoard.Type);
+                //Debug.Log(pieceIndex+"is piece index "+pieceBoard.Type);
                 var validMoves = gameState.GetMovesAllowed(pieceBoard, pieceIndex);
                 while (validMoves != 0)
                 {
                     ulong bit = validMoves & (~(validMoves - 1)); // Isolate the rightmost set bit
                     int toIndex = BitOps.BitScan(bit); // Get the index of the isolated bit
-                    Debug.Log(toIndex+"is to index");
+                    //Debug.Log(toIndex+"is to index");
                     if((bit & gameState.PlayerStates[1-TurnIndex].OccupancyBoard)!=0){
                         // Prioritize capturing moves
                         moves.Insert(0, new Vector2Int(pieceIndex, toIndex));

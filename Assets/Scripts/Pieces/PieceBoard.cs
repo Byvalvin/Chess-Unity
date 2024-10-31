@@ -99,7 +99,7 @@ public abstract class PieceBoard
         ValidMovesMap.Remove(index);
 
         // Log or handle any additional cleanup as necessary
-        Debug.Log($"Removed piece from index {index}. Remaining bitboard: {Bitboard}");
+        //Debug.Log($"Removed piece from index {index}. Remaining bitboard: {Bitboard}");
     }
 
     public virtual void AddPiece(int index) {
@@ -125,7 +125,7 @@ public abstract class PieceBoard
     // ValidMovesMap[index] = GetValidMoves(Bitboard, index); // You need to implement this logic based on your piece type
 
     
-    Debug.Log($"Added {Type} at index {index}. Current bitboard: {Bitboard}");
+    //Debug.Log($"Added {Type} at index {index}. Current bitboard: {Bitboard}");
 }
 
 

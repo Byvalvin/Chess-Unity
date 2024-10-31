@@ -43,7 +43,7 @@ public class GameState
     }
     public GameState Clone() => new GameState(this);
 
-    public string Hash(){
+    public string HashA(){
         // Simple example: concatenate relevant properties
         StringBuilder hashBuilder = new StringBuilder();
 
@@ -57,6 +57,37 @@ public class GameState
         hashBuilder.Append(currentIndex); // Include whose turn it is
         return hashBuilder.ToString();
     }
+    public ulong HashB()
+    {
+        ulong hash;
+
+        // Hash the occupancy boards of both players
+        // hash ^= PlayerStates[0].OccupancyBoard;
+        // hash ^= PlayerStates[1].OccupancyBoard;
+        hash = OccupancyBoard;
+
+        // Hash each player's piece boards
+        // foreach (var playerState in PlayerStates)
+        // {
+        //     foreach (var pieceBoard in playerState.PieceBoards.Values)
+        //     {
+        //         // Hash the piece type (assume you have a mapping to integral values)
+        //         //hash ^= (ulong)pieceBoard.Type; // Convert char to int (e.g., Q=1, K=2, etc.)
+                
+        //         // Hash the bitboard for the piece
+        //         hash ^= pieceBoard.Bitboard; // Assuming pieceBoard.Bitboard is a ulong
+        //     }
+        // }
+
+        // Include current player index
+        //hash ^= (ulong)currentIndex;
+
+        // Incorporate currentIndex with shifting
+        hash ^= (ulong)(currentIndex << 32); // Shift currentIndex to higher bits
+
+        return hash;
+    }
+
 
     public void Initialize()
     {
@@ -121,7 +152,7 @@ public class GameState
             isPromotion
         );
 
-        Debug.Log("move invoked updated");
+        //Debug.Log("move invoked updated");
     }
 
     public PieceBoard GetPieceBoard(int index, PlayerState givenPlayerState =null){
@@ -172,13 +203,13 @@ public class GameState
             // Remove the piece from the opponent's board
             PieceBoard opponentPieceBoard = GetPieceBoard(index, PlayerStates[1 - currentIndex]);
             PlayerStates[1-currentIndex].RemovePiece(opponentPieceBoard, index);
-            Debug.Log($"Captured opponent's piece at index {index}.");
+            //Debug.Log($"Captured opponent's piece at index {index}.");
             removedPieceIndex = index;
         }
         else if(isEnPassantCapture)
         {
             PlayerStates[1-currentIndex].EnPassantChosen();
-            Debug.Log($"Captured opponent's piece enpassant {index}.");
+            //Debug.Log($"Captured opponent's piece enpassant {index}.");
             removedPieceIndex = (PlayerStates[1-currentIndex].PieceBoards['P'] as PawnBoard).enPassantablePawn;
         }
 
@@ -472,7 +503,7 @@ public class GameState
 
         otherPlayer.KingAttacker=attacker;
         
-        Debug.Log("Player Check Update: "+otherPlayer.PlayerType +" is in check?: "+otherPlayer.InCheck + " "+ otherPlayer.DoubleCheck + " " +otherPlayer.IsInCheck + "by attackker at " + attacker);
+        //Debug.Log("Player Check Update: "+otherPlayer.PlayerType +" is in check?: "+otherPlayer.InCheck + " "+ otherPlayer.DoubleCheck + " " +otherPlayer.IsInCheck + "by attackker at " + attacker);
     }
 
     private void UpdateGameState(){
@@ -511,8 +542,6 @@ public class GameState
             UpdateCheckStatus(playerState);
             UpdateKingAttack(playerState);
         }
-        Debug.Log("Bigger Upadte: "+ PlayerStates[0].PlayerType + " "+ PlayerStates[0].IsInCheck + " " + PlayerStates[0].KingAttacker);
-        Debug.Log("Bigger Upadte: "+ PlayerStates[1].PlayerType + " "+ PlayerStates[1].IsInCheck + " " + PlayerStates[1].KingAttacker);
 
     }
 

@@ -29,7 +29,8 @@ public abstract class BotState : PlayerState
 
     public GameState CurrentGame{get; set;}
     // Transposition table
-    protected Dictionary<string, int> TT = new Dictionary<string, int>();
+    //protected Dictionary<string, int> TT = new Dictionary<string, int>();
+    protected Dictionary<ulong, int> TT = new Dictionary<ulong, int>();
 
     public BotState(string playerName, bool isWhite) : base(playerName, isWhite){}
 
@@ -268,8 +269,4 @@ public abstract class BotState : PlayerState
         int fromNotSafe = -CountAttackers(CurrentGame, fromtarget);
         return (toNotSafe + fromNotSafe) * pieceValues[type];
     }
-
-
-
-
 }

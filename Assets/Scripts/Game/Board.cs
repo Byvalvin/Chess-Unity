@@ -77,7 +77,7 @@ public class Board : MonoBehaviour
         CreateBoard(); // Initialize the board with pieces
 
         state.OnPieceMoved += UpdateSelectedPieceUI; // auto update ui for bord after piece moves
-        LogBoard();
+        //LogBoard();
         //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
     }
 
@@ -313,7 +313,7 @@ public class Board : MonoBehaviour
     void BotMove(){
         PlayerState currPlayer = gameState.PlayerStates[gameState.currentIndex];
         Vector2Int fromTo = (currPlayer as BotState).GetMove();
-        Debug.Log(fromTo+currPlayer.PlayerName+" "+currPlayer);
+        //Debug.Log(fromTo+currPlayer.PlayerName+" "+currPlayer);
         originalPosition = BitOps.GetPosition(fromTo.x);
 
         // setselected Piece
@@ -356,8 +356,8 @@ public class Board : MonoBehaviour
                 // Execute the move
                 gameState.ExecuteMove(pieceBoard, originalIndex, index);
                 //uses action in GameState to auto update ui, Board is a listeneer
-                Debug.Log($"Moved piece to {targetPosition} (Index: {index})");
-                Debug.Log(gameState.PlayerStates[1-gameState.currentIndex].InCheck+" king check");
+                //Debug.Log($"Moved piece to {targetPosition} (Index: {index})");
+                //Debug.Log(gameState.PlayerStates[1-gameState.currentIndex].InCheck+" king check");
             }
         } else{
             // Reset to original position if the move isn't valid
