@@ -57,7 +57,7 @@ public class AggressorState : BotState
         score += EvaluateCenterControl(gameState);
 
         // mobility
-        score += EvaluateMobility(gameState);
+        score += EvaluateMobility(gameState, TurnIndex);
 
         score += 2 * (EvaluateMaterial(gameState, TurnIndex) - EvaluateMaterial(gameState, 1-TurnIndex));
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Text; // string builder hash
 
 public class GameState
 {
@@ -41,6 +42,21 @@ public class GameState
         Initialize();
     }
     public GameState Clone() => new GameState(this);
+
+    public string Hash(){
+        // Simple example: concatenate relevant properties
+        StringBuilder hashBuilder = new StringBuilder();
+
+        foreach (PlayerState playerState in PlayerStates){
+            foreach (PieceBoard pieceBoard in playerState.PieceBoards.Values){
+                hashBuilder.Append(pieceBoard.Type);
+                foreach (int bitPosition in pieceBoard.ValidMovesMap.Keys)
+                    hashBuilder.Append(bitPosition);
+            }
+        }
+        hashBuilder.Append(currentIndex); // Include whose turn it is
+        return hashBuilder.ToString();
+    }
 
     public void Initialize()
     {

@@ -253,16 +253,13 @@ public abstract class BotState : PlayerState
         return attackerCount;
     }
 
-    protected int EvaluateMobility(GameState clone)
+    protected int EvaluateMobility(GameState clone, int playerIndex)
     {
         int mobilityScore = 0;
-        foreach (PieceBoard pieceBoard in clone.PlayerStates[TurnIndex].PieceBoards.Values)
-        {
+        foreach (PieceBoard pieceBoard in clone.PlayerStates[playerIndex].PieceBoards.Values)
             foreach (ulong moves in pieceBoard.ValidMovesMap.Values)
-            {
                 mobilityScore += BitOps.CountSetBits(moves);
-            }
-        }
+            
         return mobilityScore;
     }
 
