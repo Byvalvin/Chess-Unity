@@ -11,7 +11,7 @@ public class Levi : Bot
 
 public class LeviState : BotState
 {
-    private const int MaxDepth = 4,
+    private const int MaxDepth = 8,
                     KingThreatPenalty = 10,
                     CaptureScoreMultiplier = 2,
                     PieceProtectionReward = 5;
