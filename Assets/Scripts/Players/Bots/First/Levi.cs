@@ -24,7 +24,7 @@ public class LeviState : BotState
     protected override int EvaluateMove(int fromIndex, int toIndex, GameState clone){
         clone.MakeBotMove(fromIndex, toIndex);
         int movescore = Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite);
-        Debug.Log("Scoring| "+ fromIndex + " to" + toIndex + ": " + movescore);
+        //Debug.Log("Scoring| "+ fromIndex + " to" + toIndex + ": " + movescore);
         return movescore;
     }
     private bool IsGameOver(GameState gameState){
@@ -33,7 +33,7 @@ public class LeviState : BotState
     }
     private int Minimax(GameState gameState, int depth, int alpha, int beta, bool maximizingPlayer){
         //string hashKey = gameState.HashA(); // Generate the hash for the current game state
-        //ulong hashKey = gameState.HashB(); // Generate the hash for the current game state
+        ulong hashKey = gameState.HashB(); // Generate the hash for the current game state
         /*
         Debug.Log(maximizingPlayer+" "+depth + " "+ alpha + " " + beta);
         Debug.Log(TT + "for tt" + hashKey);
@@ -42,11 +42,12 @@ public class LeviState : BotState
         foreach (var item in TT){
             Debug.Log("Hasing: "+ item.Key + " " + item.Value);
         }
+        */
         
         // Check if we have already evaluated this game state
         if (TT.TryGetValue(hashKey, out int cachedValue))
             return cachedValue; // Return the cached evaluation
-        */
+        
         if (depth == 0 || IsGameOver(gameState))
             return EvaluateGameState(gameState);
 
@@ -82,7 +83,7 @@ public class LeviState : BotState
         }
 
         // Store the evaluation in the transposition table
-        //TT[hashKey] = eval;
+        TT[hashKey] = eval;
 
         return eval;
     }

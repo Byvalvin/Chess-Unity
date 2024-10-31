@@ -302,6 +302,7 @@ public class Board : MonoBehaviour
             //PieceBoard pieceBoard = gameState.PlayerStates[gameState.currentIndex].PieceBoards[selectedPiece.name[0]];
             PieceBoard pieceBoard = promotedPawnBoard;
             gameState.ExecuteMove(pieceBoard, originalIndex, index);
+            HandleGameEndMessage();
         }else{
             // Reset to original position if the move wasnt made
             UpdateSelectedPieceUI(originalPosition);
@@ -355,6 +356,7 @@ public class Board : MonoBehaviour
             }else{
                 // Execute the move
                 gameState.ExecuteMove(pieceBoard, originalIndex, index);
+                HandleGameEndMessage();
                 //uses action in GameState to auto update ui, Board is a listeneer
                 //Debug.Log($"Moved piece to {targetPosition} (Index: {index})");
                 //Debug.Log(gameState.PlayerStates[1-gameState.currentIndex].InCheck+" king check");
@@ -370,7 +372,22 @@ public class Board : MonoBehaviour
         //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
     }
 
-
+    void HandleGameEndMessage(){
+        if(gameState.Gameover){
+            Debug.Log("Game is Over");
+            if(gameState.CheckCheckmate()){
+                if(gameState.PlayerStates[0].IsInCheck)
+                    Debug.Log(gameState.PlayerStates[0].PlayerName + " is CHECKmated");
+                if(gameState.PlayerStates[1].IsInCheck)
+                    Debug.Log(gameState.PlayerStates[1].PlayerName + " is CHECKmated");
+            }else{
+                if(gameState.hasMoves(gameState.PlayerStates[0]))
+                    Debug.Log(gameState.PlayerStates[0].PlayerName + " is STALEmated");
+                if(gameState.hasMoves(gameState.PlayerStates[1]))
+                    Debug.Log(gameState.PlayerStates[1].PlayerName + " is STALEmated");
+            }
+        }
+    }
     void HandleDragAndDrop(){
         if (selectedPiece != null){
             DragPiece();

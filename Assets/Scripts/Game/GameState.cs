@@ -553,7 +553,7 @@ public class GameState
     // Game end
     public bool PlayerCheckmated(PlayerState player){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
         if(!hasMoves(player)&& currentIndex==player.TurnIndex && player.IsInCheck){
-            Debug.Log($"GAME OVER:{player.PlayerType} IS CHECKMATED");
+            //Debug.Log($"GAME OVER:{player.PlayerType} IS CHECKMATED");
             return true;
         }
         return false;
@@ -562,7 +562,7 @@ public class GameState
 
     public bool PlayerStalemated(PlayerState player){
         if(!hasMoves(player) && currentIndex==player.TurnIndex && !player.IsInCheck){
-            Debug.Log($"GAME OVER: DRAW-> {player.PlayerType} STALEMATED");
+            //Debug.Log($"GAME OVER: DRAW-> {player.PlayerType} STALEMATED");
             return true;
         }
         return false;
