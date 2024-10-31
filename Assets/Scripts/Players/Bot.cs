@@ -56,6 +56,22 @@ public abstract class BotState : PlayerState
     
         return completeMove;
     }
+
+    protected virtual (int, char) EvaluatePromotionMove(int from, int to){
+        (int score, char choice) promotionPack = (int.MinValue, '\0');
+        // 4 clones
+        char[] promotions = {'Q', 'R', 'B', 'N'};
+        GameState clone;
+        int newScore;
+        foreach (char promotion in promotions){
+             clone = CurrentGame.Clone(); (clone.PlayerStates[TurnIndex] as BotState).PromoteTo=promotion;
+             newScore = EvaluateMove(from, to, clone);
+             if(newScore > promotionPack.score){
+                promotionPack = (newScore, promotion);
+             }
+        }
+        return promotionPack;
+    }
     protected virtual int EvaluateGameState(GameState gameState)=>1;
     protected virtual int EvaluateMove(int fromIndex, int toIndex, GameState clone){
         clone.MakeBotMove(fromIndex, toIndex);
@@ -68,38 +84,58 @@ public abstract class BotState : PlayerState
         int bestFromIndex = -1;
         int bestToIndex = -1;
         int bestScore = int.MinValue; // Initialize with the lowest possible score
+        char bestPromoChoice = '\0';
+
+        var bestMoves = new List<Vector2Int>();
+        Vector2Int best = default;
 
         // Loop through each piece's valid moves
         foreach (var kvp in moveMap)
         {
             int from = kvp.Key;
             ulong allTo = kvp.Value;
-
+            PieceBoard pieceBoard = CurrentGame.GetPieceBoard(from, this);
             // Iterate over the bits in the ulong to find all possible destination indices
             while (allTo != 0)
             {
                 ulong bit = allTo & (~(allTo - 1)); // Isolate the rightmost set bit
                 int toIndex = BitOps.BitScan(bit); // Get the index of the isolated bit
                 
-                // Clone the current game state for evaluation
-                GameState clonedGame = CurrentGame.Clone();
+                int score = int.MinValue;
+                char promoChoice = '\0';
 
-                // Evaluate the move and get the score
-                int score = EvaluateMove(from, toIndex, clonedGame);
-
+                if(GameState.IsPromotion(pieceBoard, toIndex)){
+                    (int score, char choice) promotionScore =  EvaluatePromotionMove(from, toIndex);
+                    score = promotionScore.score;
+                    promoChoice = promotionScore.choice;
+                    // Check if this is the best promotion
+                    if (score > bestScore)
+                        bestPromoChoice = promoChoice; // Track the best promotion choice
+                }else{
+                    // Evaluate the move and get the score
+                    score = EvaluateMove(from, toIndex, CurrentGame.Clone());
+                }
+    
                 // Update the best score and corresponding indices if this move is better
                 if (score > bestScore)
                 {
                     bestScore = score;
                     bestFromIndex = from;
                     bestToIndex = toIndex;
+
+                    bestMoves.Clear();
+                    bestMoves.Add(new Vector2Int(bestFromIndex, bestToIndex));
                 }
 
                 // Clear the rightmost set bit to continue
                 allTo ^= bit;
             }
         }
-        return new Vector2Int(bestFromIndex, bestToIndex);
+        best = bestMoves.Count > 1 ? bestMoves[UnityEngine.Random.Range(0, bestMoves.Count)] : new Vector2Int(bestFromIndex, bestToIndex);
+        PromoteTo=GameState.IsPromotion(CurrentGame.GetPieceBoard(best.x, this), best.y)? bestPromoChoice : '\0';
+
+        //Debug.Log($"BEST MOVE: {movingPiece.Type} {movingPiece.Colour} {best[0]} {best[1]} {bestScore}");
+        return best;
     }
 
 
