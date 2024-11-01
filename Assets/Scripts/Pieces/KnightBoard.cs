@@ -2,6 +2,21 @@ using System.Collections.Generic;
 
 public class KnightBoard : PieceBoard
 {
+    // Knight moves (L-shape)
+    static readonly int[] knightMoves = new int[]
+    {
+        // Two squares forward, then one left/right
+        2 * BitOps.N + 1,  // Up-Left 17
+        2 * BitOps.N - 1,  // Up-Right 15 
+        -2 * BitOps.N + 1, // Down-Left -15
+        -2 * BitOps.N - 1, // Down-Right -17
+
+        // Two squares left/right, then one forward/backward
+        1 * BitOps.N + 2,  // Left-Up 10
+        1 * BitOps.N - 2,  // Left-Down 6
+        -1 * BitOps.N + 2, // Right-Up -6
+        -1 * BitOps.N - 2  // Right-Down -10
+    };
     public KnightBoard(bool isWhite, ulong startingBitboard = 0) : base(isWhite, startingBitboard)
     {
         Type = 'N';
@@ -14,22 +29,6 @@ public class KnightBoard : PieceBoard
     public override ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
         ulong validMoves = 0UL;
-
-        // Knight moves (L-shape)
-        int[] knightMoves = new int[]
-        {
-            // Two squares forward, then one left/right
-            2 * BitOps.N + 1,  // Up-Left 17
-            2 * BitOps.N - 1,  // Up-Right 15 
-            -2 * BitOps.N + 1, // Down-Left -15
-            -2 * BitOps.N - 1, // Down-Right -17
-
-            // Two squares left/right, then one forward/backward
-            1 * BitOps.N + 2,  // Left-Up 10
-            1 * BitOps.N - 2,  // Left-Down 6
-            -1 * BitOps.N + 2, // Right-Up -6
-            -1 * BitOps.N - 2  // Right-Down -10
-        };
 
         foreach (var move in knightMoves)
         {

@@ -14,9 +14,10 @@ public static class Utility
     /*
     get where the user's mouse is currently
     */
+    private static Camera mainCamera = Camera.main;
     public static Vector2 GetMouseWorldPosition()
     {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         return new Vector2(mousePos.x, mousePos.y);
     }
 

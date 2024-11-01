@@ -22,12 +22,10 @@ public abstract class PieceBoard
         ValidMovesMap = new Dictionary<int, ulong>(); // will set later
 
         // set first moves
-        if (startingBitboard != 0)
+        if (Bitboard != 0)
             for (int i = 0; i < 64; i++)
-                if ((startingBitboard & (BitOps.a1 << i)) != 0)
+                if (GetPieceAt(i) != 0)
                     FirstMovers.Add(i);
-            
-        
     }
 
     public PieceBoard(PieceBoard original){
@@ -82,8 +80,7 @@ public abstract class PieceBoard
 
         ValidMovesMap.Remove(fromIndex); // the piece is no longer there
 
-        if (FirstMovers.Contains(fromIndex))
-            FirstMovers.Remove(fromIndex);
+        FirstMovers.Remove(fromIndex); // no need to check with Contains
     }
 
     public void RemovePiece(int index){
@@ -92,8 +89,7 @@ public abstract class PieceBoard
         
         // Optionally, you might want to clean up any other related data structures
         // For instance, if you're tracking the position of pieces in a dictionary, you could remove that entry
-        if (FirstMovers.Contains(index))
-            FirstMovers.Remove(index); // Remove any first move tracking for the captured piece
+        FirstMovers.Remove(index); // Remove any first move tracking for the captured piece
 
         // remove moves for removed piece
         ValidMovesMap.Remove(index);
@@ -102,31 +98,18 @@ public abstract class PieceBoard
         //Debug.Log($"Removed piece from index {index}. Remaining bitboard: {Bitboard}");
     }
 
-    public virtual void AddPiece(int index) {
-    if (!BitOps.InBounds(index)) {
-        Debug.LogError("Index out of bounds.");
-        return;
+    public virtual void AddPiece(int index)
+    {
+        if (BitOps.InBounds(index) && GetPieceAt(index) == 0)
+        {
+            Bitboard |= (BitOps.a1 << index);
+            // Debug.Log($"Added {Type} at index {index}. Current bitboard: {Bitboard}");
+        }
+        else
+        {
+            Debug.LogError($"Cannot add piece at index {index}: out of bounds or occupied.");
+        }
     }
-
-    // Check if there is already a piece at the given index
-    if (GetPieceAt(index) != 0) {
-        Debug.LogError("There is already a piece at this index.");
-        return;
-    }
-
-    // Update the Bitboard to add the new piece
-    Bitboard |= (BitOps.a1 << index);
-    
-    // Track first move if applicable
-    //FirstMovers.Add(index);
-    
-    // You might want to also update ValidMovesMap here if necessary
-    // For example, you can initialize it with some valid moves for the new piece
-    // ValidMovesMap[index] = GetValidMoves(Bitboard, index); // You need to implement this logic based on your piece type
-
-    
-    //Debug.Log($"Added {Type} at index {index}. Current bitboard: {Bitboard}");
-}
 
 
     public static void PrintBitboard(ulong bitboard){

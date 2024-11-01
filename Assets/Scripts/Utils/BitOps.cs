@@ -4,7 +4,7 @@ using System;
 public static class BitOps 
 {
     public const ulong a1 = 1UL; // Constant for bit manipulation
-    public const int N = Board.N; // Board size
+    public static readonly int N = Board.N; // Board size
 
     // Method to calculate the index based on row and column
     public static int GetIndex(int row, int col) => row * N + col; // Adjust for Unity's Y direction

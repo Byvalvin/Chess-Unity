@@ -11,7 +11,7 @@ public class Levi : Bot
 
 public class LeviState : BotState
 {
-    private const int MaxDepth = 8,
+    private const int MaxDepth = 6,
                     KingThreatPenalty = 10,
                     CaptureScoreMultiplier = 2,
                     PieceProtectionReward = 5;
@@ -32,8 +32,8 @@ public class LeviState : BotState
         return gameState.IsGameEnd(); // Placeholder
     }
     private int Minimax(GameState gameState, int depth, int alpha, int beta, bool maximizingPlayer){
-        //string hashKey = gameState.HashA(); // Generate the hash for the current game state
-        ulong hashKey = gameState.HashB(); // Generate the hash for the current game state
+        string hashKey = gameState.HashA(); // Generate the hash for the current game state
+        //ulong hashKey = gameState.HashB(); // Generate the hash for the current game state
         /*
         Debug.Log(maximizingPlayer+" "+depth + " "+ alpha + " " + beta);
         Debug.Log(TT + "for tt" + hashKey);

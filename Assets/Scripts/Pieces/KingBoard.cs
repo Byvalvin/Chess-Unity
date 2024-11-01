@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Linq;
 
 
 public class KingBoard : PieceBoard
@@ -21,7 +22,7 @@ public class KingBoard : PieceBoard
                                 BlackQueenSideMove = 0x0400000000000000; // b8, c8, d8
     
     // Array of movement functions to check
-    static Func<int, int, int>[] moveFunctions = new Func<int, int, int>[]
+    static readonly Func<int, int, int>[] moveFunctions = new Func<int, int, int>[]
     {
         BitOps.ForwardMove,
         BitOps.BackwardMove,
@@ -32,6 +33,8 @@ public class KingBoard : PieceBoard
         BitOps.Diagonal3Move,
         BitOps.Diagonal4Move
     };
+
+    public int MyIndex=>ValidMovesMap.Keys.First();
 
 
     public KingBoard(bool IsWhite, ulong startingBitboard = 0) : base(IsWhite, startingBitboard)
@@ -76,9 +79,8 @@ public class KingBoard : PieceBoard
     public ulong GetAttackMoves(){ // all valid king attack mvoes so defense is proper
         ulong allKingMoves = 0UL;
 
-        var enumerator = ValidMovesMap.GetEnumerator();
-        enumerator.MoveNext();
-        int kingIndex = enumerator.Current.Key;
+        
+        int kingIndex = MyIndex;
 
         foreach (var moveFunc in moveFunctions){
             int newIndex = moveFunc(kingIndex, 1); // one in each dir
