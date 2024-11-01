@@ -11,8 +11,9 @@ public class Bot : Player
 
 public abstract class BotState : PlayerState
 {
+    const int MAX = 1000000, softMax = MAX/100;
     // Material Values (simplified)
-    protected Dictionary<char, int> pieceValues = new Dictionary<char, int>
+    protected readonly Dictionary<char, int> pieceValues = new Dictionary<char, int>
     {
         { 'P', 1 },  // Pawn
         { 'N', 3 },  // Knight
@@ -58,6 +59,17 @@ public abstract class BotState : PlayerState
         return completeMove;
     }
 
+    protected int GameEndingMove(GameState clone, int score=0){
+        if (clone.PlayerCheckmated(clone.PlayerStates[1 - TurnIndex]))
+            return MAX; // Opponent is checkmated
+        if(clone.PlayerCheckmated(clone.PlayerStates[TurnIndex]))
+            return -MAX; // Current player is checkmated
+        if (clone.PlayerStalemated(clone.PlayerStates[1 - TurnIndex]))
+            return -MAX; // Avoid stalemate
+
+        return 0; // No special state
+    }
+
     protected virtual (int, char) EvaluatePromotionMove(int from, int to){
         (int score, char choice) promotionPack = (int.MinValue, '\0');
         // 4 clones
@@ -76,6 +88,10 @@ public abstract class BotState : PlayerState
     protected virtual int EvaluateGameState(GameState gameState)=>1;
     protected virtual int EvaluateMove(int fromIndex, int toIndex, GameState clone){
         clone.MakeBotMove(fromIndex, toIndex);
+
+        int gamescore = GameEndingMove(clone);
+        if(gamescore!=0) return gamescore;
+
         return EvaluateGameState(clone);// placeholder assumes all moves are equal but diff bots will have diff scoring
     }
     
@@ -137,6 +153,33 @@ public abstract class BotState : PlayerState
 
         //Debug.Log($"BEST MOVE: {movingPiece.Type} {movingPiece.Colour} {best[0]} {best[1]} {bestScore}");
         return best;
+    }
+
+    protected List<Vector2Int> GenerateAllMoves(GameState gameState, int playerIndex){
+        var moves = new List<Vector2Int>();
+        var pieceBoards = gameState.PlayerStates[playerIndex].PieceBoards.Values;
+
+        foreach (var pieceBoard in pieceBoards)
+        {
+            foreach (int pieceIndex in pieceBoard.ValidMovesMap.Keys)
+            {
+                //Debug.Log(pieceIndex+"is piece index "+pieceBoard.Type);
+                var validMoves = gameState.GetMovesAllowed(pieceBoard, pieceIndex);
+                while (validMoves != 0)
+                {
+                    ulong bit = validMoves & (~(validMoves - 1)); // Isolate the rightmost set bit
+                    int toIndex = BitOps.BitScan(bit); // Get the index of the isolated bit
+                    
+                    moves.Add(new Vector2Int(pieceIndex, toIndex));
+                    
+                    // Clear the rightmost set bit to continue
+                    validMoves ^= bit;
+                }
+            }
+            
+        }
+
+        return moves;
     }
 
 

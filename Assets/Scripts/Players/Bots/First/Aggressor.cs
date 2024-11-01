@@ -22,6 +22,12 @@ public class AggressorState : BotState
     public override PlayerState Clone() => new AggressorState(this);
 
     protected override int EvaluateMove(int fromIndex, int toIndex, GameState clone){
+        // evaluate clone score
+        clone.MakeBotMove(fromIndex, toIndex);
+
+        int gamescore = GameEndingMove(clone);
+        if(gamescore!=0) return gamescore;
+
         int score = 0;
 
         // 1. Capture Bonus
@@ -32,16 +38,11 @@ public class AggressorState : BotState
             score += EvaluateCapture(targetPiece, toBitBoard);
         }
 
-        // evaluate clone score
-        clone.MakeBotMove(fromIndex, toIndex);
-
         // piece safety
         PieceBoard movingPiece = CurrentGame.GetPieceBoard(fromIndex, CurrentGame.PlayerStates[TurnIndex]);
         score += EvaluatePieceSafety(movingPiece.Type, clone, BitOps.GetBitBoard(fromIndex), BitOps.GetBitBoard(toIndex));
 
         score += EvaluateGameState(clone);
-
-
 
         return score;
     }

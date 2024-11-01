@@ -146,19 +146,18 @@ public class LeviState : BotState
                 if((kingBitBoard & attackMoves)!=0){
                     safetyScore-=KingThreatPenalty;
                 }
-
+                
                 // Check if opponent can attack king's escape moves
                 safetyScore -= BitOps.CountSetBits((thisKing.ValidMovesMap[kingBitIndex] & attackMoves))*KingThreatPenalty;
             }
 
-            
         }
         
         return safetyScore;
     }
 
 
-    private List<Vector2Int> GenerateAllMoves(GameState gameState, int playerIndex){
+    private List<Vector2Int> GenerateAllMovesOrdered(GameState gameState, int playerIndex){
         var moves = new List<Vector2Int>();
         var pieceBoards = gameState.PlayerStates[playerIndex].PieceBoards.Values;
 
@@ -168,8 +167,7 @@ public class LeviState : BotState
             {
                 //Debug.Log(pieceIndex+"is piece index "+pieceBoard.Type);
                 var validMoves = gameState.GetMovesAllowed(pieceBoard, pieceIndex);
-                while (validMoves != 0)
-                {
+                while (validMoves != 0){
                     ulong bit = validMoves & (~(validMoves - 1)); // Isolate the rightmost set bit
                     int toIndex = BitOps.BitScan(bit); // Get the index of the isolated bit
                     //Debug.Log(toIndex+"is to index");
@@ -193,3 +191,25 @@ public class LeviState : BotState
     
 
 }
+
+
+
+/*
+depth of 6
+55
+1:20
+4:37
+1:07
+12:16
+--ended too slow to be feasible
+
+depth of 6 no move ordering
+1:10
+1:28
+2:00
+0:30
+8:43
+
+
+
+*/

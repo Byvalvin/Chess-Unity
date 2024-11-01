@@ -78,8 +78,6 @@ public class KingBoard : PieceBoard
 
     public ulong GetAttackMoves(){ // all valid king attack mvoes so defense is proper
         ulong allKingMoves = 0UL;
-
-        
         int kingIndex = MyIndex;
 
         foreach (var moveFunc in moveFunctions){
