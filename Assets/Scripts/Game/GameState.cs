@@ -13,6 +13,7 @@ public class GameState
 
     public char PromoteTo{get; set;}
     public bool Gameover{get; private set;}
+    public int Winner{get; private set;}
 
     public GameState(
         string player1Type, string player1Name,
@@ -29,6 +30,7 @@ public class GameState
             botState2.CurrentGame = this;
 
         OccupancyBoard = 0; // Initialize occupancy board
+        Winner = -1; // no winner to start
 
     }
     public GameState(GameState original){
@@ -259,6 +261,7 @@ public class GameState
         UpdateBoard();
         UpdateGameState();
         Gameover = IsGameEnd();
+        
     }
 
     
@@ -554,6 +557,7 @@ public class GameState
     public bool PlayerCheckmated(PlayerState player){ // ends when a player is in double check and cant move the king OR a player is in check and cant evade, capture attacker or block check path
         if(!hasMoves(player)&& currentIndex==player.TurnIndex && player.IsInCheck){
             //Debug.Log($"GAME OVER:{player.PlayerType} IS CHECKMATED");
+            Winner = 1-player.TurnIndex;
             return true;
         }
         return false;
