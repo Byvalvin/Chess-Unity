@@ -34,7 +34,7 @@ public class KingBoard : PieceBoard
         BitOps.Diagonal4Move
     };
 
-    public int MyIndex=>ValidMovesMap.Keys.First();
+    public int MyIndex{get; private set;}
 
 
     public KingBoard(bool IsWhite, ulong startingBitboard = 0) : base(IsWhite, startingBitboard)
@@ -42,10 +42,15 @@ public class KingBoard : PieceBoard
         Type = 'K';
     }
 
-    public KingBoard(KingBoard original) : base(original) { }
+    public KingBoard(KingBoard original) : base(original) {}
 
     public override PieceBoard Clone() => new KingBoard(this);
 
+    public override void ResetValidMoves(ulong friendBoard, int index, ulong enemyBoard){
+        MyIndex = index;
+        base.ResetValidMoves(friendBoard, index, enemyBoard);
+    }
+  
     public override ulong GetValidMoves(ulong friendBoard, int index, ulong enemyBoard = 0, bool includeFriends = false)
     {
         ulong validMoves = 0UL;

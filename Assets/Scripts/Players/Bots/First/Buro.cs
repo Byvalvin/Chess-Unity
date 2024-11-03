@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Buro : Bot
 {
-    // Add methods for player actions, like making a move, if needed
+    // Main bot class, can be extended with player actions or other functionalities.
 }
 
 public class MCTSNode
@@ -13,7 +13,7 @@ public class MCTSNode
     public List<MCTSNode> Children { get; private set; }
     public int Visits { get; private set; }
     public float Wins { get; private set; }
-    public MCTSNode Parent { get; private set; } // Add a reference to the parent node
+    public MCTSNode Parent { get; private set; }
 
     public MCTSNode(GameState state, MCTSNode parent = null)
     {
@@ -21,7 +21,7 @@ public class MCTSNode
         Children = new List<MCTSNode>();
         Visits = 0;
         Wins = 0;
-        Parent = parent; // Set the parent node
+        Parent = parent;
     }
 
     public void AddChild(MCTSNode child)
@@ -32,21 +32,22 @@ public class MCTSNode
     public void UpdateStats(float result)
     {
         Visits++;
-        Wins += result;
+        Wins += result; // Update wins based on the result
     }
 
-    public float WinRate => Visits == 0 ? 0 : Wins / Visits;
+    public float WinRate => Visits == 0 ? 0 : Wins / Visits; // Calculate win rate
 }
 
 public class BuroState : BotState
 {
-    private const int KingThreatPenalty = 10,
-                PieceProtectionReward = 5;
-    private const int SimulationCount = 100; // Number of simulations per move
+    private const int KingThreatPenalty = 10;
+    private const int PieceProtectionReward = 5;
+    private const int SimulationCount = 150; // Number of simulations per move
 
     public BuroState(string playerName, bool isWhite) : base(playerName, isWhite) { }
 
     public BuroState(BuroState original) : base(original) { }
+
     public override PlayerState Clone() => new BuroState(this);
 
     protected override int EvaluateMove(int fromIndex, int toIndex, GameState clone)
@@ -54,6 +55,7 @@ public class BuroState : BotState
         // Use MCTS to evaluate the move
         clone.MakeBotMove(fromIndex, toIndex);
         float score = RunMCTS(clone);
+        Debug.Log("for "+fromIndex+" "+toIndex+"score: "+score);
         return (int)(score * 100); // Scale score for evaluation
     }
 
@@ -64,28 +66,31 @@ public class BuroState : BotState
         for (int i = 0; i < SimulationCount; i++)
         {
             MCTSNode node = Select(root);
-            float result = Simulate(node.State);
+            float result = Simulate(node.State.Clone());
             Backpropagate(node, result);
+            //Debug.Log("after sim "+i+"; "+node.Visits+" is root: "+(node==root));
         }
 
-        // Return the best child based on visit counts
-        MCTSNode bestChild = root.Children[0];
+        // Find the best child based on visit counts
+        MCTSNode bestChild = null;
         foreach (var child in root.Children)
         {
-            if (child.Visits > bestChild.Visits)
+            if (bestChild == null || child.Visits > bestChild.Visits)
             {
                 bestChild = child;
             }
         }
-        return bestChild.WinRate; // Return the win rate of the best move
+        return bestChild?.WinRate ?? 0; // Return the win rate of the best move
     }
 
     private MCTSNode Select(MCTSNode node)
     {
+        //Debug.Log("children count"+node.Children.Count+" visit count"+node.Visits);
         while (node.Children.Count > 0)
         {
             node = BestChild(node);
         }
+
         if (node.Visits == 0)
         {
             return node; // If the node is unvisited, return it for expansion
@@ -96,19 +101,24 @@ public class BuroState : BotState
     private MCTSNode Expand(MCTSNode node)
     {
         var moves = GenerateAllMoves(node.State, node.State.currentIndex);
-        Debug.Log(moves.Count + "ggg");
+        //Debug.Log($"Generating {moves.Count} moves for state with {node.Visits} visits.");
+
         foreach (var move in moves)
         {
-            Debug.Log(move);
             GameState clonedState = node.State.Clone();
-            Debug.Log(clonedState.currentIndex);
             clonedState.MakeBotMove(move.x, move.y);
-            
             MCTSNode childNode = new MCTSNode(clonedState, node);
             node.AddChild(childNode);
+            //Debug.Log($"Added child node with state: {clonedState} | Visits: {childNode.Visits} | Wins: {childNode.Wins}");
         }
-        Debug.Log(node.Children.Count + "childea");
-        return node.Children[UnityEngine.Random.Range(0, node.Children.Count)]; // Return a random child
+
+        if (node.Children.Count > 0)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, node.Children.Count);
+            return node.Children[randomIndex]; // Return a random child
+        }
+
+        return node; // Fallback if no children were generated
     }
 
     private MCTSNode BestChild(MCTSNode node)
@@ -118,7 +128,8 @@ public class BuroState : BotState
 
         foreach (var child in node.Children)
         {
-            float uctValue = child.WinRate + Mathf.Sqrt(2 * Mathf.Log(node.Visits) / child.Visits);
+            // Ensure we avoid division by zero
+            float uctValue = child.WinRate + Mathf.Sqrt(2 * Mathf.Log(node.Visits) / (child.Visits + 1));
             if (uctValue > bestValue)
             {
                 bestValue = uctValue;
@@ -156,19 +167,16 @@ public class BuroState : BotState
         // Return a value based on the game state (e.g., +1 for win, -1 for loss, 0 for draw)
         if (gameState.IsGameEnd())
         {
-            if (gameState.Winner==TurnIndex) return 1; // Win
+            if (gameState.Winner == TurnIndex) return 1; // Win
             if (gameState.Winner == -1) return 0; // Draw
             return -1; // Loss
         }
         return 0; // Not finished
     }
 
-    // Add your existing methods for generating moves and evaluating game states here
-    protected override int EvaluateGameState(GameState gameState){
+    protected override int EvaluateGameState(GameState gameState)
+    {
         int score = 0;
-        // game ending moves
-        //score = GameEndingMove(score, gameState);
-        if(score!=0) return score;
 
         // Evaluate material balance
         score += EvaluateMaterialDiff(gameState);
@@ -183,22 +191,23 @@ public class BuroState : BotState
         return score;
     }
 
-    private int EvaluateMaterialDiff(GameState gameState){
+    private int EvaluateMaterialDiff(GameState gameState)
+    {
         return EvaluateMaterial(gameState, TurnIndex) - EvaluateMaterial(gameState, 1 - TurnIndex);
     }
 
-    private int EvaluatePositioning(GameState gameState){
-
+    private int EvaluatePositioning(GameState gameState)
+    {
         return EvaluateCenterControl(gameState);
     }
 
-
-    private int EvaluateMobilityDiff(GameState gameState){
-        int spaceControl = EvaluateMobility(gameState, TurnIndex),
-            enemyControl = EvaluateMobility(gameState, 1-TurnIndex);
-                
+    private int EvaluateMobilityDiff(GameState gameState)
+    {
+        int spaceControl = EvaluateMobility(gameState, TurnIndex);
+        int enemyControl = EvaluateMobility(gameState, 1 - TurnIndex);
         return 5 * (spaceControl - enemyControl);
     }
+
     private int EvaluateKingThreat(GameState gameState)
     {
         int safetyScore = 0;
@@ -207,28 +216,23 @@ public class BuroState : BotState
         KingBoard thisKing = (thisPlayer.PieceBoards['K'] as KingBoard);
         ulong kingBitBoard = thisKing.Bitboard;
         int kingBitIndex = thisPlayer.GetKingIndex();
-        
+
         // Check for direct threats to the king
-        foreach (PieceBoard pieceBoard in gameState.PlayerStates[1 - TurnIndex].PieceBoards.Values){
+        foreach (PieceBoard pieceBoard in gameState.PlayerStates[1 - TurnIndex].PieceBoards.Values)
+        {
             foreach (var kvp in pieceBoard.ValidMovesMap)
             {
-                ulong attackMoves = 0UL;
-                // Check if the opponent can directly attack the king
-                if(pieceBoard is KingBoard king){
-                    attackMoves = king.GetAttackMoves();
-                }else if (pieceBoard is PawnBoard pawn){
-                    attackMoves = pawn.GetAttackMove(kvp.Key);
+                ulong attackMoves = pieceBoard is KingBoard king ? king.GetAttackMoves() : (pieceBoard is PawnBoard pawn ? pawn.GetAttackMove(kvp.Key) : 0UL);
+                if ((kingBitBoard & attackMoves) != 0)
+                {
+                    safetyScore -= KingThreatPenalty;
                 }
-                if((kingBitBoard & attackMoves)!=0){
-                    safetyScore-=KingThreatPenalty;
-                }
-                
-                // Check if opponent can attack king's escape moves
-                safetyScore -= BitOps.CountSetBits((thisKing.ValidMovesMap[kingBitIndex] & attackMoves))*KingThreatPenalty;
-            }
 
+                // Check if opponent can attack king's escape moves
+                safetyScore -= BitOps.CountSetBits((thisKing.ValidMovesMap[kingBitIndex] & attackMoves)) * KingThreatPenalty;
+            }
         }
-        
+
         return safetyScore;
     }
 }

@@ -150,7 +150,7 @@ public abstract class BotState : PlayerState
         }
         best = bestMoves.Count > 1 ? bestMoves[UnityEngine.Random.Range(0, bestMoves.Count)] : new Vector2Int(bestFromIndex, bestToIndex);
         PromoteTo=GameState.IsPromotion(CurrentGame.GetPieceBoard(best.x, this), best.y)? bestPromoChoice : '\0';
-
+        Debug.Log($"BEST MOVE: {best.x} {best.y} => {bestScore}");
         //Debug.Log($"BEST MOVE: {movingPiece.Type} {movingPiece.Colour} {best[0]} {best[1]} {bestScore}");
         return best;
     }
@@ -161,14 +161,17 @@ public abstract class BotState : PlayerState
 
         foreach (var pieceBoard in pieceBoards)
         {
+            //Debug.Log(pieceBoard+" "+pieceBoard.Type+" "+pieceBoard.IsWhite);
             foreach (int pieceIndex in pieceBoard.ValidMovesMap.Keys)
             {
-                //Debug.Log(pieceIndex+"is piece index "+pieceBoard.Type);
+                //Debug.Log(pieceIndex+"is piece index with moves"+pieceBoard.ValidMovesMap[pieceIndex]);
                 var validMoves = gameState.GetMovesAllowed(pieceBoard, pieceIndex);
+                //Debug.Log(validMoves+"left");
                 while (validMoves != 0)
                 {
                     ulong bit = validMoves & (~(validMoves - 1)); // Isolate the rightmost set bit
                     int toIndex = BitOps.BitScan(bit); // Get the index of the isolated bit
+                    //Debug.Log(pieceIndex + " " + toIndex);
                     
                     moves.Add(new Vector2Int(pieceIndex, toIndex));
                     
@@ -178,7 +181,11 @@ public abstract class BotState : PlayerState
             }
             
         }
-
+        /*
+        Debug.Log(playerIndex);
+        Debug.Log(moves.Count);
+        */
+        
         return moves;
     }
 
