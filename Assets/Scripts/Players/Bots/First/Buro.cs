@@ -42,7 +42,7 @@ public class BuroState : BotState
 {
     private const int KingThreatPenalty = 10;
     private const int PieceProtectionReward = 5;
-    private const int SimulationCount = 1000; // Number of simulations per move
+    private const int SimulationCount = 500; // Number of simulations per move
     
     private int minViability = 0;
     
