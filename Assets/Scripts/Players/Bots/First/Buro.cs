@@ -43,12 +43,26 @@ public class BuroState : BotState
     private const int KingThreatPenalty = 10;
     private const int PieceProtectionReward = 5;
     private const int SimulationCount = 150; // Number of simulations per move
-
+    
+    private int minViability = 0;
+    
+    
+    private int movesPlayed = 0;
+    
+    private int Phase => 0<=movesPlayed && movesPlayed<=10 ? 0 :
+                        11<=movesPlayed && movesPlayed<=30 ? 1 :
+                        2;
+    private int[] simMaxDepth = {50,100,150};
     public BuroState(string playerName, bool isWhite) : base(playerName, isWhite) { }
 
     public BuroState(BuroState original) : base(original) { }
 
     public override PlayerState Clone() => new BuroState(this);
+    public override Vector2Int GetMove(){
+        movesPlayed++;
+        return base.GetMove();
+    }
+
 
     protected override float EvaluateMove(int fromIndex, int toIndex, GameState clone)
     {
@@ -110,25 +124,58 @@ public class BuroState : BotState
     private MCTSNode Expand(MCTSNode node)
     {
         var moves = GenerateAllMoves(node.State, node.State.currentIndex);
-        //Debug.Log($"Generating {moves.Count} moves for state with {node.Visits} visits.");
+        // Debug.Log($"Generating {moves.Count} moves for state with {node.Visits} visits.");
+        
+        // Define the percentage of top moves you want to keep
+        float topPercentage = 0.3f;  // 30% of the best moves, adjust as needed
+        int topMovesCount = Mathf.CeilToInt(moves.Count * topPercentage); // Ensure at least 1 move is kept if percentage is low
 
+        // The exploration factor (probability of adding a move that fails the first criteria)
+        float eFactor = 0.1f;  // 10% chance to consider a move that fails the criteria
+
+        // Min-heap or sorted list to store the top moves
+        SortedList<int, MCTSNode> topMoves = new SortedList<int, MCTSNode>();
+
+        // Iterate through all possible moves
         foreach (var move in moves)
         {
             GameState clonedState = node.State.Clone();
             clonedState.MakeBotMove(move.x, move.y);
+            int childViability = EvaluateGameState(clonedState);
+
+            // Create the child node
             MCTSNode childNode = new MCTSNode(clonedState, node);
             node.AddChild(childNode);
-            //Debug.Log($"Added child node with state: {clonedState} | Visits: {childNode.Visits} | Wins: {childNode.Wins}");
+
+            // Check if the move meets the criteria
+            bool meetsCriteria = childViability > minViability;
+            
+            // If the move meets the viability criterion, or if it's randomly selected for exploration, add it
+            if (meetsCriteria || UnityEngine.Random.value < eFactor)
+            {
+                topMoves[childViability] = childNode;
+
+                // If the list has more than the desired number of top moves, remove the worst
+                if (topMoves.Count > topMovesCount)
+                {
+                    topMoves.Remove(topMoves.Keys[0]); // Remove the least viable (smallest viability)
+                }
+            }
         }
 
-        if (node.Children.Count > 0)
+        // Ensure that at least one move is considered
+        if (topMoves.Count > 0)
         {
-            int randomIndex = UnityEngine.Random.Range(0, node.Children.Count);
-            return node.Children[randomIndex]; // Return a random child
+            // Randomly pick a move from the best moves
+            int randomIndex = UnityEngine.Random.Range(0, topMoves.Count);
+            MCTSNode selectedNode = topMoves.Values[randomIndex]; // Select a random child from the best moves
+            return selectedNode;
         }
 
-        return node; // Fallback if no children were generated
+        // If no valid moves were found above minViability, return a fallback node (current node)
+        return node;
     }
+
 
     private MCTSNode BestChild(MCTSNode node)
     {
@@ -152,12 +199,16 @@ public class BuroState : BotState
     private float Simulate(GameState state)
     {
         // Run a random simulation until the game ends
-        while (!state.IsGameEnd())
+        int simDepth = 0;
+
+        while (!state.IsGameEnd() && simDepth <= simMaxDepth[Phase])
         {
             var moves = GenerateAllMoves(state, state.currentIndex);
             if (moves.Count == 0) break; // No valid moves
             var randomMove = moves[UnityEngine.Random.Range(0, moves.Count)];
             state.MakeBotMove(randomMove.x, randomMove.y);
+
+            simDepth++;
         }
         return EvaluateGameOutcome(state);
     }
@@ -187,6 +238,15 @@ public class BuroState : BotState
         return 0; // Not finished
     }
 
+
+
+
+
+
+
+
+
+
     protected override int EvaluateGameState(GameState gameState)
     {
         int score = 0;
@@ -198,7 +258,7 @@ public class BuroState : BotState
         //score += EvaluatePositioning(gameState);
 
         // Evaluate king safety and control
-        score += EvaluateKingSafety(gameState);
+        //score += EvaluateKingSafety(gameState);
         score += EvaluateMobilityDiff(gameState);
 
         return score;

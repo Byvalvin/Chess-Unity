@@ -308,8 +308,8 @@ public abstract class BotState : PlayerState
     {
         int mobilityScore = 0;
         foreach (PieceBoard pieceBoard in clone.PlayerStates[playerIndex].PieceBoards.Values)
-            foreach (ulong moves in pieceBoard.ValidMovesMap.Values)
-                mobilityScore += BitOps.CountSetBits(moves);
+            foreach (var kvp in pieceBoard.ValidMovesMap)
+                mobilityScore += BitOps.CountSetBits(CurrentGame.GetMovesAllowed(pieceBoard, kvp.Key));
             
         return mobilityScore;
     }
