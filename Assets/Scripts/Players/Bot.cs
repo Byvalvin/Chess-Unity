@@ -150,7 +150,7 @@ public abstract class BotState : PlayerState
         }
         best = bestMoves.Count > 1 ? bestMoves[UnityEngine.Random.Range(0, bestMoves.Count)] : new Vector2Int(bestFromIndex, bestToIndex);
         PromoteTo=GameState.IsPromotion(CurrentGame.GetPieceBoard(best.x, this), best.y)? bestPromoChoice : '\0';
-        Debug.Log($"BEST MOVE: {best.x} {best.y} => {bestScore}");
+        //Debug.Log($"BEST MOVE: {best.x} {best.y} => {bestScore}");
         //Debug.Log($"BEST MOVE: {movingPiece.Type} {movingPiece.Colour} {best[0]} {best[1]} {bestScore}");
         return best;
     }
