@@ -328,6 +328,7 @@ public class Board : MonoBehaviour
             originalPromotedPawnPosition = originalPosition;
         }
         gameState.MakeBotMove(fromTo.x, fromTo.y);
+        HandleGameEndMessage();
     }
     void ReleasePiece(){
         Vector2Int targetPosition = GetIndexPosition(Utility.GetMouseWorldPosition());
@@ -374,17 +375,23 @@ public class Board : MonoBehaviour
 
     void HandleGameEndMessage(){
         if(gameState.Gameover){
-            Debug.Log("Game is Over");
+            Debug.Log($"Game is Over | Moves:{gameState.MoveCount}");
             if(gameState.CheckCheckmate()){
                 if(gameState.PlayerStates[0].IsInCheck)
                     Debug.Log(gameState.PlayerStates[0].PlayerName + " is CHECKmated");
                 if(gameState.PlayerStates[1].IsInCheck)
                     Debug.Log(gameState.PlayerStates[1].PlayerName + " is CHECKmated");
             }else{
-                if(gameState.hasMoves(gameState.PlayerStates[0]))
-                    Debug.Log(gameState.PlayerStates[0].PlayerName + " is STALEmated");
-                if(gameState.hasMoves(gameState.PlayerStates[1]))
-                    Debug.Log(gameState.PlayerStates[1].PlayerName + " is STALEmated");
+                Debug.Log("Its A DRAW");
+                if(gameState.CheckInsufficientMaterial())
+                    Debug.Log("Insufficient material: Draw!");
+                else if(gameState.Check50MoveRule())
+                    Debug.Log("50-move rule: Draw!");
+                else if(gameState.CheckThreefoldRepetition())
+                    Debug.Log("Threefold repetition: Draw!");
+                else
+                    Debug.Log(gameState.PlayerStates[gameState.currentIndex].PlayerName + "is STALEmated");
+                
             }
         }
     }

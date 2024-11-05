@@ -45,12 +45,10 @@ public class BuroState : BotState
     private const int SimulationCount = 400; // Number of simulations per move
     
     private int minViability = 0;
+
     
-    
-    private int movesPlayed = 0;
-    
-    private int Phase => 0<=movesPlayed && movesPlayed<=10 ? 0 :
-                        11<=movesPlayed && movesPlayed<=30 ? 1 :
+    private int Phase => 0<=CurrentGame.MoveCount && CurrentGame.MoveCount<=10 ? 0 :
+                        11<=CurrentGame.MoveCount && CurrentGame.MoveCount<=30 ? 1 :
                         2;
     private int[] simMaxDepth = {50,100,150};
     public BuroState(string playerName, bool isWhite) : base(playerName, isWhite) { }
@@ -58,11 +56,6 @@ public class BuroState : BotState
     public BuroState(BuroState original) : base(original) { }
 
     public override PlayerState Clone() => new BuroState(this);
-    public override Vector2Int GetMove(){
-        movesPlayed++;
-        return base.GetMove();
-    }
-
 
     protected override float EvaluateMove(int fromIndex, int toIndex, GameState clone)
     {

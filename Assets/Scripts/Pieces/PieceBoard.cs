@@ -51,7 +51,7 @@ public abstract class PieceBoard
         {
             int newIndex = moveFunc(index, i);
             //if(Type=='B')Debug.Log(!BitOps.IsValidMove(index, newIndex) + " cant moving this direction" + index +" to"+newIndex);
-            if (!BitOps.IsValidMove(index, newIndex, movement)) break;
+            if (!BitOps.IsValidMove(index, newIndex, mtype:movement)) break;
 
             ulong newBit = BitOps.a1 << newIndex;
              //if(Type=='B')Debug.Log(((friendBoard & newBit) != 0 && !includeFriends) + " " +((enemyBoard & newBit) != 0 || (friendBoard & newBit) != 0 && includeFriends));

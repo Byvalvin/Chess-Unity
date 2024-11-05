@@ -15,6 +15,10 @@ public class GameState
     public bool Gameover{get; private set;}
     public int Winner{get; private set;}
 
+    public int MoveCount{get; private set;}
+    public Queue<string> lastThreeStates{get; private set;}
+    public int NoCaptureNoPawnMoveCount{get; private set;} // Track moves without captures or pawn moves
+
     public GameState(
         string player1Type, string player1Name,
         string player2Type, string player2Name
@@ -32,6 +36,10 @@ public class GameState
         OccupancyBoard = 0; // Initialize occupancy board
         Winner = -1; // no winner to start
 
+        MoveCount=0;
+        lastThreeStates = new Queue<string>(); lastThreeStates.Enqueue(HashA());
+        NoCaptureNoPawnMoveCount=0;
+
     }
     public GameState(GameState original){
         PlayerStates = new PlayerState[2];
@@ -40,6 +48,12 @@ public class GameState
 
         currentIndex = original.currentIndex;
         PromoteTo = original.PromoteTo;
+
+        Winner = original.Winner;
+
+        MoveCount = original.MoveCount;
+        lastThreeStates = new Queue<string>(original.lastThreeStates);
+        NoCaptureNoPawnMoveCount = original.NoCaptureNoPawnMoveCount;
 
         Initialize();
     }
@@ -57,6 +71,7 @@ public class GameState
             }
         }
         hashBuilder.Append(currentIndex); // Include whose turn it is
+        //hashBuilder.Append(MoveCount);
         return hashBuilder.ToString();
     }
     public ulong HashB()
@@ -197,6 +212,8 @@ public class GameState
             
             isCastle = pieceBoard is KingBoard kingBoard
                         && Math.Abs(originalIndex-index)==2;
+
+        bool isPawnMove = pieceBoard is PawnBoard && originalIndex != index; // A pawn move (doesn't involve a capture)
        
 
         int removedPieceIndex = -1; // no removed piece
@@ -214,6 +231,7 @@ public class GameState
             //Debug.Log($"Captured opponent's piece enpassant {index}.");
             removedPieceIndex = (PlayerStates[1-currentIndex].PieceBoards['P'] as PawnBoard).enPassantablePawn;
         }
+
 
         if(IsPromotion(pieceBoard, index)){
             if(PromoteTo!='\0'){
@@ -256,6 +274,20 @@ public class GameState
         (PlayerStates[1 - currentIndex].PieceBoards['P'] as PawnBoard).EnPassantReset(); // reset enpassant after a move is made a poor fix but works for now
         PromoteTo='\0';
         PlayerStates[currentIndex].PromoteTo='\0';
+
+        // TRACKINGS
+        //Track move count
+        MoveCount++;
+
+        // Track the last three game state hashes
+        string currentHash = HashA();
+        if (lastThreeStates.Count == 3)
+            lastThreeStates.Dequeue(); // Remove the oldest hash
+        lastThreeStates.Enqueue(currentHash); // Add the current hash
+
+        // Track cap or awnmove
+        NoCaptureNoPawnMoveCount = (isPawnMove || isCapture || isEnPassantCapture)? 0 : NoCaptureNoPawnMoveCount+1;
+
 
         SwitchPlayer();
         UpdateBoard();
@@ -573,7 +605,118 @@ public class GameState
         return false;
     }
     public bool CheckStalemate()=> PlayerStalemated(PlayerStates[0]) || PlayerStalemated(PlayerStates[1]);
-    public bool IsGameEnd()=>CheckCheckmate() || CheckStalemate();
+
+    public bool IsInsufficientMaterial()
+    {
+        bool player1HasInsufficientMaterial = HasInsufficientMaterialForPlayer(PlayerStates[0]);
+        bool player2HasInsufficientMaterial = HasInsufficientMaterialForPlayer(PlayerStates[1]);
+
+        // The game is a draw only if both players have insufficient material
+        return player1HasInsufficientMaterial && player2HasInsufficientMaterial;
+    }
+    private bool HasInsufficientMaterialForPlayer(PlayerState player)
+    {
+        int pieceCount = 0;
+        bool hasKnight = false;
+        bool hasBishop = false;
+        bool hasQueenOrRook = false;
+        bool hasPawn = false; // Track if the player has pawns
+
+        // Loop through the player's PieceBoards and check the size of ValidMovesMap to count pieces
+        foreach (var pieceBoard in player.PieceBoards.Values)
+        {
+            //int pieceCountForType = pieceBoard.ValidMovesMap.Count; // The size of the ValidMovesMap gives the number of pieces
+            int pieceCountForType = BitOps.CountSetBits(pieceBoard.Bitboard);
+            // Determine what piece this is based on the piece type
+            switch (pieceBoard.Type)
+            {
+                case 'K': // King (should always be 1, but check for completeness)
+                    pieceCount += pieceCountForType;
+                    break;
+                case 'N': // Knight
+                    hasKnight = true;
+                    pieceCount += pieceCountForType;
+                    break;
+                case 'B': // Bishop
+                    hasBishop = true;
+                    pieceCount += pieceCountForType;
+                    break;
+                case 'R': // Rook
+                case 'Q': // Queen
+                    hasQueenOrRook = true;
+                    pieceCount += pieceCountForType;
+                    break;
+                case 'P': // Pawn
+                    hasPawn = true; // Found a pawn, the player has sufficient material
+                    pieceCount += pieceCountForType;
+                    break;
+            }
+        }
+
+        // If the player has any pawns, they have sufficient material
+        if (hasPawn) return false; // Pawn means the player can promote, so they have sufficient material
+
+        // Check for immediate cases of sufficient material
+        if (hasQueenOrRook) return false; // If the player has a Queen or Rook, they can potentially checkmate
+        if (pieceCount > 2 && (hasKnight || hasBishop)) return false; // Two minor pieces (Knight/Bishop) are enough for checkmate
+
+        // Now check for insufficient material:
+        // If only Kings, or Kings + Knight/Bishop, we have an insufficient material scenario
+        if (pieceCount == 1) return true; // King vs King (insufficient material)
+        if (pieceCount == 2 && (hasKnight || hasBishop)) return true; // King vs King + Knight or King vs King + Bishop
+        if (pieceCount == 2 && hasKnight && hasBishop) return true; // King + Knight vs King + Bishop (insufficient material)
+
+        // If we haven't returned yet, the player likely has enough material for checkmate
+        return false;
+    }
+
+
+
+    public bool CheckInsufficientMaterial()
+    {
+        // Check for insufficient material draw (both players need insufficient material)
+        if (IsInsufficientMaterial())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public bool Check50MoveRule()
+    {
+
+        // Check for the 50-move rule: no capture or pawn move for 50 moves per player (100 total moves)
+        if (NoCaptureNoPawnMoveCount >= 50)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public bool CheckThreefoldRepetition() 
+    {
+        // Check for threefold repetition: same position occurs 3 times
+        string currentHash = HashA();
+        int count = 0;
+        foreach (string hash in lastThreeStates)
+        {
+            if (hash == currentHash)
+            {
+                count++;
+            }
+        }
+
+        if (count >= 2) // Repetition has occurred 3 times (including the current state)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public bool Draw()=>CheckInsufficientMaterial() || Check50MoveRule() || CheckThreefoldRepetition();
+
+
+    public bool IsGameEnd()=>CheckCheckmate() || CheckStalemate() || Draw();
 
     // For Bots
     public void MakeBotMove(int fromIndex, int toIndex){
