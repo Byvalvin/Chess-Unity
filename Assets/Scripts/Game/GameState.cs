@@ -323,15 +323,12 @@ public class GameState
 
 
         // Condition 2: Check for king attacker
-        int kingAttackerIndex = currPlayer.KingAttacker;
-
         if(PlayerStates[currentIndex].InCheck){
+            int kingAttackerIndex = currPlayer.KingAttacker;
             ulong attackerPosition = BitOps.a1 << kingAttackerIndex;
             ulong path = GetAttackPath(kingAttackerIndex, kingIndex, PlayerStates[1 - currentIndex]);
 
-            if (!isKing)
-            {
-
+            if (!isKing){
                 // Only allow moves that block the attack or capture the attacker
                 filteredMoves &= (path | attackerPosition);
             }else if(isKing){ //Handle castling
