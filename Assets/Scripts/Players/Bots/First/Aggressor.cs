@@ -21,7 +21,7 @@ public class AggressorState : BotState
     }
     public override PlayerState Clone() => new AggressorState(this);
 
-    protected override int EvaluateMove(int fromIndex, int toIndex, GameState clone){
+    protected override float EvaluateMove(int fromIndex, int toIndex, GameState clone){
         // evaluate clone score
         clone.MakeBotMove(fromIndex, toIndex);
 

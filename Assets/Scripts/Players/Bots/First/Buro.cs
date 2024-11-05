@@ -50,7 +50,7 @@ public class BuroState : BotState
 
     public override PlayerState Clone() => new BuroState(this);
 
-    protected override int EvaluateMove(int fromIndex, int toIndex, GameState clone)
+    protected override float EvaluateMove(int fromIndex, int toIndex, GameState clone)
     {
         // Use MCTS to evaluate the move
         clone.MakeBotMove(fromIndex, toIndex);
@@ -61,6 +61,12 @@ public class BuroState : BotState
 
     private float RunMCTS(GameState gameState)
     {
+        string key = gameState.HashA();
+       if (TT.TryGetValue(key, out var winrate))
+       {
+           // Use the stored values from the TT
+           return winrate;
+       }
         MCTSNode root = new MCTSNode(gameState);
 
         for (int i = 0; i < SimulationCount; i++)
@@ -70,6 +76,9 @@ public class BuroState : BotState
             Backpropagate(node, result);
             //Debug.Log("after sim "+i+"; "+node.Visits+" is root: "+(node==root));
         }
+
+        // store results in TT
+        TT[key] = root.Wins/root.Visits;
 
         // Find the best child based on visit counts
         MCTSNode bestChild = null;
@@ -158,6 +167,10 @@ public class BuroState : BotState
         while (node != null)
         {
             node.UpdateStats(result);
+
+            string key = node.State.HashA();// Update TT entry
+            TT[key]=result;
+
             node = node.Parent; // Move to the parent node
         }
     }
@@ -182,7 +195,7 @@ public class BuroState : BotState
         score += EvaluateMaterialDiff(gameState);
 
         // Evaluate piece positioning
-        score += EvaluatePositioning(gameState);
+        //score += EvaluatePositioning(gameState);
 
         // Evaluate king safety and control
         score += EvaluateKingSafety(gameState);

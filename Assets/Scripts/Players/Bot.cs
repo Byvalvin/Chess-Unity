@@ -30,7 +30,7 @@ public abstract class BotState : PlayerState
 
     public GameState CurrentGame{get; set;}
     // Transposition table
-    protected Dictionary<string, int> TT = new Dictionary<string, int>();
+    protected Dictionary<string, float> TT = new Dictionary<string, float>();
     // protected Dictionary<ulong, int> TT = new Dictionary<ulong, int>();
 
     public BotState(string playerName, bool isWhite) : base(playerName, isWhite){}
@@ -70,12 +70,12 @@ public abstract class BotState : PlayerState
         return 0; // No special state
     }
 
-    protected virtual (int, char) EvaluatePromotionMove(int from, int to){
-        (int score, char choice) promotionPack = (int.MinValue, '\0');
+    protected virtual (float, char) EvaluatePromotionMove(int from, int to){
+        (float score, char choice) promotionPack = (int.MinValue, '\0');
         // 4 clones
         char[] promotions = {'Q', 'R', 'B', 'N'};
         GameState clone;
-        int newScore;
+        float newScore;
         foreach (char promotion in promotions){
              clone = CurrentGame.Clone(); (clone.PlayerStates[TurnIndex] as BotState).PromoteTo=promotion;
              newScore = EvaluateMove(from, to, clone);
@@ -86,7 +86,7 @@ public abstract class BotState : PlayerState
         return promotionPack;
     }
     protected virtual int EvaluateGameState(GameState gameState)=>1;
-    protected virtual int EvaluateMove(int fromIndex, int toIndex, GameState clone){
+    protected virtual float EvaluateMove(int fromIndex, int toIndex, GameState clone){
         clone.MakeBotMove(fromIndex, toIndex);
 
         int gamescore = GameEndingMove(clone);
@@ -100,7 +100,7 @@ public abstract class BotState : PlayerState
 
         int bestFromIndex = -1;
         int bestToIndex = -1;
-        int bestScore = int.MinValue; // Initialize with the lowest possible score
+        float bestScore = int.MinValue; // Initialize with the lowest possible score
         char bestPromoChoice = '\0';
 
         var bestMoves = new List<Vector2Int>();
@@ -118,11 +118,11 @@ public abstract class BotState : PlayerState
                 ulong bit = allTo & (~(allTo - 1)); // Isolate the rightmost set bit
                 int toIndex = BitOps.BitScan(bit); // Get the index of the isolated bit
                 
-                int score = int.MinValue;
+                float score = int.MinValue;
                 char promoChoice = '\0';
 
                 if(GameState.IsPromotion(pieceBoard, toIndex)){
-                    (int score, char choice) promotionScore =  EvaluatePromotionMove(from, toIndex);
+                    (float score, char choice) promotionScore =  EvaluatePromotionMove(from, toIndex);
                     score = promotionScore.score;
                     promoChoice = promotionScore.choice;
                     // Check if this is the best promotion

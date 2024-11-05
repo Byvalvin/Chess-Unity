@@ -21,9 +21,9 @@ public class LeviState : BotState
     public LeviState(LeviState original) : base(original){}
     public override PlayerState Clone() => new LeviState(this);
 
-    protected override int EvaluateMove(int fromIndex, int toIndex, GameState clone){
+    protected override float EvaluateMove(int fromIndex, int toIndex, GameState clone){
         clone.MakeBotMove(fromIndex, toIndex);
-        int movescore = Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite);
+        float movescore = Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite);
         //Debug.Log("Scoring| "+ fromIndex + " to" + toIndex + ": " + movescore);
         return movescore;
     }
@@ -31,7 +31,7 @@ public class LeviState : BotState
         // Implement logic to determine if the game is over (checkmate, stalemate, etc.)
         return gameState.IsGameEnd(); // Placeholder
     }
-    private int Minimax(GameState gameState, int depth, int alpha, int beta, bool maximizingPlayer){
+    private float Minimax(GameState gameState, int depth, float alpha, float beta, bool maximizingPlayer){
         string hashKey = gameState.HashA(); // Generate the hash for the current game state
         //ulong hashKey = gameState.HashB(); // Generate the hash for the current game state
         /*
@@ -45,15 +45,15 @@ public class LeviState : BotState
         */
         
         // Check if we have already evaluated this game state
-        if (TT.TryGetValue(hashKey, out int cachedValue))
+        if (TT.TryGetValue(hashKey, out float cachedValue))
             return cachedValue; // Return the cached evaluation
         
         if (depth == 0 || IsGameOver(gameState))
             return EvaluateGameState(gameState);
 
-        int eval;
+        float eval;
         if (maximizingPlayer == IsWhite){
-            int maxEval = int.MinValue;
+            float maxEval = int.MinValue;
             foreach (var move in GenerateAllMoves(gameState, TurnIndex)){
                 //Debug.Log(move);
                 GameState clonedGame = gameState.Clone();
@@ -68,7 +68,7 @@ public class LeviState : BotState
             eval = maxEval;
         }
         else{
-            int minEval = int.MaxValue;
+            float minEval = int.MaxValue;
             foreach (var move in GenerateAllMoves(gameState, 1 - TurnIndex)){
                 GameState clonedGame = gameState.Clone();
                 clonedGame.MakeBotMove(move.x, move.y);
