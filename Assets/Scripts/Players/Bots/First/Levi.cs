@@ -122,7 +122,7 @@ public class LeviState : BotState
         int score = 0;
 
         // game-ending moves
-        //score = GameEndingMove(score, gameState);
+        score = GameEndingMove(gameState);
         if (score != 0) return score;
 
         // Evaluate material balance

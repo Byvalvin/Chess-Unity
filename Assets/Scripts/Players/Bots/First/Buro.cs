@@ -42,7 +42,7 @@ public class BuroState : BotState
 {
     private const int KingThreatPenalty = 10;
     private const int PieceProtectionReward = 5;
-    private const int SimulationCount = 500; // Number of simulations per move
+    private const int SimulationCount = 400; // Number of simulations per move
     
     private int minViability = 0;
     
@@ -69,8 +69,8 @@ public class BuroState : BotState
         // Use MCTS to evaluate the move
         clone.MakeBotMove(fromIndex, toIndex);
         float score = RunMCTS(clone);
-        Debug.Log("for "+fromIndex+" "+toIndex+"score: "+score);
-        return (int)(score * 100); // Scale score for evaluation
+        //Debug.Log("for "+fromIndex+" "+toIndex+"score: "+score);
+        return (score * 100); // Scale score for evaluation
     }
 
     private float RunMCTS(GameState gameState)
@@ -295,6 +295,9 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
     {
         int score = 0;
 
+        score = GameEndingMove(gameState);
+        if (score != 0) return score;
+
         // Evaluate material balance
         score += EvaluateMaterialDiff(gameState);
 
@@ -310,7 +313,7 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
 
     private int EvaluateMaterialDiff(GameState gameState)
     {
-        return EvaluateMaterial(gameState, TurnIndex) - EvaluateMaterial(gameState, 1 - TurnIndex);
+        return EvaluateMaterial(gameState, TurnIndex) - 5*EvaluateMaterial(gameState, 1 - TurnIndex);
     }
 
     private int EvaluatePositioning(GameState gameState)
@@ -322,7 +325,7 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
     {
         int spaceControl = EvaluateMobility(gameState, TurnIndex);
         int enemyControl = EvaluateMobility(gameState, 1 - TurnIndex);
-        return 5 * (spaceControl - enemyControl);
+        return 2 * (spaceControl - enemyControl);
     }
 
     private int EvaluateKingThreat(GameState gameState)
