@@ -299,7 +299,7 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         if (score != 0) return score;
 
         // Evaluate material balance
-        score += EvaluateMaterialDiff(gameState);
+        //score += EvaluateMaterialDiff(gameState);
 
         // Evaluate piece positioning
         //score += EvaluatePositioning(gameState);
@@ -313,7 +313,7 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
 
     private int EvaluateMaterialDiff(GameState gameState)
     {
-        return EvaluateMaterial(gameState, TurnIndex) - 5*EvaluateMaterial(gameState, 1 - TurnIndex);
+        return EvaluateMaterial(gameState, TurnIndex) - EvaluateMaterial(gameState, 1 - TurnIndex);
     }
 
     private int EvaluatePositioning(GameState gameState)
@@ -325,7 +325,7 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
     {
         int spaceControl = EvaluateMobility(gameState, TurnIndex);
         int enemyControl = EvaluateMobility(gameState, 1 - TurnIndex);
-        return 2 * (spaceControl - enemyControl);
+        return (spaceControl - enemyControl);
     }
 
     private int EvaluateKingThreat(GameState gameState)
