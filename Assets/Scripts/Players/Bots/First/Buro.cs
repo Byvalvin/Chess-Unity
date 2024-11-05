@@ -143,16 +143,15 @@ public class BuroState : BotState
             clonedState.MakeBotMove(move.x, move.y);
             int childViability = EvaluateGameState(clonedState);
 
-            // Create the child node
-            MCTSNode childNode = new MCTSNode(clonedState, node);
-            node.AddChild(childNode);
-
             // Check if the move meets the criteria
             bool meetsCriteria = childViability > minViability;
             
             // If the move meets the viability criterion, or if it's randomly selected for exploration, add it
             if (meetsCriteria || UnityEngine.Random.value < eFactor)
             {
+                // Create the child node
+                MCTSNode childNode = new MCTSNode(clonedState, node);
+                node.AddChild(childNode);
                 topMoves[childViability] = childNode;
 
                 // If the list has more than the desired number of top moves, remove the worst
