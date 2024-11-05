@@ -42,7 +42,7 @@ public class BuroState : BotState
 {
     private const int KingThreatPenalty = 10;
     private const int PieceProtectionReward = 5;
-    private const int SimulationCount = 150; // Number of simulations per move
+    private const int SimulationCount = 1000; // Number of simulations per move
     
     private int minViability = 0;
     
@@ -175,6 +175,23 @@ public class BuroState : BotState
         return node;
     }
 
+    /*
+    Time Complexity: The time complexity remains at 
+𝑂
+(
+𝑛
+log
+⁡
+𝑘
+)
+O(nlogk), where 
+𝑛
+n is the number of moves and 
+𝑘
+k is the number of top moves you're considering (i.e., determined by topPercentage).
+Random Check: The random check (UnityEngine.Random.value < eFactor) is efficient and doesn’t significantly add to the complexity, as it’s just a simple comparison.
+By introducing the eFactor, you're allowing for a more dynamic exploration without being too narrow-minded, and you're still keeping the overall performance in check. This adjustment gives you a good balance of exploration and exploitation, which is often essential for algorithms like MCTS*/
+
 
     private MCTSNode BestChild(MCTSNode node)
     {
@@ -211,6 +228,34 @@ public class BuroState : BotState
         }
         return EvaluateGameOutcome(state);
     }
+
+//     private float Simulate(GameState state){
+//         int simDepth = 0;
+//         while (!state.IsGameEnd() && simDepth <= simMaxDepth[Phase]){  
+//             var moves = GenerateAllMoves(state, state.currentIndex);            
+//             if (moves.Count == 0) break; 
+
+//             float bestMoveEval = float.NegativeInfinity;
+//             Vector2Int bestMove;
+//             foreach (var move in moves){
+//                 GameState clonedState = state.Clone();  
+//                 clonedState.MakeBotMove(move.x, move.y);
+//                 int moveEval = EvaluateGameState(clonedState);
+//                 if (moveEval > bestMoveEval) { 
+//                     bestMoveEval = moveEval;  
+//                     bestMove = move;                
+//                 }
+//                 // Early cutoff based on evaluation (if a decisive position is reached)
+//                 // if (Mathf.Abs(bestMoveEval) > 1000) // Arbitrary threshold, adjust as needed
+//                 // {
+//                 //     return bestMoveEval;
+//                 // }
+//             
+//             }
+//             simDepth++;
+//         }
+//         return EvaluateGameOutcome(state);    
+//     }
 
     private void Backpropagate(MCTSNode node, float result)
     {
