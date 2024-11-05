@@ -326,10 +326,11 @@ public class GameState
         int kingAttackerIndex = currPlayer.KingAttacker;
 
         if(PlayerStates[currentIndex].InCheck){
-            if (kingAttackerIndex != -1 && !isKing)
+            ulong attackerPosition = BitOps.a1 << kingAttackerIndex;
+            ulong path = GetAttackPath(kingAttackerIndex, kingIndex, PlayerStates[1 - currentIndex]);
+
+            if (!isKing)
             {
-                ulong attackerPosition = BitOps.a1 << kingAttackerIndex;
-                ulong path = GetAttackPath(kingAttackerIndex, kingIndex, PlayerStates[1 - currentIndex]);
 
                 // Only allow moves that block the attack or capture the attacker
                 filteredMoves &= (path | attackerPosition);
@@ -343,6 +344,9 @@ public class GameState
                     filteredMoves &= ~(kingCastleMove);
                 if((filteredMoves & queenCastleMove)!=0)
                     filteredMoves &= ~(queenCastleMove);
+
+                // king must leav check or cap attacker
+                filteredMoves &= (~(path) | attackerPosition);
                 return filteredMoves;
             }
         }
