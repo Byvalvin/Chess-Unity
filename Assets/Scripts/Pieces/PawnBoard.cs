@@ -8,6 +8,8 @@ public class PawnBoard : PieceBoard
     public int enPassantablePawn;
     public int enPassantCounter;
     public bool canBeCapturedEnPassant => enPassantCounter<=1 && enPassantablePawn!=-1;
+
+    private List<int> pawnIndexes => BitOps.GetAllSetBitIndices(Bitboard);
     public PawnBoard(bool isWhite, ulong startingBitboard = 0) : base(isWhite, startingBitboard)
     {
         Type = 'P';
@@ -117,7 +119,7 @@ public class PawnBoard : PieceBoard
         ulong allPawnForwardMoves = 0UL;
         int direction = IsWhite ? 1 : -1;
         
-        foreach (int pawnIndex in ValidMovesMap.Keys)
+        foreach (int pawnIndex in pawnIndexes)
         {
             // Forward move
             bool canMoveFwd = AddForwardMove(ref allPawnForwardMoves, pawnIndex, direction, friendBoard, enemyBoard); // cant double fwd if can mvoe forward
@@ -133,8 +135,7 @@ public class PawnBoard : PieceBoard
     public ulong GetAttackMoves(){
         ulong allPawnCaptureMoves = 0UL;
         int direction = IsWhite ? 1 : -1;
-        
-        foreach (int pawnIndex in ValidMovesMap.Keys){
+        foreach (int pawnIndex in pawnIndexes){
             int leftCaptureIndex = IsWhite
                 ? BitOps.Diagonal1Move(pawnIndex, direction) // White: up-left
                 : BitOps.Diagonal3Move(pawnIndex, -direction); // Black: down-left

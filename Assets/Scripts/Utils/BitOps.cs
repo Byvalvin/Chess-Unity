@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 public static class BitOps 
 {
@@ -9,6 +10,43 @@ public static class BitOps
     // Method to calculate the index based on row and column
     public static int GetIndex(int row, int col) => row * N + col; // Adjust for Unity's Y direction
     public static int GetIndex(Vector2Int position) => GetIndex(position.y, position.x);
+
+    // Method to find the first set bit index using De Bruijn sequence trick
+    public static int GetFirstSetBitIndex(ulong number)
+    {
+        if (number == 0) return -1;
+
+        // De Bruijn sequence based method
+        number = number ^ (number - 1); // Isolate the rightmost 1 bit
+        return (int)((number * 0x07C4ACDD) >> 58); // 0x07C4ACDD is a magic constant for 64-bit numbers
+    }
+
+    // Method to find all set bit indices (0-63) without modifying the original ulong
+    public static List<int> GetAllSetBitIndices(ulong number)
+    {
+        List<int> indices = new List<int>();
+        
+        while (number != 0)
+        {
+            // Find the index of the rightmost set bit
+            ulong rightmostSetBit = number & (ulong)(-(long)number); // Isolate the rightmost 1 bit
+
+            // Manually count the position of the rightmost set bit (index)
+            int bitIndex = 0;
+            while ((rightmostSetBit >> bitIndex) != 1) // Keep shifting until we get the bit in the lowest place
+            {
+                bitIndex++;
+            }
+
+            // Add the index of the rightmost set bit to the list
+            indices.Add(bitIndex);
+
+            // Remove the rightmost set bit
+            number &= number - 1; // This clears the rightmost 1 bit
+        }
+
+        return indices;
+    }
 
     // Method to get a Vector2Int from an index
     public static Vector2Int GetPosition(int index)

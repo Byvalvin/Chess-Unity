@@ -77,7 +77,7 @@ public abstract class BotState : PlayerState
         GameState clone;
         float newScore;
         foreach (char promotion in promotions){
-             clone = CurrentGame.Clone(); (clone.PlayerStates[TurnIndex] as BotState).PromoteTo=promotion;
+             clone = CurrentGame.Clone(); clone.PlayerStates[TurnIndex].PromoteTo=promotion;
              newScore = EvaluateMove(from, to, clone);
              if(newScore > promotionPack.score){
                 promotionPack = (newScore, promotion);

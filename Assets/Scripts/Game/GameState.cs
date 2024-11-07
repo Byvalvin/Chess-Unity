@@ -66,8 +66,11 @@ public class GameState
         foreach (PlayerState playerState in PlayerStates){
             foreach (PieceBoard pieceBoard in playerState.PieceBoards.Values){
                 hashBuilder.Append(pieceBoard.Type);
-                foreach (int bitPosition in pieceBoard.ValidMovesMap.Keys)
+                List<int> bitPositions = BitOps.GetAllSetBitIndices(pieceBoard.Bitboard);
+                foreach (int bitPosition in bitPositions){
+                    //Debug.Log(bitPosition + " " + pieceBoard.Type + " " + playerState.TurnIndex);
                     hashBuilder.Append(bitPosition);
+                }
             }
         }
         hashBuilder.Append(currentIndex); // Include whose turn it is
@@ -152,7 +155,8 @@ public class GameState
                 opponentMoves |= oppPawnBoard.GetAttackMoves();
             }else{
                 ulong enemyBoardExceptKingPos = otherPlayer.OccupancyBoard & ~(otherPlayer.PieceBoards['K'].Bitboard);
-                foreach (int pieceIndex in opponentPieceBoard.ValidMovesMap.Keys)
+                List<int> pieceIndexes = BitOps.GetAllSetBitIndices(opponentPieceBoard.Bitboard);
+                foreach (int pieceIndex in pieceIndexes)
                     opponentMoves |= opponentPieceBoard.GetValidMoves(player.OccupancyBoard, pieceIndex, enemyBoardExceptKingPos, true);
             }
         }
@@ -285,8 +289,11 @@ public class GameState
             lastThreeStates.Dequeue(); // Remove the oldest hash
         lastThreeStates.Enqueue(currentHash); // Add the current hash
 
+
+        //Debug.Log(isPawnMove + " " + isCapture + " "+ isEnPassantCapture + " " +(isPawnMove || isCapture || isEnPassantCapture) + " " + NoCaptureNoPawnMoveCount);
         // Track cap or awnmove
-        NoCaptureNoPawnMoveCount = (isPawnMove || isCapture || isEnPassantCapture)? 0 : NoCaptureNoPawnMoveCount+1;
+        NoCaptureNoPawnMoveCount = (isPawnMove || isCapture || isEnPassantCapture)?
+                0 : NoCaptureNoPawnMoveCount+1;
 
 
         SwitchPlayer();
@@ -334,8 +341,10 @@ public class GameState
             ulong allAttackedSquares = GetAllAttackMoves(PlayerStates[1-currentIndex]);
             ulong kingCastleMove = (pieceboard as KingBoard).GetKingsideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard),
                 queenCastleMove = (pieceboard as KingBoard).GetQueensideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard);
+            int kcastleIndex = BitOps.GetFirstSetBitIndex(kingCastleMove),
+                qcastleIndex = BitOps.GetFirstSetBitIndex(queenCastleMove);
             // check KingSide
-            if((filteredMoves & kingCastleMove)!=0 
+            if(Math.Abs(kingIndex-kcastleIndex)==2 
             &&  (!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 7:63))
                 ||((KingSideSquares & allAttackedSquares) != 0)
                 )
@@ -344,7 +353,7 @@ public class GameState
             }
 
             // check QueenSide
-            if((filteredMoves & queenCastleMove)!=0
+            if(Math.Abs(kingIndex-qcastleIndex)==2
             &&  (!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 0:56))
                 ||((QueenSideSquares & allAttackedSquares) != 0)
                 )
@@ -368,10 +377,12 @@ public class GameState
                 //filteredMoves &= ~((pieceboard as KingBoard).GetCastlingMoves());
                 ulong kingCastleMove = (pieceboard as KingBoard).GetKingsideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard),
                     queenCastleMove = (pieceboard as KingBoard).GetQueensideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard);
-
-                if((filteredMoves & kingCastleMove)!=0)
+                
+                int kcastleIndex = BitOps.GetFirstSetBitIndex(kingCastleMove),
+                    qcastleIndex = BitOps.GetFirstSetBitIndex(queenCastleMove);
+                if(Math.Abs(kingIndex-kcastleIndex)==2)
                     filteredMoves &= ~(kingCastleMove);
-                if((filteredMoves & queenCastleMove)!=0)
+                if(Math.Abs(kingIndex-qcastleIndex)==2)
                     filteredMoves &= ~(queenCastleMove);
 
                 // king must leav check or cap attacker
@@ -435,11 +446,12 @@ public class GameState
         pinnedMovement = 0UL;
         foreach (var kvpPiece in otherPlayer.PieceBoards){
             if(new HashSet<char>{ 'Q', 'R', 'B' }.Contains(kvpPiece.Key)){ // only sliders
-                foreach (var kvpMoves in kvpPiece.Value.ValidMovesMap){
-                    if(IsLineValid(kvpMoves.Key, kingIndex, kvpPiece.Key)){ // if there is a path
-                        pinnedMovement=GetAttackPath(kvpMoves.Key, kingIndex, otherPlayer); //get the path
+                List<int> oppIndexes = BitOps.GetAllSetBitIndices(kvpPiece.Value.Bitboard);
+                foreach (int oppIndex in oppIndexes){
+                    if(IsLineValid(oppIndex, kingIndex, kvpPiece.Key)){ // if there is a path
+                        pinnedMovement=GetAttackPath(oppIndex, kingIndex, otherPlayer); //get the path
                         ulong piecePosition=BitOps.a1 << pieceIndex,
-                            attackerPosition=BitOps.a1 << kvpMoves.Key;
+                            attackerPosition=BitOps.a1 << oppIndex;
                         // Debug.Log(pieceIndex + " " + kvpMoves.Key + " "+ pinnedMovement);
                         bool otherPieceOnPath = (OccupancyBoard & (pinnedMovement & ~(attackerPosition) & ~(piecePosition)))!=0;
                         if(otherPieceOnPath){
@@ -619,53 +631,52 @@ public class GameState
         int pieceCount = 0;
         bool hasKnight = false;
         bool hasBishop = false;
-        bool hasQueenOrRook = false;
+        bool hasQueen = false;
+        bool hasRook = false;
         bool hasPawn = false; // Track if the player has pawns
 
         // Loop through the player's PieceBoards and check the size of ValidMovesMap to count pieces
         foreach (var pieceBoard in player.PieceBoards.Values)
         {
-            //int pieceCountForType = pieceBoard.ValidMovesMap.Count; // The size of the ValidMovesMap gives the number of pieces
-            int pieceCountForType = BitOps.CountSetBits(pieceBoard.Bitboard);
+            int pieceCountForType = pieceBoard.ValidMovesMap.Count; // The size of the ValidMovesMap gives the number of pieces
+            //int pieceCountForType = BitOps.CountSetBits(pieceBoard.Bitboard);
             // Determine what piece this is based on the piece type
             switch (pieceBoard.Type)
             {
                 case 'K': // King (should always be 1, but check for completeness)
-                    pieceCount += pieceCountForType;
                     break;
                 case 'N': // Knight
-                    hasKnight = true;
-                    pieceCount += pieceCountForType;
+                    hasKnight = pieceCountForType>0;
                     break;
                 case 'B': // Bishop
-                    hasBishop = true;
-                    pieceCount += pieceCountForType;
+                    hasBishop = pieceCountForType>0;
                     break;
                 case 'R': // Rook
+                    hasRook = pieceCountForType>0;
+                    break;
                 case 'Q': // Queen
-                    hasQueenOrRook = true;
-                    pieceCount += pieceCountForType;
+                    hasQueen = pieceCountForType>0;
                     break;
                 case 'P': // Pawn
-                    hasPawn = true; // Found a pawn, the player has sufficient material
-                    pieceCount += pieceCountForType;
+                    hasPawn = pieceCountForType>0; // Found a pawn, the player has sufficient material
                     break;
             }
+            pieceCount += pieceCountForType;
+
         }
 
         // If the player has any pawns, they have sufficient material
         if (hasPawn) return false; // Pawn means the player can promote, so they have sufficient material
 
         // Check for immediate cases of sufficient material
-        if (hasQueenOrRook) return false; // If the player has a Queen or Rook, they can potentially checkmate
+        if (hasQueen || hasRook) return false; // If the player has a Queen or Rook, they can potentially checkmate
         if (pieceCount > 2 && (hasKnight || hasBishop)) return false; // Two minor pieces (Knight/Bishop) are enough for checkmate
 
         // Now check for insufficient material:
         // If only Kings, or Kings + Knight/Bishop, we have an insufficient material scenario
         if (pieceCount == 1) return true; // King vs King (insufficient material)
         if (pieceCount == 2 && (hasKnight || hasBishop)) return true; // King vs King + Knight or King vs King + Bishop
-        if (pieceCount == 2 && hasKnight && hasBishop) return true; // King + Knight vs King + Bishop (insufficient material)
-
+ 
         // If we haven't returned yet, the player likely has enough material for checkmate
         return false;
     }
@@ -686,7 +697,7 @@ public class GameState
     {
 
         // Check for the 50-move rule: no capture or pawn move for 50 moves per player (100 total moves)
-        if (NoCaptureNoPawnMoveCount >= 50)
+        if (NoCaptureNoPawnMoveCount >= 50 || MoveCount >=500)
         {
             return true;
         }
