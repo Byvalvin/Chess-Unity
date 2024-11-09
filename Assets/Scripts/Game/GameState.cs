@@ -66,7 +66,7 @@ public class GameState
         foreach (PlayerState playerState in PlayerStates){
             foreach (PieceBoard pieceBoard in playerState.PieceBoards.Values){
                 hashBuilder.Append(pieceBoard.Type);
-                List<int> bitPositions = BitOps.GetAllSetBitIndices(pieceBoard.Bitboard);
+                List<int> bitPositions = BitOps.GetAllSetBitIndicesLinear(pieceBoard.Bitboard);
                 foreach (int bitPosition in bitPositions){
                     //Debug.Log(bitPosition + " " + pieceBoard.Type + " " + playerState.TurnIndex);
                     hashBuilder.Append(bitPosition);
@@ -133,7 +133,7 @@ public class GameState
 
     public bool hasMoves(PlayerState player){
         foreach (PieceBoard pieceBoard in player.PieceBoards.Values){
-            List<int> pieceIndexes = BitOps.GetAllSetBitIndices(pieceBoard.Bitboard);
+            List<int> pieceIndexes = BitOps.GetAllSetBitIndicesLinear(pieceBoard.Bitboard);
             foreach (int pieceIndex in pieceIndexes)
                 if(GetMovesAllowed(pieceBoard, pieceIndex)!=0UL)
                     return true;
@@ -157,7 +157,7 @@ public class GameState
                 opponentMoves |= oppPawnBoard.GetAttackMoves();
             }else{
                 ulong enemyBoardExceptKingPos = otherPlayer.OccupancyBoard & ~(otherPlayer.PieceBoards['K'].Bitboard);
-                List<int> pieceIndexes = BitOps.GetAllSetBitIndices(opponentPieceBoard.Bitboard);
+                List<int> pieceIndexes = BitOps.GetAllSetBitIndicesLinear(opponentPieceBoard.Bitboard);
                 foreach (int pieceIndex in pieceIndexes)
                     opponentMoves |= opponentPieceBoard.GetValidMoves(player.OccupancyBoard, pieceIndex, enemyBoardExceptKingPos, true);
             }
@@ -449,7 +449,7 @@ public class GameState
         pinnedMovement = 0UL;
         foreach (var kvpPiece in otherPlayer.PieceBoards){
             if(new HashSet<char>{ 'Q', 'R', 'B' }.Contains(kvpPiece.Key)){ // only sliders
-                List<int> oppIndexes = BitOps.GetAllSetBitIndices(kvpPiece.Value.Bitboard);
+                List<int> oppIndexes = BitOps.GetAllSetBitIndicesLinear(kvpPiece.Value.Bitboard);
                 foreach (int oppIndex in oppIndexes){
                     if(IsLineValid(oppIndex, kingIndex, kvpPiece.Key)){ // if there is a path
                         pinnedMovement=GetAttackPath(oppIndex, kingIndex, otherPlayer); //get the path

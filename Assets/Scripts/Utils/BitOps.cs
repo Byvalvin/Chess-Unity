@@ -180,6 +180,27 @@ public static int GetRightmostSetBitIndex(ulong number)
     return bitIndex;
 }
 
+public static List<int> GetAllSetBitIndicesLinear(ulong number)
+{
+    List<int> indices = new List<int>();
+    int index = 0;  // Start at the least significant bit (0)
+
+    // Iterate through all 64 bits
+    while (number != 0)
+    {
+        if ((number & 1) != 0)  // Check if the least significant bit is set
+        {
+            indices.Add(index);  // Add the index of the set bit
+        }
+
+        number >>= 1;  // Right-shift the number to check the next bit
+        index++;  // Increment the index to check the next position
+    }
+
+    return indices;
+}
+
+
     // Method to get a Vector2Int from an index
     public static Vector2Int GetPosition(int index)
     {
