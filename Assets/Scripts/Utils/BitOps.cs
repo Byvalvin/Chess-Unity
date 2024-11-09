@@ -118,31 +118,67 @@ public static class BitOps
 
 
     // Method to find all set bit indices (0-63) without modifying the original ulong
-    public static List<int> GetAllSetBitIndices(ulong number)
-    {
-        List<int> indices = new List<int>();
+    // public static List<int> GetAllSetBitIndices(ulong number)
+    // {
+    //     List<int> indices = new List<int>();
         
-        while (number != 0)
-        {
-            // Find the index of the rightmost set bit
-            ulong rightmostSetBit = number & (ulong)(-(long)number); // Isolate the rightmost 1 bit
+    //     while (number != 0)
+    //     {
+    //         // Find the index of the rightmost set bit
+    //         ulong rightmostSetBit = number & (ulong)(-(long)number); // Isolate the rightmost 1 bit
 
-            // Manually count the position of the rightmost set bit (index)
-            int bitIndex = 0;
-            while ((rightmostSetBit >> bitIndex) != 1) // Keep shifting until we get the bit in the lowest place
-            {
-                bitIndex++;
-            }
+    //         // Manually count the position of the rightmost set bit (index)
+    //         int bitIndex = 0;
+    //         while ((rightmostSetBit >> bitIndex) != 1) // Keep shifting until we get the bit in the lowest place
+    //         {
+    //             bitIndex++;
+    //         }
 
-            // Add the index of the rightmost set bit to the list
-            indices.Add(bitIndex);
+    //         // Add the index of the rightmost set bit to the list
+    //         indices.Add(bitIndex);
 
-            // Remove the rightmost set bit
-            number &= number - 1; // This clears the rightmost 1 bit
-        }
+    //         // Remove the rightmost set bit
+    //         number &= number - 1; // This clears the rightmost 1 bit
+    //     }
 
-        return indices;
+    //     return indices;
+    // }
+
+    // Method to find all set bit indices (0-63) without modifying the original ulong
+public static List<int> GetAllSetBitIndices(ulong number)
+{
+    List<int> indices = new List<int>();
+
+    while (number != 0)
+    {
+        // Find the index of the rightmost set bit using custom trailing zero count
+        int bitIndex = GetRightmostSetBitIndex(number);
+        
+        // Add the index of the rightmost set bit to the list
+        indices.Add(bitIndex);
+        
+        // Remove the rightmost set bit
+        number &= number - 1; // This clears the rightmost 1 bit
     }
+
+    return indices;
+}
+
+// Custom method to find the rightmost set bit index (trailing zero count)
+public static int GetRightmostSetBitIndex(ulong number)
+{
+    // Isolate the rightmost set bit (no casting between ulong and long)
+    ulong rightmostSetBit = number & (~number + 1); // Using bitwise NOT for isolation
+
+    // Count trailing zeros to find the index of the rightmost set bit
+    int bitIndex = 0;
+    while ((rightmostSetBit >> bitIndex) != 1)
+    {
+        bitIndex++;
+    }
+
+    return bitIndex;
+}
 
     // Method to get a Vector2Int from an index
     public static Vector2Int GetPosition(int index)
