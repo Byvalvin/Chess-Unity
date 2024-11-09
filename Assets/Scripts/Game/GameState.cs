@@ -132,10 +132,12 @@ public class GameState
     }
 
     public bool hasMoves(PlayerState player){
-        foreach (PieceBoard pieceBoard in player.PieceBoards.Values)
-            foreach (int pieceIndex in pieceBoard.ValidMovesMap.Keys)
+        foreach (PieceBoard pieceBoard in player.PieceBoards.Values){
+            List<int> pieceIndexes = BitOps.GetAllSetBitIndices(pieceBoard.Bitboard);
+            foreach (int pieceIndex in pieceIndexes)
                 if(GetMovesAllowed(pieceBoard, pieceIndex)!=0UL)
                     return true;
+        }
         return false;   
     }
     public ulong GetMovesAllowed(PieceBoard pieceBoard, int index){
