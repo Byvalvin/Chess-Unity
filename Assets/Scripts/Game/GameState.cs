@@ -249,7 +249,7 @@ public class GameState
                 // update pieceBpard
                 // create piece ui
 
-                MoveUpdate(index,isPromotion:true);
+                MoveUpdate(index, isCapture:isCapture, capturedPosition:removedPieceIndex, isPromotion:true);
             }
 
         }else{
@@ -307,7 +307,7 @@ public class GameState
     public ulong ValidateMoves(PieceBoard pieceboard, int index, ulong moves)
     {
         ulong filteredMoves = moves;
-        bool isKing = pieceboard.Type == 'K';
+        bool isKing = pieceboard.Type == 'K' && pieceboard is KingBoard;
         PlayerState currPlayer = PlayerStates[currentIndex];
 
         // Condition 1: If in double-check, only allow king's moves
@@ -341,8 +341,8 @@ public class GameState
             ulong allAttackedSquares = GetAllAttackMoves(PlayerStates[1-currentIndex]);
             ulong kingCastleMove = (pieceboard as KingBoard).GetKingsideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard),
                 queenCastleMove = (pieceboard as KingBoard).GetQueensideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard);
-            int kcastleIndex = BitOps.GetFirstSetBitIndex(kingCastleMove),
-                qcastleIndex = BitOps.GetFirstSetBitIndex(queenCastleMove);
+            int kcastleIndex = BitOps.GetFirstSetBitIndexBSR(kingCastleMove),
+                qcastleIndex = BitOps.GetFirstSetBitIndexBSR(queenCastleMove);
             // check KingSide
             if(Math.Abs(kingIndex-kcastleIndex)==2 
             &&  (!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 7:63))
@@ -373,13 +373,14 @@ public class GameState
                 // Only allow moves that block the attack or capture the attacker
                 filteredMoves &= (path | attackerPosition);
             }else if(isKing){ //Handle castling
+
                 // remove all castling moves since king in check
                 //filteredMoves &= ~((pieceboard as KingBoard).GetCastlingMoves());
                 ulong kingCastleMove = (pieceboard as KingBoard).GetKingsideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard),
                     queenCastleMove = (pieceboard as KingBoard).GetQueensideCastlingMoves(OccupancyBoard, currPlayer.OccupancyBoard);
-                
-                int kcastleIndex = BitOps.GetFirstSetBitIndex(kingCastleMove),
-                    qcastleIndex = BitOps.GetFirstSetBitIndex(queenCastleMove);
+                int kcastleIndex = BitOps.GetFirstSetBitIndexBSR(kingCastleMove),
+                    qcastleIndex = BitOps.GetFirstSetBitIndexBSR(queenCastleMove);
+
                 if(Math.Abs(kingIndex-kcastleIndex)==2)
                     filteredMoves &= ~(kingCastleMove);
                 if(Math.Abs(kingIndex-qcastleIndex)==2)
@@ -638,8 +639,8 @@ public class GameState
         // Loop through the player's PieceBoards and check the size of ValidMovesMap to count pieces
         foreach (var pieceBoard in player.PieceBoards.Values)
         {
-            int pieceCountForType = pieceBoard.ValidMovesMap.Count; // The size of the ValidMovesMap gives the number of pieces
-            //int pieceCountForType = BitOps.CountSetBits(pieceBoard.Bitboard);
+            //int pieceCountForType = pieceBoard.ValidMovesMap.Count; // The size of the ValidMovesMap gives the number of pieces
+            int pieceCountForType = BitOps.CountSetBits(pieceBoard.Bitboard);
             // Determine what piece this is based on the piece type
             switch (pieceBoard.Type)
             {
@@ -665,6 +666,8 @@ public class GameState
 
         }
 
+        //Debug.Log(player.PlayerName + " "+hasPawn + " " + hasQueen + " " + hasRook + pieceCount);
+
         // If the player has any pawns, they have sufficient material
         if (hasPawn) return false; // Pawn means the player can promote, so they have sufficient material
 
@@ -675,7 +678,7 @@ public class GameState
         // Now check for insufficient material:
         // If only Kings, or Kings + Knight/Bishop, we have an insufficient material scenario
         if (pieceCount == 1) return true; // King vs King (insufficient material)
-        if (pieceCount == 2 && (hasKnight || hasBishop)) return true; // King vs King + Knight or King vs King + Bishop
+        if (pieceCount == 2 && !(hasPawn || hasRook || hasQueen) && (hasKnight || hasBishop)) return true; // King vs King + Knight or King vs King + Bishop
  
         // If we haven't returned yet, the player likely has enough material for checkmate
         return false;

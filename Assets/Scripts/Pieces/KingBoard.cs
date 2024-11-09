@@ -35,7 +35,7 @@ public class KingBoard : PieceBoard
     };
 
     // public int MyIndex{get; private set;}
-    public int MyIndex=>ValidMovesMap.First().Key;
+    public int MyIndex=>BitOps.GetFirstSetBitIndexBSR(Bitboard);
 
 
     public KingBoard(bool IsWhite, ulong startingBitboard = 0) : base(IsWhite, startingBitboard)

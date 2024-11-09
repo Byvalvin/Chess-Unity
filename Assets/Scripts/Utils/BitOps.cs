@@ -11,8 +11,8 @@ public static class BitOps
     public static int GetIndex(int row, int col) => row * N + col; // Adjust for Unity's Y direction
     public static int GetIndex(Vector2Int position) => GetIndex(position.y, position.x);
 
-    // Method to find the first set bit index using De Bruijn sequence trick
-    public static int GetFirstSetBitIndex(ulong number)
+    // (DOES NOT WORK)Method to find the first set bit index using De Bruijn sequence trick
+    public static int GetFirstSetBitIndexDeBruijn(ulong number)
     {
         if (number == 0) return -1;
 
@@ -20,6 +20,102 @@ public static class BitOps
         number = number ^ (number - 1); // Isolate the rightmost 1 bit
         return (int)((number * 0x07C4ACDD) >> 58); // 0x07C4ACDD is a magic constant for 64-bit numbers
     }
+    // (DOES NOT WORK) De Bruijn sequence method using a 64-bit magic constant
+    public static int GetFirstSetBitIndexDeBruijnCast(ulong number)
+    {
+        if (number == 0) return -1;
+
+        // De Bruijn sequence trick: Isolate the rightmost 1 bit
+        number = number ^ (number - 1); // Isolate the rightmost 1 bit
+
+        // Magic constant for De Bruijn sequence (for 64-bit numbers)
+        const ulong deBruijnMagicConstant = 0x07C4ACDD;
+
+        // Multiply and shift to extract the bit index
+        return (int)((number * deBruijnMagicConstant) >> 58);
+    }
+    // (DOES NOT WORK)De Bruijn sequence method with masking for alignment
+    public static int GetFirstSetBitIndexDeBruijnWithMask(ulong number)
+    {
+        if (number == 0) return -1;
+
+        // De Bruijn sequence trick requires isolating the rightmost set bit
+        number = number ^ (number - 1); // Isolate the rightmost 1 bit
+
+        // Mask out the upper bits to ensure proper alignment
+        const ulong mask = 0xFFFFFFFFFFFFFFF0; // Mask to keep lower 60 bits
+        number &= mask;
+
+        // Apply De Bruijn sequence and shift the result
+        return (int)((number * 0x07C4ACDD) >> 58); // 0x07C4ACDD is the magic constant for 64-bit numbers
+    }
+
+
+
+    // Iterative method to find the first set bit index
+    public static int GetFirstSetBitIndexIterative(ulong number)
+    {
+        if (number == 0) return -1;
+
+        int index = 0;
+        
+        // Iterate through the bits of the number
+        while ((number & 1) == 0)
+        {
+            number >>= 1; // Shift the number to the right by 1 bit
+            index++;
+        }
+        
+        return index;
+    }
+
+    public static int GetFirstSetBitIndexLog(ulong number)
+    {
+        if (number == 0) return -1;
+
+        int index = 0;
+
+        // Logically shift to isolate the highest bit
+        while (number > 1)
+        {
+            number >>= 1;
+            index++;
+        }
+
+        return index;
+    }
+
+
+    // Manual Bit Scan Reverse (BSR) implementation
+    public static int GetFirstSetBitIndexBSR(ulong number)
+    { 
+            /*
+        the Bit-Scan Reverse method is a much better choice 
+        than trying to fix the De Bruijn sequence trick for every edge case.
+        */
+        if (number == 0) return -1;
+
+        int index = 0;
+
+        // Step 1: Find the highest set bit
+        if ((number & 0xFFFFFFFF00000000) != 0) { number >>= 32; index += 32; }
+        if ((number & 0xFFFF0000) != 0) { number >>= 16; index += 16; }
+        if ((number & 0xFF00) != 0) { number >>= 8; index += 8; }
+        if ((number & 0xF0) != 0) { number >>= 4; index += 4; }
+        if ((number & 0xC) != 0) { number >>= 2; index += 2; }
+        if ((number & 0x2) != 0) { number >>= 1; index += 1; }
+
+        return index;
+        //(int)BitOperations.Log2(number);  // Get the index of the most significant set bit
+    }
+
+
+
+
+
+
+
+
 
     // Method to find all set bit indices (0-63) without modifying the original ulong
     public static List<int> GetAllSetBitIndices(ulong number)

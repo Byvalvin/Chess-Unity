@@ -42,7 +42,7 @@ public class BuroState : BotState
 {
     private const int KingThreatPenalty = 10;
     private const int PieceProtectionReward = 5;
-    private const int SimulationCount = 300; // Number of simulations per move
+    private const int SimulationCount = 400; // Number of simulations per move
     
     private int minViability = 0;
 
@@ -50,7 +50,7 @@ public class BuroState : BotState
     private int Phase => 0<=CurrentGame.MoveCount && CurrentGame.MoveCount<=10 ? 0 :
                         11<=CurrentGame.MoveCount && CurrentGame.MoveCount<=30 ? 1 :
                         2;
-    private int[] simMaxDepth = {50,100,150};
+    private int[] simMaxDepth = {50,150,200};
     public BuroState(string playerName, bool isWhite) : base(playerName, isWhite) { }
 
     public BuroState(BuroState original) : base(original) { }
@@ -120,7 +120,7 @@ public class BuroState : BotState
         // Debug.Log($"Generating {moves.Count} moves for state with {node.Visits} visits.");
         
         // Define the percentage of top moves you want to keep
-        float topPercentage = 0.3f;  // 30% of the best moves, adjust as needed
+        float topPercentage = 0.4f;  // 30% of the best moves, adjust as needed
         int topMovesCount = Mathf.CeilToInt(moves.Count * topPercentage); // Ensure at least 1 move is kept if percentage is low
 
         // The exploration factor (probability of adding a move that fails the first criteria)
@@ -295,7 +295,7 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         //score += EvaluateMaterialDiff(gameState);
 
         // Evaluate piece positioning
-        //score += EvaluatePositioning(gameState);
+        score += EvaluatePositioning(gameState);
 
         // Evaluate king safety and control
         //score += EvaluateKingSafety(gameState);
@@ -349,3 +349,48 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         return safetyScore;
     }
 }
+
+
+/*
+1:08
+1:08
+1:28
+13
+31
+56
+22
+1:29
+8
+1:02
+1:39
+1:25
+2
+36
+37
+1:16
+1:11 ERROR
+
+*/
+
+/*
+32
+1:05
+23
+34
+1:11
+9
+1:32
+53
+1:25
+1:19
+12
+1:04
+1:02
+1:07
+1:11
+1:01
+49
+4
+2
+38 MOVES
+*/

@@ -327,6 +327,7 @@ public class Board : MonoBehaviour
             promotedPawn = selectedPiece;
             originalPromotedPawnPosition = originalPosition;
         }
+        //Debug.Log(selectedPiece.name + originalPosition + " to " + BitOps.GetPosition(fromTo.y));
         gameState.MakeBotMove(fromTo.x, fromTo.y);
         HandleGameEndMessage();
     }
