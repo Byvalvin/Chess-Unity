@@ -292,13 +292,13 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         if (score != 0) return score;
 
         // Evaluate material balance
-        //score += EvaluateMaterialDiff(gameState);
+        score += EvaluateMaterialDiff(gameState);
 
         // Evaluate piece positioning
         score += EvaluatePositioning(gameState);
 
         // Evaluate king safety and control
-        //score += EvaluateKingSafety(gameState);
+        score += -1*EvaluateKingSafety(gameState, 1-TurnIndex);
         score += EvaluateMobilityDiff(gameState);
 
         return score;

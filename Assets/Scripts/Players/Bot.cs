@@ -23,7 +23,9 @@ public abstract class BotState : PlayerState
         { 'K', 0 }     // King (no value since it can't be captured)
     };
             // Define center squares
-    protected const ulong centerSquares = 0x0000001818000000; // e4, e5, d4, d5
+    // protected const ulong centerSquares = 0x0000001818000000; // e4, e5, d4, d5
+    
+    protected const ulong centerSquares = 0x00003c3c3c3c0000; // e4, e5, d4, d5
     private const int KingTileValue = 3;
 
 
@@ -217,6 +219,24 @@ public abstract class BotState : PlayerState
         {
             score -= 5; // Penalize for being in check
         }
+
+        return score;
+    }
+    
+    protected int EvaluateKingSafety(GameState gameState, int playerIndex)
+    {
+        PlayerState currPlayer = gameState.PlayerStates[playerIndex];
+        int score = 0;
+
+        // Check positions of both kings and potential threats
+        // This can be expanded based on specific criteria
+        if (currPlayer.IsInCheck)
+        {
+            score -= 5; // Penalize for being in check
+        }
+        int tileCount = BitOps.CountSetBits(gameState.GetMovesAllowed(currPlayer.PieceBoards['K'], currPlayer.GetKingIndex()));
+        score -= KingTileValue * (8 - tileCount);
+
 
         return score;
     }

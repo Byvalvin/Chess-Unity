@@ -393,6 +393,8 @@ public class GameState
                 return filteredMoves;
             }
         }
+
+        // remove opposing king postiion to prevent king captures
         
         return filteredMoves; // Return the filtered moves
     }
