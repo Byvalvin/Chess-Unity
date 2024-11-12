@@ -299,7 +299,7 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
 
         // Evaluate king safety and control
         score += -1*EvaluateKingSafety(gameState, 1-TurnIndex);
-        score += EvaluateMobilityDiff(gameState);
+        score += 2*EvaluateMobilityDiff(gameState);
 
         return score;
     }
@@ -349,6 +349,24 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         return safetyScore;
     }
 }
+
+/*
+45
+11
+1:01
+1:18
+51
+1
+1:23
+2:56
+1:05
+2:08
+2:12
+10
+9
+10
+3
+*/
 
 
 /*

@@ -395,6 +395,8 @@ public class GameState
         }
 
         // remove opposing king postiion to prevent king captures
+        ulong otherPlayerKingPosition = PlayerStates[1-currentIndex].PieceBoards['K'].Bitboard;
+        filteredMoves &= (~otherPlayerKingPosition);
         
         return filteredMoves; // Return the filtered moves
     }
