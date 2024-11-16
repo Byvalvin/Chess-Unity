@@ -55,7 +55,7 @@ public class Game : MonoBehaviour
 
 
     void Start(){
-        StartGame("Buro", "P1", "Levi","P2");
+        StartGame("Levi", "P1", "Buro","P2");
     }
 
     void Update(){

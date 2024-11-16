@@ -157,7 +157,7 @@ public abstract class BotState : PlayerState
         return best;
     }
 
-    protected List<Vector2Int> GenerateAllMoves(GameState gameState, int playerIndex){
+    protected static List<Vector2Int> GenerateAllMoves(GameState gameState, int playerIndex){
         var moves = new List<Vector2Int>(100);  // Pre-allocate with a reasonable capacity
         var pieceBoards = gameState.PlayerStates[playerIndex].PieceBoards.Values;
 
