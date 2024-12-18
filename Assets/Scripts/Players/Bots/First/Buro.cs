@@ -69,8 +69,7 @@ public class BuroState : BotState
 
     private float RunMCTS(GameState gameState)
     {
-        // string key = gameState.HashA();
-        ulong key = gameState.CurrentHash;
+        string key = gameState.HashD();
        if (TT.TryGetValue(key, out var winrate))
        {
            // Use the stored values from the TT
@@ -231,8 +230,7 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         {
             node.UpdateStats(result);
 
-            // string key = node.State.HashA();// Update TT entry
-            ulong key = node.State.CurrentHash;// Update TT entry
+            string key = node.State.HashD();// Update TT entry
             TT[key]=result;
 
             node = node.Parent; // Move to the parent node

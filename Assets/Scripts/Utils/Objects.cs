@@ -49,7 +49,8 @@ public static class ZobristHashing
         {
             for (int j = 0; j < 12; j++)
             {
-                zobristTable[i, j] = (ulong)random.Next() << 32 | (ulong)random.Next();
+                // Cast random.Next() to uint before shifting
+                zobristTable[i, j] = ((ulong)(uint)random.Next() << 32) | (ulong)(uint)random.Next();
             }
         }
     }
@@ -108,4 +109,5 @@ public static class ZobristHashing
         return currentHash;
     }
 }
+
 
