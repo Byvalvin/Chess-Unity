@@ -12,7 +12,7 @@ public class Levi : Bot
 
 public class LeviState : BotState
 {
-    private const int MaxDepth = 100,
+    private const int MaxDepth = 200,
                       KingThreatPenalty = 10,
                       CaptureScoreMultiplier = 2,
                       PieceProtectionReward = 5;
@@ -101,7 +101,7 @@ public class LeviState : BotState
 
 
     private float Minimax(GameState gameState, int depth, float alpha, float beta, bool maximizingPlayer){
-        string hashKey = gameState.HashA(); // Generate the hash for the current game state
+        string hashKey = gameState.HashD(); // Generate the hash for the current game state
         
         // Check if we have already evaluated this game state
         if (TT.TryGetValue(hashKey, out float cachedValue))

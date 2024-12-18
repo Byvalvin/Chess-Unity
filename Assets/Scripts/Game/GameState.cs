@@ -3,6 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Text; // string builder hash
 
+using System.Security.Cryptography; // SHA256
+using System.IO;  // +MemStream
+
 public class GameState
 {
     
@@ -77,9 +80,64 @@ public class GameState
         //hashBuilder.Append(MoveCount);
         return hashBuilder.ToString();
     }
-    // public string HashC(){
-    //     StringBuilder hashBuilder = new StringBuilder();
-    // }
+
+
+
+public string HashD()
+{
+    using (SHA256 sha256 = SHA256.Create())
+    {
+        // Create a MemoryStream for efficient writing
+        using (MemoryStream stream = new MemoryStream())
+        {
+            foreach (PlayerState playerState in PlayerStates)
+            {
+                foreach (PieceBoard pieceBoard in playerState.PieceBoards.Values)
+                {
+                    // Hash piece type
+                    byte[] typeBytes = Encoding.UTF8.GetBytes(pieceBoard.Type.ToString());
+                    stream.Write(typeBytes, 0, typeBytes.Length);
+
+                    // Hash piece positions (bitboard)
+                    List<int> bitPositions = BitOps.GetAllSetBitIndicesLinear(pieceBoard.Bitboard);
+                    foreach (int bitPosition in bitPositions)
+                    {
+                        byte[] positionBytes = BitConverter.GetBytes(bitPosition);
+                        stream.Write(positionBytes, 0, positionBytes.Length);
+                    }
+                }
+            }
+
+            // Include whose turn it is
+            byte[] turnBytes = BitConverter.GetBytes(currentIndex);
+            stream.Write(turnBytes, 0, turnBytes.Length);
+
+            // Compute SHA-256 hash directly from the memory stream
+            byte[] hashBytes = sha256.ComputeHash(stream.ToArray());
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+        }
+    }
+}
+
+    public string HashC(int depth){
+        // Simple example: concatenate relevant properties
+        StringBuilder hashBuilder = new StringBuilder();
+
+        foreach (PlayerState playerState in PlayerStates){
+            foreach (PieceBoard pieceBoard in playerState.PieceBoards.Values){
+                hashBuilder.Append(pieceBoard.Type);
+                List<int> bitPositions = BitOps.GetAllSetBitIndicesLinear(pieceBoard.Bitboard);
+                foreach (int bitPosition in bitPositions){
+                    //Debug.Log(bitPosition + " " + pieceBoard.Type + " " + playerState.TurnIndex);
+                    hashBuilder.Append(bitPosition);
+                }
+            }
+        }
+        hashBuilder.Append(currentIndex); // Include whose turn it is
+        hashBuilder.Append(depth); // Include depth
+        //hashBuilder.Append(MoveCount);
+        return hashBuilder.ToString();
+    }
     public ulong HashB()
     {
         ulong hash;
