@@ -43,7 +43,7 @@ public class BuroState : BotState
 {
     private const int KingThreatPenalty = 10;
     private const int PieceProtectionReward = 5;
-    private const int SimulationCount = 400; // Number of simulations per move
+    private const int SimulationCount = 50; // Number of simulations per move
     
     private int minViability = 0;
 
@@ -58,35 +58,123 @@ public class BuroState : BotState
 
     public override PlayerState Clone() => new BuroState(this);
 
+    // protected override float EvaluateMove(int fromIndex, int toIndex, GameState clone)
+    // {
+    //     // Use MCTS to evaluate the move
+    //     clone.MakeBotMove(fromIndex, toIndex);
+
+    //     float movecurrentScore = GameEndingMove(clone);
+    //     if (movecurrentScore!=0){
+    //         return movecurrentScore;
+    //     }
+    //     movecurrentScore = EvaluateGameState(clone);
+    //     if (movecurrentScore<=0){
+    //         return movecurrentScore;
+    //     }
+
+    //     float score = RunMCTS(clone);
+    //     //Debug.Log("for "+fromIndex+" "+toIndex+"score: "+score);
+    //     return (score * 100); // Scale score for evaluation
+    // }
+
     protected override float EvaluateMove(int fromIndex, int toIndex, GameState clone)
     {
-        // Use MCTS to evaluate the move
+        Profiler.Start("EvaluateMove");
         clone.MakeBotMove(fromIndex, toIndex);
+
+        float movecurrentScore = GameEndingMove(clone);
+        if (movecurrentScore != 0)
+        {
+            Profiler.Stop("EvaluateMove");
+            return movecurrentScore;
+        }
+
+        movecurrentScore = EvaluateGameState(clone);
+        if (movecurrentScore <= 0)
+        {
+            Profiler.Stop("EvaluateMove");
+            return movecurrentScore;
+        }
+
         float score = RunMCTS(clone);
-        //Debug.Log("for "+fromIndex+" "+toIndex+"score: "+score);
+        Profiler.Stop("EvaluateMove");
+        // Optionally call Profiler.LogTimings() at the end of each frame
+        Profiler.LogTimings();
         return (score * 100); // Scale score for evaluation
-    }
+     }
 
-    private float RunMCTS(GameState gameState)
+    // private float RunMCTS(GameState gameState)
+    // {
+    //     string key = gameState.HashD();
+    //    if (TT.TryGetValue(key, out var winrate))
+    //    {
+    //        // Use the stored values from the TT
+    //        return winrate;
+    //    }
+
+    //     MCTSNode root = new MCTSNode(gameState);
+    //     for (int i = 0; i < SimulationCount; i++)
+    //     {
+    //         MCTSNode node = Select(root);
+    //         float result = Simulate(node.State.Clone());
+    //         Backpropagate(node, result);
+    //         //Debug.Log("after sim "+i+"; "+node.Visits+" is root: "+(node==root));
+    //     }
+
+    //     // store results in TT
+    //     TT[key] = root.Wins/root.Visits;
+
+    //     // Find the best child based on visit counts
+    //     MCTSNode bestChild = null;
+    //     foreach (var child in root.Children)
+    //     {
+    //         if (bestChild == null || child.Visits > bestChild.Visits)
+    //         {
+    //             bestChild = child;
+    //         }
+    //     }
+    //     return bestChild?.WinRate ?? 0; // Return the win rate of the best move
+    // }
+
+    // private MCTSNode Select(MCTSNode node)
+    // {
+    //     //Debug.Log("children count"+node.Children.Count+" visit count"+node.Visits);
+    //     while (node.Children.Count > 0)
+    //     {
+    //         node = BestChild(node);
+    //     }
+
+    //     if (node.Visits == 0)
+    //     {
+    //         return node; // If the node is unvisited, return it for expansion
+    //     }
+    //     return Expand(node);
+    // }
+
+        private float RunMCTS(GameState gameState)
     {
-        string key = gameState.HashD();
-       if (TT.TryGetValue(key, out var winrate))
-       {
-           // Use the stored values from the TT
-           return winrate;
-       }
-        MCTSNode root = new MCTSNode(gameState);
+        Profiler.Start("RunMCTS");
 
+        string key = gameState.HashD();
+        if (TT.TryGetValue(key, out var winrate))
+        {
+            // Use the stored values from the TT
+            Profiler.Stop("RunMCTS");
+            return winrate;
+        }
+
+        MCTSNode root = new MCTSNode(gameState);
         for (int i = 0; i < SimulationCount; i++)
         {
+            Profiler.Start("MCTS-Simulation");
             MCTSNode node = Select(root);
             float result = Simulate(node.State.Clone());
             Backpropagate(node, result);
-            //Debug.Log("after sim "+i+"; "+node.Visits+" is root: "+(node==root));
+            Profiler.Stop("MCTS-Simulation");
         }
 
         // store results in TT
-        TT[key] = root.Wins/root.Visits;
+        TT[key] = root.Wins / root.Visits;
 
         // Find the best child based on visit counts
         MCTSNode bestChild = null;
@@ -97,12 +185,14 @@ public class BuroState : BotState
                 bestChild = child;
             }
         }
+
+        Profiler.Stop("RunMCTS");
         return bestChild?.WinRate ?? 0; // Return the win rate of the best move
     }
 
     private MCTSNode Select(MCTSNode node)
     {
-        //Debug.Log("children count"+node.Children.Count+" visit count"+node.Visits);
+        Profiler.Start("Select");
         while (node.Children.Count > 0)
         {
             node = BestChild(node);
@@ -110,132 +200,227 @@ public class BuroState : BotState
 
         if (node.Visits == 0)
         {
+            Profiler.Stop("Select");
             return node; // If the node is unvisited, return it for expansion
         }
         return Expand(node);
     }
 
+    // private MCTSNode Expand(MCTSNode node)
+    // {
+    //     var moves = GenerateAllMoves(node.State, node.State.currentIndex);
+    //     // Debug.Log($"Generating {moves.Count} moves for state with {node.Visits} visits.");
+        
+    //     // Define the percentage of top moves you want to keep
+    //     float topPercentage = 0.3f;  // 30% of the best moves, adjust as needed
+    //     int topMovesCount = Mathf.CeilToInt(moves.Count * topPercentage); // Ensure at least 1 move is kept if percentage is low
+
+    //     // The exploration factor (probability of adding a move that fails the first criteria)
+    //     float eFactor = 0.1f;  // 10% chance to consider a move that fails the criteria
+
+    //     // Min-heap or sorted list to store the top moves
+    //     SortedList<int, MCTSNode> topMoves = new SortedList<int, MCTSNode>();
+
+    //     // Iterate through all possible moves
+    //     foreach (var move in moves)
+    //     {
+    //         GameState clonedState = node.State.Clone();
+    //         clonedState.MakeBotMove(move.x, move.y);
+    //         int childViability = EvaluateGameState(clonedState);
+
+    //         // Check if the move meets the criteria
+    //         bool meetsCriteria = childViability > minViability;
+            
+    //         // If the move meets the viability criterion, or if it's randomly selected for exploration, add it
+    //         if (meetsCriteria || UnityEngine.Random.value < eFactor)
+    //         {
+    //             // Create the child node
+    //             MCTSNode childNode = new MCTSNode(clonedState, node);
+    //             node.AddChild(childNode);
+    //             topMoves[childViability] = childNode;
+
+    //             // If the list has more than the desired number of top moves, remove the worst
+    //             if (topMoves.Count > topMovesCount)
+    //             {
+    //                 topMoves.Remove(topMoves.Keys[0]); // Remove the least viable (smallest viability)
+    //             }
+    //         }
+    //     }
+
+    //     // Ensure that at least one move is considered
+    //     if (topMoves.Count > 0)
+    //     {
+    //         // Randomly pick a move from the best moves
+    //         int randomIndex = UnityEngine.Random.Range(0, topMoves.Count);
+    //         MCTSNode selectedNode = topMoves.Values[randomIndex]; // Select a random child from the best moves
+    //         return selectedNode;
+    //     }
+
+    //     // If no valid moves were found above minViability, return a fallback node (current node)
+    //     return node;
+    // }
+
     private MCTSNode Expand(MCTSNode node)
     {
+        Profiler.Start("Expand");
         var moves = GenerateAllMoves(node.State, node.State.currentIndex);
-        // Debug.Log($"Generating {moves.Count} moves for state with {node.Visits} visits.");
-        
-        // Define the percentage of top moves you want to keep
-        float topPercentage = 0.4f;  // 30% of the best moves, adjust as needed
+        float topPercentage = 0.3f;  // 30% of the best moves, adjust as needed
         int topMovesCount = Mathf.CeilToInt(moves.Count * topPercentage); // Ensure at least 1 move is kept if percentage is low
 
         // The exploration factor (probability of adding a move that fails the first criteria)
         float eFactor = 0.1f;  // 10% chance to consider a move that fails the criteria
 
-        // Min-heap or sorted list to store the top moves
         SortedList<int, MCTSNode> topMoves = new SortedList<int, MCTSNode>();
 
-        // Iterate through all possible moves
         foreach (var move in moves)
         {
             GameState clonedState = node.State.Clone();
             clonedState.MakeBotMove(move.x, move.y);
             int childViability = EvaluateGameState(clonedState);
 
-            // Check if the move meets the criteria
             bool meetsCriteria = childViability > minViability;
-            
-            // If the move meets the viability criterion, or if it's randomly selected for exploration, add it
+
             if (meetsCriteria || UnityEngine.Random.value < eFactor)
             {
-                // Create the child node
                 MCTSNode childNode = new MCTSNode(clonedState, node);
                 node.AddChild(childNode);
                 topMoves[childViability] = childNode;
 
-                // If the list has more than the desired number of top moves, remove the worst
                 if (topMoves.Count > topMovesCount)
                 {
-                    topMoves.Remove(topMoves.Keys[0]); // Remove the least viable (smallest viability)
+                    topMoves.Remove(topMoves.Keys[0]);
                 }
             }
         }
 
-        // Ensure that at least one move is considered
         if (topMoves.Count > 0)
         {
-            // Randomly pick a move from the best moves
             int randomIndex = UnityEngine.Random.Range(0, topMoves.Count);
-            MCTSNode selectedNode = topMoves.Values[randomIndex]; // Select a random child from the best moves
+            MCTSNode selectedNode = topMoves.Values[randomIndex];
+            Profiler.Stop("Expand");
             return selectedNode;
         }
 
-        // If no valid moves were found above minViability, return a fallback node (current node)
-        return node;
+        Profiler.Stop("Expand");
+        return node; // If no valid moves, return current node
     }
+    // Ensure we avoid division by zero
+    private float UCT(MCTSNode parent, MCTSNode child) => child.WinRate + Mathf.Sqrt(2 * Mathf.Log(parent.Visits) / (child.Visits + 1));
+    // private MCTSNode BestChild(MCTSNode node)
+    // {
+    //     float bestValue = float.NegativeInfinity;
+    //     MCTSNode bestNode = null;
 
-    /*
-    Time Complexity: The time complexity remains at 
-𝑂
-(
-𝑛
-log
-⁡
-𝑘
-)
-O(nlogk), where 
-𝑛
-n is the number of moves and 
-𝑘
-k is the number of top moves you're considering (i.e., determined by topPercentage).
-Random Check: The random check (UnityEngine.Random.value < eFactor) is efficient and doesn’t significantly add to the complexity, as it’s just a simple comparison.
-By introducing the eFactor, you're allowing for a more dynamic exploration without being too narrow-minded, and you're still keeping the overall performance in check. This adjustment gives you a good balance of exploration and exploitation, which is often essential for algorithms like MCTS*/
+    //     foreach (var child in node.Children)
+    //     {
+            
+    //         float selectionValue = UCT(node, child);
+    //         if (selectionValue > bestValue)
+    //         {
+    //             bestValue = selectionValue;
+    //             bestNode = child;
+    //         }
+    //     }
 
+    //     return bestNode;
+    // }
 
     private MCTSNode BestChild(MCTSNode node)
     {
+        Profiler.Start("BestChild");
         float bestValue = float.NegativeInfinity;
         MCTSNode bestNode = null;
 
         foreach (var child in node.Children)
         {
-            // Ensure we avoid division by zero
-            float uctValue = child.WinRate + Mathf.Sqrt(2 * Mathf.Log(node.Visits) / (child.Visits + 1));
-            if (uctValue > bestValue)
+            float selectionValue = UCT(node, child);
+            if (selectionValue > bestValue)
             {
-                bestValue = uctValue;
+                bestValue = selectionValue;
                 bestNode = child;
             }
         }
 
+        Profiler.Stop("BestChild");
         return bestNode;
     }
 
-    private float Simulate(GameState state)
-    {
-        // Run a random simulation until the game ends
-        int simDepth = 0;
+    // private float Simulate(GameState state)
+    // {
+    //     // Run a random simulation until the game ends
+    //     // int simDepth = 0; //&& simDepth <= simMaxDepth[Phase], // simDepth++;
 
-        while (!state.IsGameEnd() && simDepth <= simMaxDepth[Phase])
+    //     while (!state.IsGameEnd() )
+    //     {
+    //         var moves = GenerateAllMoves(state, state.currentIndex);
+    //         if (moves.Count == 0) break; // No valid moves
+    //         var randomMove = moves[UnityEngine.Random.Range(0, moves.Count)];
+    //         state.MakeBotMove(randomMove.x, randomMove.y);
+
+    //     }
+    //     return EvaluateGameOutcome(state);
+    // }
+
+
+    // private void Backpropagate(MCTSNode node, float result)
+    // {
+    //     while (node != null)
+    //     {
+    //         node.UpdateStats(result);
+
+    //         string key = node.State.HashD();// Update TT entry
+    //         if (TT.ContainsKey(key))
+    //         {
+    //             TT[key] = (TT[key] * (node.Visits - 1) + result) / node.Visits; // Update with averaging
+    //         }
+    //         else
+    //         {
+    //             TT[key] = result; // First time, just set it
+    //         }
+
+
+    //         node = node.Parent; // Move to the parent node
+    //     }
+    // }
+
+        private float Simulate(GameState state)
+    {
+        Profiler.Start("Simulate");
+        while (!state.IsGameEnd())
         {
             var moves = GenerateAllMoves(state, state.currentIndex);
             if (moves.Count == 0) break; // No valid moves
             var randomMove = moves[UnityEngine.Random.Range(0, moves.Count)];
             state.MakeBotMove(randomMove.x, randomMove.y);
-
-            simDepth++;
         }
-        return EvaluateGameOutcome(state);
-    }
 
+        float result = EvaluateGameOutcome(state);
+        Profiler.Stop("Simulate");
+        return result;
+    }
 
     private void Backpropagate(MCTSNode node, float result)
     {
+        Profiler.Start("Backpropagate");
         while (node != null)
         {
             node.UpdateStats(result);
 
-            string key = node.State.HashD();// Update TT entry
-            TT[key]=result;
+            string key = node.State.HashD();
+            if (TT.ContainsKey(key))
+            {
+                TT[key] = (TT[key] * (node.Visits - 1) + result) / node.Visits;
+            }
+            else
+            {
+                TT[key] = result;
+            }
 
-            node = node.Parent; // Move to the parent node
+            node = node.Parent;
         }
+        Profiler.Stop("Backpropagate");
     }
+
 
     private float EvaluateGameOutcome(GameState gameState)
     {
@@ -248,7 +433,6 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         }
         return 0; // Not finished
     }
-
 
 
 
@@ -317,95 +501,3 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         return safetyScore;
     }
 }
-
-/*
-45
-11
-1:01
-1:18
-51
-1
-1:23
-2:56
-1:05
-2:08
-2:12
-10
-9
-10
-3
-*/
-
-
-/*
-1:08
-1:08
-1:28
-13
-31
-56
-22
-1:29
-8
-1:02
-1:39
-1:25
-2
-36
-37
-1:16
-1:11 ERROR
-
-*/
-
-/*
-32
-1:05
-23
-34
-1:11
-9
-1:32
-53
-1:25
-1:19
-12
-1:04
-1:02
-1:07
-1:11
-1:01
-49
-4
-2
-38 MOVES
-*/
-
-
-//     private float Simulate(GameState state){
-//         int simDepth = 0;
-//         while (!state.IsGameEnd() && simDepth <= simMaxDepth[Phase]){  
-//             var moves = GenerateAllMoves(state, state.currentIndex);            
-//             if (moves.Count == 0) break; 
-
-//             float bestMoveEval = float.NegativeInfinity;
-//             Vector2Int bestMove;
-//             foreach (var move in moves){
-//                 GameState clonedState = state.Clone();  
-//                 clonedState.MakeBotMove(move.x, move.y);
-//                 int moveEval = EvaluateGameState(clonedState);
-//                 if (moveEval > bestMoveEval) { 
-//                     bestMoveEval = moveEval;  
-//                     bestMove = move;                
-//                 }
-//                 // Early cutoff based on evaluation (if a decisive position is reached)
-//                 // if (Mathf.Abs(bestMoveEval) > 1000) // Arbitrary threshold, adjust as needed
-//                 // {
-//                 //     return bestMoveEval;
-//                 // }
-//             
-//             }
-//             simDepth++;
-//         }
-//         return EvaluateGameOutcome(state);    
-//     }

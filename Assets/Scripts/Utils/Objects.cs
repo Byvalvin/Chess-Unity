@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-// using UnityEngine;
+using UnityEngine;
 
 public static class Objects
 {
@@ -40,7 +40,7 @@ public static class ZobristHashing
 {
     // Zobrist table: [64 positions] x [12 types (6 for each player)]
     private static readonly ulong[,] zobristTable = new ulong[64, 12];  
-    private static readonly Random random = new Random();
+    private static readonly System.Random random = new System.Random();
 
     // Initialize the Zobrist table with random values
     static ZobristHashing()
@@ -110,4 +110,37 @@ public static class ZobristHashing
     }
 }
 
+
+public static class Profiler
+{
+    private static Dictionary<string, float> timings = new Dictionary<string, float>();
+    private static Dictionary<string, int> counts = new Dictionary<string, int>();
+
+    public static void Start(string label)
+    {
+        if (!timings.ContainsKey(label))
+        {
+            timings[label] = 0;
+            counts[label] = 0;
+        }
+    }
+
+    public static void Stop(string label)
+    {
+        float elapsedTime = Time.realtimeSinceStartup;
+        timings[label] += elapsedTime;
+        counts[label]++;
+    }
+
+    public static void LogTimings()
+    {
+        foreach (var entry in timings)
+        {
+            string label = entry.Key;
+            float totalTime = entry.Value;
+            int count = counts[label];
+            Debug.Log($"{label}: {totalTime} seconds over {count} runs");
+        }
+    }
+}
 
