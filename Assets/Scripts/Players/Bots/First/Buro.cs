@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class Buro : Bot
 {
     // Main bot class, can be extended with player actions or other functionalities.
@@ -68,7 +69,8 @@ public class BuroState : BotState
 
     private float RunMCTS(GameState gameState)
     {
-        string key = gameState.HashA();
+        // string key = gameState.HashA();
+        ulong key = gameState.CurrentHash;
        if (TT.TryGetValue(key, out var winrate))
        {
            // Use the stored values from the TT
@@ -222,33 +224,6 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         return EvaluateGameOutcome(state);
     }
 
-//     private float Simulate(GameState state){
-//         int simDepth = 0;
-//         while (!state.IsGameEnd() && simDepth <= simMaxDepth[Phase]){  
-//             var moves = GenerateAllMoves(state, state.currentIndex);            
-//             if (moves.Count == 0) break; 
-
-//             float bestMoveEval = float.NegativeInfinity;
-//             Vector2Int bestMove;
-//             foreach (var move in moves){
-//                 GameState clonedState = state.Clone();  
-//                 clonedState.MakeBotMove(move.x, move.y);
-//                 int moveEval = EvaluateGameState(clonedState);
-//                 if (moveEval > bestMoveEval) { 
-//                     bestMoveEval = moveEval;  
-//                     bestMove = move;                
-//                 }
-//                 // Early cutoff based on evaluation (if a decisive position is reached)
-//                 // if (Mathf.Abs(bestMoveEval) > 1000) // Arbitrary threshold, adjust as needed
-//                 // {
-//                 //     return bestMoveEval;
-//                 // }
-//             
-//             }
-//             simDepth++;
-//         }
-//         return EvaluateGameOutcome(state);    
-//     }
 
     private void Backpropagate(MCTSNode node, float result)
     {
@@ -256,7 +231,8 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         {
             node.UpdateStats(result);
 
-            string key = node.State.HashA();// Update TT entry
+            // string key = node.State.HashA();// Update TT entry
+            ulong key = node.State.CurrentHash;// Update TT entry
             TT[key]=result;
 
             node = node.Parent; // Move to the parent node
@@ -274,12 +250,6 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
         }
         return 0; // Not finished
     }
-
-
-
-
-
-
 
 
 
@@ -412,3 +382,32 @@ By introducing the eFactor, you're allowing for a more dynamic exploration witho
 2
 38 MOVES
 */
+
+
+//     private float Simulate(GameState state){
+//         int simDepth = 0;
+//         while (!state.IsGameEnd() && simDepth <= simMaxDepth[Phase]){  
+//             var moves = GenerateAllMoves(state, state.currentIndex);            
+//             if (moves.Count == 0) break; 
+
+//             float bestMoveEval = float.NegativeInfinity;
+//             Vector2Int bestMove;
+//             foreach (var move in moves){
+//                 GameState clonedState = state.Clone();  
+//                 clonedState.MakeBotMove(move.x, move.y);
+//                 int moveEval = EvaluateGameState(clonedState);
+//                 if (moveEval > bestMoveEval) { 
+//                     bestMoveEval = moveEval;  
+//                     bestMove = move;                
+//                 }
+//                 // Early cutoff based on evaluation (if a decisive position is reached)
+//                 // if (Mathf.Abs(bestMoveEval) > 1000) // Arbitrary threshold, adjust as needed
+//                 // {
+//                 //     return bestMoveEval;
+//                 // }
+//             
+//             }
+//             simDepth++;
+//         }
+//         return EvaluateGameOutcome(state);    
+//     }

@@ -32,8 +32,9 @@ public abstract class BotState : PlayerState
 
     public GameState CurrentGame{get; set;}
     // Transposition table
-    protected Dictionary<string, float> TT = new Dictionary<string, float>();
-    // protected Dictionary<ulong, int> TT = new Dictionary<ulong, int>();
+    // protected Dictionary<string, float> TT = new Dictionary<string, float>();
+    protected Dictionary<ulong, float> TT = new Dictionary<ulong, float>();
+
 
     public BotState(string playerName, bool isWhite) : base(playerName, isWhite){}
 

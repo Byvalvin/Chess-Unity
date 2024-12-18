@@ -46,63 +46,64 @@ public class LeviState : BotState
         return bestMoveScore;
     }
 
-    private float IterativeMinimax(GameState gameState, int maxDepth, float alpha, float beta, bool maximizingPlayer)
-    {
-        Stack<(GameState state, int depth, float alpha, float beta, bool maximizing)> stack = new Stack<(GameState, int, float, float, bool)>();
-        stack.Push((gameState, 0, alpha, beta, maximizingPlayer));
+    // private float IterativeMinimax(GameState gameState, int maxDepth, float alpha, float beta, bool maximizingPlayer)
+    // {
+    //     Stack<(GameState state, int depth, float alpha, float beta, bool maximizing)> stack = new Stack<(GameState, int, float, float, bool)>();
+    //     stack.Push((gameState, 0, alpha, beta, maximizingPlayer));
 
-        float bestValue = maximizingPlayer ? int.MinValue : int.MaxValue;
+    //     float bestValue = maximizingPlayer ? int.MinValue : int.MaxValue;
 
-        while (stack.Count > 0)
-        {
-            var (state, depth, alphaValue, betaValue, isMaximizing) = stack.Pop();
+    //     while (stack.Count > 0)
+    //     {
+    //         var (state, depth, alphaValue, betaValue, isMaximizing) = stack.Pop();
 
-            // Base case: If we reached the maximum depth or a terminal state, evaluate
-            if (depth == maxDepth || IsGameOver(state))
-            {
-                bestValue = EvaluateGameState(state);
-                continue;
-            }
+    //         // Base case: If we reached the maximum depth or a terminal state, evaluate
+    //         if (depth == maxDepth || IsGameOver(state))
+    //         {
+    //             bestValue = EvaluateGameState(state);
+    //             continue;
+    //         }
 
-            if (isMaximizing)
-            {
-                float maxEval = int.MinValue;
-                foreach (var move in GenerateAllMoves(state, TurnIndex))
-                {
-                    GameState clonedState = state.Clone();
-                    clonedState.MakeBotMove(move.x, move.y);
-                    stack.Push((clonedState, depth + 1, alphaValue, betaValue, false));
-                    maxEval = Mathf.Max(maxEval, bestValue);
-                    alphaValue = Mathf.Max(alphaValue, bestValue);
-                    if (betaValue <= alphaValue)
-                        break;
-                }
-                bestValue = maxEval;
-            }
-            else
-            {
-                float minEval = int.MaxValue;
-                foreach (var move in GenerateAllMoves(state, 1 - TurnIndex))
-                {
-                    GameState clonedState = state.Clone();
-                    clonedState.MakeBotMove(move.x, move.y);
-                    stack.Push((clonedState, depth + 1, alphaValue, betaValue, true));
-                    minEval = Mathf.Min(minEval, bestValue);
-                    betaValue = Mathf.Min(betaValue, bestValue);
-                    if (betaValue <= alphaValue)
-                        break;
-                }
-                bestValue = minEval;
-            }
-        }
+    //         if (isMaximizing)
+    //         {
+    //             float maxEval = int.MinValue;
+    //             foreach (var move in GenerateAllMoves(state, TurnIndex))
+    //             {
+    //                 GameState clonedState = state.Clone();
+    //                 clonedState.MakeBotMove(move.x, move.y);
+    //                 stack.Push((clonedState, depth + 1, alphaValue, betaValue, false));
+    //                 maxEval = Mathf.Max(maxEval, bestValue);
+    //                 alphaValue = Mathf.Max(alphaValue, bestValue);
+    //                 if (betaValue <= alphaValue)
+    //                     break;
+    //             }
+    //             bestValue = maxEval;
+    //         }
+    //         else
+    //         {
+    //             float minEval = int.MaxValue;
+    //             foreach (var move in GenerateAllMoves(state, 1 - TurnIndex))
+    //             {
+    //                 GameState clonedState = state.Clone();
+    //                 clonedState.MakeBotMove(move.x, move.y);
+    //                 stack.Push((clonedState, depth + 1, alphaValue, betaValue, true));
+    //                 minEval = Mathf.Min(minEval, bestValue);
+    //                 betaValue = Mathf.Min(betaValue, bestValue);
+    //                 if (betaValue <= alphaValue)
+    //                     break;
+    //             }
+    //             bestValue = minEval;
+    //         }
+    //     }
 
-        return bestValue;
-    }
+    //     return bestValue;
+    // }
 
 
     private float Minimax(GameState gameState, int depth, float alpha, float beta, bool maximizingPlayer){
-        string hashKey = gameState.HashD(); // Generate the hash for the current game state
-        
+        // string hashKey = gameState.HashD(); // Generate the hash for the current game state
+        ulong hashKey = gameState.CurrentHash; // Generate the hash for the current game state
+
         // Check if we have already evaluated this game state
         if (TT.TryGetValue(hashKey, out float cachedValue))
             return cachedValue; // Return the cached evaluation
@@ -312,85 +313,86 @@ public class MinimaxNode
 }
 
 
-private float IterativeMinimax(GameState gameState, int maxDepth, float alpha, float beta, bool maximizingPlayer, int playerIndex)
-{
-    //string hashKey = gameState.HashA(); // Generate the hash for the current game state
+// private float IterativeMinimax(GameState gameState, int maxDepth, float alpha, float beta, bool maximizingPlayer, int playerIndex)
+// {
+//     //string hashKey = gameState.HashA(); // Generate the hash for the current game state
 
-    Stack<MinimaxNode> stack = new Stack<MinimaxNode>();  // Stack for the iterative search
-    //int playerIndex = maximizingPlayer ? TurnIndex : 1 - TurnIndex;  // Set the player index
+//     Stack<MinimaxNode> stack = new Stack<MinimaxNode>();  // Stack for the iterative search
+//     //int playerIndex = maximizingPlayer ? TurnIndex : 1 - TurnIndex;  // Set the player index
 
-    stack.Push(new MinimaxNode(gameState, 0, alpha, beta, maximizingPlayer, playerIndex));  // Push the initial node
+//     stack.Push(new MinimaxNode(gameState, 0, alpha, beta, maximizingPlayer, playerIndex));  // Push the initial node
 
-    float bestScore = maximizingPlayer ? int.MinValue : int.MaxValue;
+//     float bestScore = maximizingPlayer ? int.MinValue : int.MaxValue;
 
-    while (stack.Count > 0)
-    {
-        MinimaxNode currentNode = stack.Peek();  // Look at the top node on the stack
+//     while (stack.Count > 0)
+//     {
+//         MinimaxNode currentNode = stack.Peek();  // Look at the top node on the stack
 
-        // Check for cached evaluation
-        string hashKey = currentNode.GameState.HashA();
-        if (TT.TryGetValue(hashKey, out float cachedValue))
-        {
-            // If cached, pop the current node, and continue with the next node
-            stack.Pop();
-            currentNode.BestScore = cachedValue;
-            continue;
-        }
+//         // Check for cached evaluation
+//         // string hashKey = currentNode.GameState.HashA();
+//         ulong hashKey = gameState.CurrentHash; // Generate the hash for the current game state
+//         if (TT.TryGetValue(hashKey, out float cachedValue))
+//         {
+//             // If cached, pop the current node, and continue with the next node
+//             stack.Pop();
+//             currentNode.BestScore = cachedValue;
+//             continue;
+//         }
 
-        // If we reached the maximum depth or a terminal state, evaluate
-        if (currentNode.Depth == maxDepth || IsGameOver(currentNode.GameState))
-        {
-            // Evaluate the state at the current depth
-            currentNode.BestScore = EvaluateGameState(currentNode.GameState);
-            TT[hashKey] = currentNode.BestScore;  // Store in transposition table
-            stack.Pop();  // Pop the node after evaluation
-        }
-        else
-        {
-            // Explore the next move at this depth
-            if (currentNode.Moves.Count == 0)
-            {
-                // No more moves to explore at this node; backtrack
-                stack.Pop();
-            }
-            else
-            {
-                // Pick the next move to explore
-                Vector2Int move = currentNode.Moves[0];  // Get the first move (you can adjust this based on your move ordering strategy)
-                currentNode.Moves.RemoveAt(0);  // Remove the move from the list
+//         // If we reached the maximum depth or a terminal state, evaluate
+//         if (currentNode.Depth == maxDepth || IsGameOver(currentNode.GameState))
+//         {
+//             // Evaluate the state at the current depth
+//             currentNode.BestScore = EvaluateGameState(currentNode.GameState);
+//             TT[hashKey] = currentNode.BestScore;  // Store in transposition table
+//             stack.Pop();  // Pop the node after evaluation
+//         }
+//         else
+//         {
+//             // Explore the next move at this depth
+//             if (currentNode.Moves.Count == 0)
+//             {
+//                 // No more moves to explore at this node; backtrack
+//                 stack.Pop();
+//             }
+//             else
+//             {
+//                 // Pick the next move to explore
+//                 Vector2Int move = currentNode.Moves[0];  // Get the first move (you can adjust this based on your move ordering strategy)
+//                 currentNode.Moves.RemoveAt(0);  // Remove the move from the list
 
-                GameState clonedGame = currentNode.GameState.Clone();
-                clonedGame.MakeBotMove(move.x, move.y);  // Apply the move
+//                 GameState clonedGame = currentNode.GameState.Clone();
+//                 clonedGame.MakeBotMove(move.x, move.y);  // Apply the move
 
-                // Create a new node for the next depth level
-                MinimaxNode newNode = new MinimaxNode(clonedGame, currentNode.Depth + 1, currentNode.Alpha, currentNode.Beta, !currentNode.MaximizingPlayer, 1-currentNode.PlayerIndex);
-                stack.Push(newNode);  // Push the new node onto the stack
-            }
+//                 // Create a new node for the next depth level
+//                 MinimaxNode newNode = new MinimaxNode(clonedGame, currentNode.Depth + 1, currentNode.Alpha, currentNode.Beta, !currentNode.MaximizingPlayer, 1-currentNode.PlayerIndex);
+//                 stack.Push(newNode);  // Push the new node onto the stack
+//             }
 
-            // After exploring a move, perform Alpha-Beta pruning
-            if (currentNode.MaximizingPlayer)
-            {
-                bestScore = Mathf.Max(bestScore, currentNode.BestScore);
-                currentNode.Alpha = Mathf.Max(currentNode.Alpha, currentNode.BestScore);
+//             // After exploring a move, perform Alpha-Beta pruning
+//             if (currentNode.MaximizingPlayer)
+//             {
+//                 bestScore = Mathf.Max(bestScore, currentNode.BestScore);
+//                 currentNode.Alpha = Mathf.Max(currentNode.Alpha, currentNode.BestScore);
 
-                // Alpha-Beta pruning
-                if (currentNode.Beta <= currentNode.Alpha)
-                    stack.Pop();  // Pop the current node if pruning occurs
-            }
-            else
-            {
-                bestScore = Mathf.Min(bestScore, currentNode.BestScore);
-                currentNode.Beta = Mathf.Min(currentNode.Beta, currentNode.BestScore);
+//                 // Alpha-Beta pruning
+//                 if (currentNode.Beta <= currentNode.Alpha)
+//                     stack.Pop();  // Pop the current node if pruning occurs
+//             }
+//             else
+//             {
+//                 bestScore = Mathf.Min(bestScore, currentNode.BestScore);
+//                 currentNode.Beta = Mathf.Min(currentNode.Beta, currentNode.BestScore);
 
-                // Alpha-Beta pruning
-                if (currentNode.Beta <= currentNode.Alpha)
-                    stack.Pop();  // Pop the current node if pruning occurs
-            }
-        }
-    }
+//                 // Alpha-Beta pruning
+//                 if (currentNode.Beta <= currentNode.Alpha)
+//                     stack.Pop();  // Pop the current node if pruning occurs
+//             }
+//         }
+//     }
 
-    return bestScore;
-}
+//     return bestScore;
+// }
 
 
 }

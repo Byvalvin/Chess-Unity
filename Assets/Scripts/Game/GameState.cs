@@ -19,9 +19,12 @@ public class GameState
     public int Winner{get; private set;}
 
     public int MoveCount{get; private set;}
-    public Queue<string> lastThreeStates{get; private set;}
+    // public Queue<string> lastThreeStates{get; private set;}
+    public Queue<ulong> lastThreeStates{get; private set;}
+
     public int NoCaptureNoPawnMoveCount{get; private set;} // Track moves without captures or pawn moves
 
+    public ulong CurrentHash{get; private set;}
     public GameState(
         string player1Type, string player1Name,
         string player2Type, string player2Name
@@ -40,9 +43,12 @@ public class GameState
         Winner = -1; // no winner to start
 
         MoveCount=0;
-        lastThreeStates = new Queue<string>(); lastThreeStates.Enqueue(HashA());
+        
+        // lastThreeStates = new Queue<string>(); lastThreeStates.Enqueue(HashD());
         NoCaptureNoPawnMoveCount=0;
 
+        CurrentHash = ZobristHashing.CalculateHash(this);  // Compute initial hash
+        lastThreeStates = new Queue<ulong>(); lastThreeStates.Enqueue(CurrentHash);
     }
     public GameState(GameState original){
         PlayerStates = new PlayerState[2];
@@ -55,7 +61,8 @@ public class GameState
         Winner = original.Winner;
 
         MoveCount = original.MoveCount;
-        lastThreeStates = new Queue<string>(original.lastThreeStates);
+        // lastThreeStates = new Queue<string>(original.lastThreeStates);
+        lastThreeStates = new Queue<ulong>(original.lastThreeStates);
         NoCaptureNoPawnMoveCount = original.NoCaptureNoPawnMoveCount;
 
         Initialize();
@@ -138,6 +145,7 @@ public string HashD()
         //hashBuilder.Append(MoveCount);
         return hashBuilder.ToString();
     }
+
 
 
     public void Initialize()
@@ -312,22 +320,28 @@ public string HashD()
         PromoteTo='\0';
         PlayerStates[currentIndex].PromoteTo='\0';
 
+        // Update the Zobrist hash by XORing out the old and XORing in the new positions
+        CurrentHash = ZobristHashing.UpdateHash(CurrentHash, originalIndex, index, pieceBoard.Type, currentIndex==0);
+
+
         // TRACKINGS
         //Track move count
         MoveCount++;
 
         // Track the last three game state hashes
-        string currentHash = HashA();
+        // string currentHash = HashD();
+        
         if (lastThreeStates.Count == 3)
             lastThreeStates.Dequeue(); // Remove the oldest hash
-        lastThreeStates.Enqueue(currentHash); // Add the current hash
+        // lastThreeStates.Enqueue(currentHash); // Add the current hash
+        lastThreeStates.Enqueue(CurrentHash); // Add the current hash
 
 
         //Debug.Log(isPawnMove + " " + isCapture + " "+ isEnPassantCapture + " " +(isPawnMove || isCapture || isEnPassantCapture) + " " + NoCaptureNoPawnMoveCount);
         // Track cap or awnmove
         NoCaptureNoPawnMoveCount = (isPawnMove || isCapture || isEnPassantCapture)?
                 0 : NoCaptureNoPawnMoveCount+1;
-
+        
 
         SwitchPlayer();
         UpdateBoard();
@@ -749,11 +763,11 @@ public string HashD()
     public bool CheckThreefoldRepetition() 
     {
         // Check for threefold repetition: same position occurs 3 times
-        string currentHash = HashA();
+        // string currentHash = HashD();
         int count = 0;
-        foreach (string hash in lastThreeStates)
+        foreach (ulong hash in lastThreeStates)
         {
-            if (hash == currentHash)
+            if (hash == CurrentHash)
             {
                 count++;
             }
