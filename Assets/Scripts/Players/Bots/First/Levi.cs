@@ -12,7 +12,7 @@ public class Levi : Bot
 
 public class LeviState : BotState
 {
-    private const int MaxDepth = 4,
+    private const int MaxDepth = 100,
                       KingThreatPenalty = 10,
                       CaptureScoreMultiplier = 2,
                       PieceProtectionReward = 5;
@@ -23,28 +23,85 @@ public class LeviState : BotState
 
     public override PlayerState Clone() => new LeviState(this);
 
-    // The new iterative Minimax algorithm with TT caching
     protected override float EvaluateMove(int fromIndex, int toIndex, GameState clone)
     {
         clone.MakeBotMove(fromIndex, toIndex);
-        float movescore = Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite);
-        //float moveScore = IterativeMinimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite, 1-TurnIndex);
+        float moveScore = IterativeDeepeningMinimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite);
+        //float movescore = Minimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite);
+        // float moveScore = IterativeMinimax(clone, MaxDepth, int.MinValue, int.MaxValue, !IsWhite, 1-TurnIndex);
         //Debug.Log("Scoring | " + fromIndex + " to " + toIndex + ": " + moveScore);
-        return movescore;
+        return moveScore;
     }
+
+    private float IterativeDeepeningMinimax(GameState gameState, int maxDepth, float alpha, float beta, bool maximizingPlayer)
+    {
+        float bestMoveScore = int.MinValue;
+
+        for (int depth = 1; depth <= maxDepth; depth++)
+        {
+            float score = Minimax(gameState, depth, alpha, beta, maximizingPlayer);
+            bestMoveScore = Mathf.Max(bestMoveScore, score);
+        }
+
+        return bestMoveScore;
+    }
+
+    private float IterativeMinimax(GameState gameState, int maxDepth, float alpha, float beta, bool maximizingPlayer)
+    {
+        Stack<(GameState state, int depth, float alpha, float beta, bool maximizing)> stack = new Stack<(GameState, int, float, float, bool)>();
+        stack.Push((gameState, 0, alpha, beta, maximizingPlayer));
+
+        float bestValue = maximizingPlayer ? int.MinValue : int.MaxValue;
+
+        while (stack.Count > 0)
+        {
+            var (state, depth, alphaValue, betaValue, isMaximizing) = stack.Pop();
+
+            // Base case: If we reached the maximum depth or a terminal state, evaluate
+            if (depth == maxDepth || IsGameOver(state))
+            {
+                bestValue = EvaluateGameState(state);
+                continue;
+            }
+
+            if (isMaximizing)
+            {
+                float maxEval = int.MinValue;
+                foreach (var move in GenerateAllMoves(state, TurnIndex))
+                {
+                    GameState clonedState = state.Clone();
+                    clonedState.MakeBotMove(move.x, move.y);
+                    stack.Push((clonedState, depth + 1, alphaValue, betaValue, false));
+                    maxEval = Mathf.Max(maxEval, bestValue);
+                    alphaValue = Mathf.Max(alphaValue, bestValue);
+                    if (betaValue <= alphaValue)
+                        break;
+                }
+                bestValue = maxEval;
+            }
+            else
+            {
+                float minEval = int.MaxValue;
+                foreach (var move in GenerateAllMoves(state, 1 - TurnIndex))
+                {
+                    GameState clonedState = state.Clone();
+                    clonedState.MakeBotMove(move.x, move.y);
+                    stack.Push((clonedState, depth + 1, alphaValue, betaValue, true));
+                    minEval = Mathf.Min(minEval, bestValue);
+                    betaValue = Mathf.Min(betaValue, bestValue);
+                    if (betaValue <= alphaValue)
+                        break;
+                }
+                bestValue = minEval;
+            }
+        }
+
+        return bestValue;
+    }
+
 
     private float Minimax(GameState gameState, int depth, float alpha, float beta, bool maximizingPlayer){
         string hashKey = gameState.HashA(); // Generate the hash for the current game state
-        //ulong hashKey = gameState.HashB(); // Generate the hash for the current game state
-        /*
-        Debug.Log(maximizingPlayer+" "+depth + " "+ alpha + " " + beta);
-        Debug.Log(TT + "for tt" + hashKey);
-        */
-        /*
-        foreach (var item in TT){
-            Debug.Log("Hasing: "+ item.Key + " " + item.Value);
-        }
-        */
         
         // Check if we have already evaluated this game state
         if (TT.TryGetValue(hashKey, out float cachedValue))
@@ -57,7 +114,6 @@ public class LeviState : BotState
         if (maximizingPlayer == IsWhite){
             float maxEval = int.MinValue;
             foreach (var move in GenerateAllMoves(gameState, TurnIndex)){
-                //Debug.Log(move);
                 GameState clonedGame = gameState.Clone();
                 clonedGame.MakeBotMove(move.x, move.y);
                 eval = Minimax(clonedGame, depth - 1, alpha, beta, !IsWhite);

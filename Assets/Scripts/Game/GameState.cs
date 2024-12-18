@@ -77,6 +77,9 @@ public class GameState
         //hashBuilder.Append(MoveCount);
         return hashBuilder.ToString();
     }
+    // public string HashC(){
+    //     StringBuilder hashBuilder = new StringBuilder();
+    // }
     public ulong HashB()
     {
         ulong hash;

@@ -50,7 +50,7 @@ public class BuroState : BotState
     private int Phase => 0<=CurrentGame.MoveCount && CurrentGame.MoveCount<=10 ? 0 :
                         11<=CurrentGame.MoveCount && CurrentGame.MoveCount<=30 ? 1 :
                         2;
-    private int[] simMaxDepth = {150,200,300};
+    private int[] simMaxDepth = {300,400,500};
     public BuroState(string playerName, bool isWhite) : base(playerName, isWhite) { }
 
     public BuroState(BuroState original) : base(original) { }
