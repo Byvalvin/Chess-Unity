@@ -138,36 +138,6 @@ public string HashD()
         //hashBuilder.Append(MoveCount);
         return hashBuilder.ToString();
     }
-    public ulong HashB()
-    {
-        ulong hash;
-
-        // Hash the occupancy boards of both players
-        // hash ^= PlayerStates[0].OccupancyBoard;
-        // hash ^= PlayerStates[1].OccupancyBoard;
-        hash = OccupancyBoard;
-
-        // Hash each player's piece boards
-        // foreach (var playerState in PlayerStates)
-        // {
-        //     foreach (var pieceBoard in playerState.PieceBoards.Values)
-        //     {
-        //         // Hash the piece type (assume you have a mapping to integral values)
-        //         //hash ^= (ulong)pieceBoard.Type; // Convert char to int (e.g., Q=1, K=2, etc.)
-                
-        //         // Hash the bitboard for the piece
-        //         hash ^= pieceBoard.Bitboard; // Assuming pieceBoard.Bitboard is a ulong
-        //     }
-        // }
-
-        // Include current player index
-        //hash ^= (ulong)currentIndex;
-
-        // Incorporate currentIndex with shifting
-        hash ^= (ulong)(currentIndex << 32); // Shift currentIndex to higher bits
-
-        return hash;
-    }
 
 
     public void Initialize()
@@ -410,6 +380,7 @@ public string HashD()
             if(Math.Abs(kingIndex-kcastleIndex)==2 
             &&  (!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 7:63))
                 ||((KingSideSquares & allAttackedSquares) != 0)
+                ||PlayerStates[currentIndex].InCheck
                 )
             ){
                 filteredMoves &= ~(kingCastleMove); // remove the castle move
@@ -419,6 +390,7 @@ public string HashD()
             if(Math.Abs(kingIndex-qcastleIndex)==2
             &&  (!(currPlayer.PieceBoards['R'].FirstMovers.Contains(currPlayer.IsWhite? 0:56))
                 ||((QueenSideSquares & allAttackedSquares) != 0)
+                ||PlayerStates[currentIndex].InCheck
                 )
             ){
                 filteredMoves &= ~(queenCastleMove); // remove the castle move
