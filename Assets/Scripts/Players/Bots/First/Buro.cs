@@ -78,7 +78,7 @@ public class BuroState : BotState
 {
     private const int KingThreatPenalty = 10;
     private const int PieceProtectionReward = 5;
-    private const int SimulationCount = 1000; // Number of simulations per move
+    private const int SimulationCount = 1200; // Number of simulations per move
     
     // private int minViability = 0;
 
@@ -86,7 +86,7 @@ public class BuroState : BotState
     private int Phase => 0<=CurrentGame.MoveCount && CurrentGame.MoveCount<=5 ? 0 :
                         6<=CurrentGame.MoveCount && CurrentGame.MoveCount<=30 ? 1 :
                         2;
-    private int[] simMaxDepth = {300,200,100};
+    private int[] simMaxDepth = {200,100,50};
     public BuroState(string playerName, bool isWhite) : base(playerName, isWhite) { }
 
     public BuroState(BuroState original) : base(original) { }
