@@ -97,7 +97,7 @@ public abstract class BotState : PlayerState
         return EvaluateGameState(clone);// placeholder assumes all moves are equal but diff bots will have diff scoring
     }
     
-    protected virtual Vector2Int Evaluate(Dictionary<int, ulong> moveMap){
+    protected virtual Vector2Int Evaluate(Dictionary<int, ulong> moveMap=null){
         //return new Vector2Int(8,16);
 
         int bestFromIndex = -1;
