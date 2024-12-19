@@ -264,19 +264,20 @@ public class BuroState : BotState
     {
         Profiler.Start("Expand");
         var moves = GenerateAllMoves(node.State, node.State.currentIndex);
-        float topPercentage = 0.3f;  // 30% of the best moves, adjust as needed
-        int topMovesCount = Mathf.CeilToInt(moves.Count * topPercentage); // Ensure at least 1 move is kept if percentage is low
+        // float topPercentage = 0.3f;  // 30% of the best moves, adjust as needed
+        // int topMovesCount = Mathf.CeilToInt(moves.Count * topPercentage); // Ensure at least 1 move is kept if percentage is low
 
-        // The exploration factor (probability of adding a move that fails the first criteria)
+        // // The exploration factor (probability of adding a move that fails the first criteria)
         float eFactor = 0.1f;  // 10% chance to consider a move that fails the criteria
 
-        SortedList<int, MCTSNode> topMoves = new SortedList<int, MCTSNode>();
+        var topMoves = new List<MCTSNode>();
+        // SortedList<int, MCTSNode> topMoves = new SortedList<int, MCTSNode>();
 
         foreach (var move in moves)
         {
             GameState clonedState = node.State.Clone();
             clonedState.MakeBotMove(move.x, move.y);
-            int childViability = EvaluateGameState(clonedState);
+            float childViability = EvaluateGameState(clonedState);
 
             bool meetsCriteria = childViability > minViability;
 
@@ -284,28 +285,33 @@ public class BuroState : BotState
             {
                 MCTSNode childNode = new MCTSNode(clonedState, node);
                 node.AddChild(childNode);
-                topMoves[childViability] = childNode;
+                // topMoves[childViability] = childNode;
+                topMoves.Add(childNode);
 
-                if (topMoves.Count > topMovesCount)
-                {
-                    topMoves.Remove(topMoves.Keys[0]);
-                }
+                // if (topMoves.Count > topMovesCount)
+                // {
+                //     topMoves.Remove(topMoves.Keys[0]);
+                // }
             }
         }
 
         if (topMoves.Count > 0)
         {
             int randomIndex = UnityEngine.Random.Range(0, topMoves.Count);
-            MCTSNode selectedNode = topMoves.Values[randomIndex];
+            // MCTSNode selectedNode = topMoves.Values[randomIndex];
             Profiler.Stop("Expand");
-            return selectedNode;
+            // return selectedNode;
+            return topMoves[randomIndex];
         }
 
         Profiler.Stop("Expand");
         return node; // If no valid moves, return current node
     }
     // Ensure we avoid division by zero
-    private float UCT(MCTSNode parent, MCTSNode child) => child.WinRate + Mathf.Sqrt(2 * Mathf.Log(parent.Visits) / (child.Visits + 1));
+    // private float UCT(MCTSNode parent, MCTSNode child) => child.WinRate + Mathf.Sqrt(2 * Mathf.Log(parent.Visits) / (child.Visits + 1));
+    private float UCT(MCTSNode parent, MCTSNode child) 
+    => child.WinRate + Mathf.Sqrt(2 * Mathf.Log(parent.Visits + 1) / (child.Visits + 1));
+
     // private MCTSNode BestChild(MCTSNode node)
     // {
     //     float bestValue = float.NegativeInfinity;
@@ -386,6 +392,10 @@ public class BuroState : BotState
         private float Simulate(GameState state)
     {
         Profiler.Start("Simulate");
+            // Modify the RNG state based on the simulation number
+        UnityEngine.Random.State initialState = UnityEngine.Random.state;
+        UnityEngine.Random.state = UnityEngine.Random.state;  // Adjust this state for each simulation
+
         while (!state.IsGameEnd())
         {
             var moves = GenerateAllMoves(state, state.currentIndex);
