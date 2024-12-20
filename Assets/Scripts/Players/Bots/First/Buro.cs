@@ -194,7 +194,8 @@ private Vector2Int HeuristicMove(List<Vector2Int> legalMoves, GameState currentG
         
         // Evaluate the game state after making the move
         // float moveScore = EvaluateGameState(clonedState);  // Assuming EvaluateGameState takes a GameState and returns a score
-        float moveScore = SimpleHeuristic(clonedState);
+        // float moveScore = SimpleHeuristic(clonedState);
+        float moveScore = IdealHeuristic(clonedState);
         // If the score of this move is better than the current best, update the best move
         if (moveScore > bestScore)
         {
@@ -239,8 +240,19 @@ private Vector2Int HeuristicMove(List<Vector2Int> legalMoves, GameState currentG
     {
         int score = GameEndingMove(state);
         if (score != 0) return score;
-        score += EvaluateMobilityDiff(state);  // Just material difference
-        score += 2 * EvaluatePositioning(state);  // Some basic positional evaluation (control of the center, etc.)
+        // Evaluate material balance
+        score += EvaluateMaterialDiff(state);
+        score += 2*EvaluatePositioning(state);  // Some basic positional evaluation (control of the center, etc.)
+        return score;
+    }
+
+    private int IdealHeuristic(GameState state){
+        int score = GameEndingMove(state);
+        if (score != 0) return score;
+        // Evaluate material balance
+        score += EvaluateMaterialDiff(state);
+        score += 2*EvaluateMobilityDiff(state);  // Just material difference
+        score += 2*EvaluatePositioning(state);  // Some basic positional evaluation (control of the center, etc.)
         return score;
     }
 
