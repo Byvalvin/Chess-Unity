@@ -12,7 +12,7 @@ public class Levi : Bot
 
 public class LeviState : BotState
 {
-    private const int MaxDepth = 200,
+    private const int MaxDepth = 300,
                       KingThreatPenalty = 10,
                       CaptureScoreMultiplier = 2,
                       PieceProtectionReward = 5;
@@ -126,7 +126,7 @@ public class LeviState : BotState
 
     private int EvaluateMaterialDiff(GameState gameState)
     {
-        return 3*(EvaluateMaterial(gameState, TurnIndex) - EvaluateMaterial(gameState, 1 - TurnIndex));
+        return (EvaluateMaterial(gameState, TurnIndex) - EvaluateMaterial(gameState, 1 - TurnIndex));
     }
 
     private int EvaluatePositioning(GameState gameState)

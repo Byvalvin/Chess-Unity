@@ -83,10 +83,10 @@ public class BuroState : BotState
     // private int minViability = 0;
 
     
-    private int Phase => 0<=CurrentGame.MoveCount && CurrentGame.MoveCount<=5 ? 0 :
-                        6<=CurrentGame.MoveCount && CurrentGame.MoveCount<=30 ? 1 :
+    private int Phase => 0<=CurrentGame.MoveCount && CurrentGame.MoveCount<=10 ? 0 :
+                        11<=CurrentGame.MoveCount && CurrentGame.MoveCount<=30 ? 1 :
                         2;
-    private int[] simMaxDepth = {200,100,50};
+    private int[] simMaxDepth = {300,250,200};
     public BuroState(string playerName, bool isWhite) : base(playerName, isWhite) { }
 
     public BuroState(BuroState original) : base(original) { }
@@ -98,7 +98,7 @@ public class BuroState : BotState
     protected override Vector2Int Evaluate(Dictionary<int, ulong> moveMap=null){
         MCTSNode rootNode = new MCTSNode(CurrentGame);  // Root node is the current game state
         ExpandNode(rootNode);
-        float explorationConstant = 1.4f;
+        float explorationConstant = 3.0f;
         for (int i = 0; i < SimulationCount; i++)  // Run simulations
         {
             // Debug.Log(i);
@@ -252,7 +252,7 @@ private Vector2Int HeuristicMove(List<Vector2Int> legalMoves, GameState currentG
         // Evaluate material balance
         score += EvaluateMaterialDiff(state);
         score += 2*EvaluateMobilityDiff(state);  // Just material difference
-        score += 2*EvaluatePositioning(state);  // Some basic positional evaluation (control of the center, etc.)
+        score += EvaluatePositioning(state);  // Some basic positional evaluation (control of the center, etc.)
         return score;
     }
 
@@ -290,7 +290,7 @@ private Vector2Int HeuristicMove(List<Vector2Int> legalMoves, GameState currentG
     {
         int spaceControl = EvaluateMobility(gameState, TurnIndex);
         int enemyControl = EvaluateMobility(gameState, 1 - TurnIndex);
-        return (spaceControl - enemyControl);
+        return 5*(spaceControl - enemyControl);
     }
 
     private int EvaluateKingThreat(GameState gameState)
