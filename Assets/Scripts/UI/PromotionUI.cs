@@ -1,21 +1,29 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
+using UnityEngine.EventSystems;
 
 public class PromotionUI : MonoBehaviour
 {
     private Canvas canvas;
     private GameObject panel;
 
-    private System.Action<Vector2Int, string> onPromotionSelected;
+    private System.Action<Vector2Int, char, PieceBoard> onPromotionSelected;
     Vector2Int promotionTilePosition;
+    PieceBoard promotedPawnBoard;
     
     public float pieceScale = 1f; // Variable to scale the piece buttons down. Adjust this value to scale pieces down
-    string[] pieceTypes = { "Queen", "Rook", "Bishop", "Knight" }; // Define the types of pieces that can be promoted to. Customize as needed
+    //string[] pieceTypes = { "Queen", "Rook", "Bishop", "Knight" }; // Define the types of pieces that can be promoted to. Customize as needed
+    char[] pieceTypes = { 'Q', 'R', 'B', 'N' }; // Define the types of pieces that can be promoted to. Customize as needed
+    Dictionary<char, string> pieceTypeMap = new Dictionary<char, string>{ //primarily for getting the correct sprites
+        {'Q',"Queen"}, {'R',"Rook"}, {'B',"Bishop"}, {'N',"Knight"} 
+    }; // Define the types of pieces that can be promoted to. Customize as needed
 
-    public void Show(System.Action<Vector2Int, string> promotionCallback, Color tileColor, Vector2 tileSize, Color pawnColor, Vector2Int tilePosition){
+    public void Show(System.Action<Vector2Int, char, PieceBoard> promotionCallback, Vector2Int tilePosition, Vector2 tileSize, Color tileColor, Color pawnColor, PieceBoard pieceBoard){
         onPromotionSelected = promotionCallback;
         promotionTilePosition = tilePosition;
+        promotedPawnBoard = pieceBoard;
 
         // Create the Canvas if it doesn't exist
         if (FindObjectOfType<Canvas>() == null){
@@ -27,6 +35,15 @@ public class PromotionUI : MonoBehaviour
         }else{
             canvas = FindObjectOfType<Canvas>(); // Use existing canvas if present
         }
+
+        // Create Event System if it doesn't exist
+        if (FindObjectOfType<EventSystem>() == null)
+        {
+            GameObject eventSystemObject = new GameObject("PromotionEventSystem");
+            EventSystem eventSystem = eventSystemObject.AddComponent<EventSystem>();
+            eventSystemObject.AddComponent<StandaloneInputModule>();
+        }
+
         // Create the Panel
         panel = new GameObject("PromotionPanel");
         panel.transform.SetParent(canvas.transform);
@@ -63,7 +80,7 @@ public class PromotionUI : MonoBehaviour
     }
 
 
-    private void CreateButton(string pieceType, Color tileColor, Color pieceColor, Vector2 tileSize, int index){
+    private void CreateButton(char pieceType, Color tileColor, Color pieceColor, Vector2 tileSize, int index){
         GameObject buttonObject = new GameObject(pieceType + "Button");
         buttonObject.transform.SetParent(panel.transform);
 
@@ -77,7 +94,7 @@ public class PromotionUI : MonoBehaviour
         Image buttonImage = buttonObject.AddComponent<Image>();
         buttonImage.color = pieceColor;
 
-        Sprite pieceSprite = Board.sprites[pieceType]; // Access the sprite directly from the dictionary
+        Sprite pieceSprite = Board.sprites[pieceTypeMap[pieceType]]; // Access the sprite directly from the dictionary
         buttonImage.sprite = pieceSprite;
         buttonImage.preserveAspect = true; // Keep the aspect ratio
 
@@ -140,13 +157,13 @@ public class PromotionUI : MonoBehaviour
         return new Vector3(tilePosition.x * tileSize, tilePosition.y * tileSize, 0);
     }
 
-    private void SelectPiece(string pieceType){
-        Debug.Log("selecting "+pieceType+promotionTilePosition);
-        onPromotionSelected?.Invoke(promotionTilePosition, pieceType);
+    private void SelectPiece(char pieceType){
+        //Debug.Log("selecting "+pieceType+" "+promotionTilePosition);
+        onPromotionSelected?.Invoke(promotionTilePosition, pieceType, promotedPawnBoard);
         ClosePanel();
     }
     private void NoSelectPiece(){
-        onPromotionSelected?.Invoke(promotionTilePosition, ""); // no slection
+        onPromotionSelected?.Invoke(promotionTilePosition, '\0', promotedPawnBoard); // no slection
         ClosePanel();
     }
 
