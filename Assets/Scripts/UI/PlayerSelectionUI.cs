@@ -305,7 +305,7 @@ public class PlayerSelectionUI : MonoBehaviour
 
         Debug.Log($"Selected White Player: {whitePlayerType} ({whitePlayerName}), Black Player: {blackPlayerType} ({blackPlayerName})");
 
-        game.StartGame(whitePlayerType, blackPlayerType, whitePlayerName, blackPlayerName, filePath);
+        game.StartGame(whitePlayerType, whitePlayerName, blackPlayerType, blackPlayerName, filePath);
 
         // Clean up UI
         Destroy(canvas.gameObject);
