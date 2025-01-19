@@ -128,7 +128,7 @@ public class Board : MonoBehaviour
         }
     }
 
-    private Dictionary<string, Sprite> LoadSprites(int sheetN = 1){
+    public static Dictionary<string, Sprite> LoadSprites(int sheetN = 1){
         // Load all sprites from the Pieces.png
         Sprite[] allSprites = Resources.LoadAll<Sprite>($"Sprites/Pieces{sheetN}"); // Adjust path if needed
 

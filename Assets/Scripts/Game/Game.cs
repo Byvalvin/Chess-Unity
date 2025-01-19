@@ -7,7 +7,7 @@ public class Game : MonoBehaviour
     private Board board;
     private Player[] players;
 
-    public void StartGame(string player1Type, string player1Name, string player2Type, string player2Name)
+    public void StartGame(string player1Type, string player1Name, string player2Type, string player2Name, string filePath="")
     {
         gameState = new GameState(player1Type, player1Name, player2Type, player2Name);
         gameState.Initialize();
