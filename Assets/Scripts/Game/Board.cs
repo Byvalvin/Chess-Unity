@@ -10,6 +10,7 @@ public class Board : MonoBehaviour
     public const int N = 8; // BOARDSIZE
     private GameObject[,] tiles = new GameObject[N, N]; // Array to hold tile references
     static float tileSize = 5.0f;
+    [SerializeField] private Shader UnlitColorShader; // Assign this in the inspector, a shader to add colour to tiles
 
 
     static int sheetN = 1; // The piece sheet we use
@@ -139,21 +140,27 @@ public class Board : MonoBehaviour
     }
 
     private void CreateTiles(){
+        Material material = new Material(UnlitColorShader);
         for (int y = 0; y < N; y++){
             for (int x = 0; x < N; x++){
-                // Create a quad for the tile
-                GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                tile.transform.position = new Vector3(tileSize*x, tileSize*y, 0); // Position the tile
-                tile.transform.localScale = new Vector3(tileSize, tileSize, 1); // Scale the tile
-                tile.transform.SetParent(transform); // Set parent to keep hierarchy clean
-
-                // Set tile color based on position
-                Color tileColor = (x + y) % 2 == 1 ? Color.white : Color.black;
-                tile.GetComponent<Renderer>().material.color = tileColor;
-
-                tiles[x, y] = tile; // Store the tile reference
+                
+                tiles[x, y] = CreateTile(x,y,material); // Store the tile reference
             }
         }
+    }
+
+    private GameObject CreateTile(int x, int y, Material material){
+        // Create a quad for the tile
+        GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        tile.transform.position = new Vector3(tileSize*x, tileSize*y, 0); // Position the tile
+        tile.transform.localScale = new Vector3(tileSize, tileSize, 1); // Scale the tile
+        tile.transform.SetParent(transform); // Set parent to keep hierarchy clean
+
+        // Set tile color based on position
+        Color tileColor = (x + y) % 2 == 1 ? Color.white : Color.black;
+        tile.GetComponent<Renderer>().material = material;
+        tile.GetComponent<Renderer>().material.color = tileColor;
+        return tile;
     }
 
 
@@ -422,6 +429,8 @@ public class Board : MonoBehaviour
 
 
     private void Awake(){
+        UnlitColorShader = Shader.Find("Unlit/Color");
+
         if (colourIndex == -1) // Generate once
             colourIndex = UnityEngine.Random.Range(0, LightColors.Length);
         lightColour = LightColors[colourIndex]; darkColour = DarkColors[colourIndex];
