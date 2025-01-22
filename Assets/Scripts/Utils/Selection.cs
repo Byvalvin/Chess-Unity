@@ -13,9 +13,9 @@ public static class PlayerTypeUtility
         // Add PlayerState explicitly
         playerOptions.Add(nameof(PlayerState).Replace("State", "")); // Adding "PlayerState" for the human player
 
-        // Get all types that are subclasses of PlayerState (exclude BotState)
+        // Get all types that are subclasses of PlayerState (exclude BotState, EngineState and all other abstract classes)
         var playerTypes = _assembly.GetTypes()
-            .Where(t => t.IsSubclassOf(typeof(PlayerState)) && t != typeof(BotState));
+            .Where(t => t.IsSubclassOf(typeof(PlayerState)) && !t.IsAbstract);
 
         foreach (var playerType in playerTypes)
         {
