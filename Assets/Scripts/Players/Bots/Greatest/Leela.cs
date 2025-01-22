@@ -73,25 +73,6 @@ public class LeelaState : BotState
         SendUciCommand($"position fen {fen}");
     }
 
-    // private string GetBestMove()
-    // {
-    //     // Send LCZero command to start calculating the best move
-    //     SendUciCommand($"go movetime {timeLimitInMs} depth {maxDepth} nodes {maxNodes}");
-
-    //     string output = ReadUciOutput();
-
-    //     // Loop to read the output until we find the best move
-    //     while (!output.StartsWith("bestmove"))
-    //     {
-    //         output = ReadUciOutput();  // Read next line if it doesn't start with 'bestmove'
-    //     }
-
-    //     // Extract the best move from the output (it should be the second word after "bestmove")
-    //     string bestMove = output.Replace("bestmove ", "").Trim();
-
-    //     // Return the best move (e.g., e2e4)
-    //     return bestMove;
-    // }
     private string GetBestMove()
     {
         // Send LCZero command to start calculating the best move with dynamic parameters
