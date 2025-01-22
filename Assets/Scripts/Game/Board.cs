@@ -80,6 +80,7 @@ public class Board : MonoBehaviour
         state.OnPieceMoved += UpdateSelectedPieceUI; // auto update ui for bord after piece moves
         //LogBoard();
         //PieceBoard.PrintBitboard(gameState.OccupancyBoard);
+        //Debug.Log(StringBoard());
     }
 
     public void CreateBoard(){
@@ -127,6 +128,21 @@ public class Board : MonoBehaviour
             }
             Debug.Log(row); // Log the row
         }
+    }
+    public string StringBoard(){
+        string board = "";
+        for (int y = 7; y >= 0; y--){ // From 1st rank to 8th rank
+            // string row = $"Row {y}: "; // Adjust for logging
+            string row = "";
+            for (int x = 0; x < 8; x++) {// From a-file to h-file
+                int index = BitOps.GetIndex(y, x); // Calculate the index
+                string pieceChar = GetPieceAtIndex(index);
+                //row += pieceChar + "" + index + " "; // Add the piece character to the row
+                row += pieceChar + " "; // Add the piece character to the row
+            }
+            board+=row+'\n'; // add the row
+        }
+        return board;
     }
 
     public static Dictionary<string, Sprite> LoadSprites(int sheetN = 1){

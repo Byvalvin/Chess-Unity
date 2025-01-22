@@ -83,41 +83,41 @@ public class GameState
 
 
 
-public string HashD()
-{
-    using (SHA256 sha256 = SHA256.Create())
+    public string HashD()
     {
-        // Create a MemoryStream for efficient writing
-        using (MemoryStream stream = new MemoryStream())
+        using (SHA256 sha256 = SHA256.Create())
         {
-            foreach (PlayerState playerState in PlayerStates)
+            // Create a MemoryStream for efficient writing
+            using (MemoryStream stream = new MemoryStream())
             {
-                foreach (PieceBoard pieceBoard in playerState.PieceBoards.Values)
+                foreach (PlayerState playerState in PlayerStates)
                 {
-                    // Hash piece type
-                    byte[] typeBytes = Encoding.UTF8.GetBytes(pieceBoard.Type.ToString());
-                    stream.Write(typeBytes, 0, typeBytes.Length);
-
-                    // Hash piece positions (bitboard)
-                    List<int> bitPositions = BitOps.GetAllSetBitIndicesLinear(pieceBoard.Bitboard);
-                    foreach (int bitPosition in bitPositions)
+                    foreach (PieceBoard pieceBoard in playerState.PieceBoards.Values)
                     {
-                        byte[] positionBytes = BitConverter.GetBytes(bitPosition);
-                        stream.Write(positionBytes, 0, positionBytes.Length);
+                        // Hash piece type
+                        byte[] typeBytes = Encoding.UTF8.GetBytes(pieceBoard.Type.ToString());
+                        stream.Write(typeBytes, 0, typeBytes.Length);
+
+                        // Hash piece positions (bitboard)
+                        List<int> bitPositions = BitOps.GetAllSetBitIndicesLinear(pieceBoard.Bitboard);
+                        foreach (int bitPosition in bitPositions)
+                        {
+                            byte[] positionBytes = BitConverter.GetBytes(bitPosition);
+                            stream.Write(positionBytes, 0, positionBytes.Length);
+                        }
                     }
                 }
+
+                // Include whose turn it is
+                byte[] turnBytes = BitConverter.GetBytes(currentIndex);
+                stream.Write(turnBytes, 0, turnBytes.Length);
+
+                // Compute SHA-256 hash directly from the memory stream
+                byte[] hashBytes = sha256.ComputeHash(stream.ToArray());
+                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
             }
-
-            // Include whose turn it is
-            byte[] turnBytes = BitConverter.GetBytes(currentIndex);
-            stream.Write(turnBytes, 0, turnBytes.Length);
-
-            // Compute SHA-256 hash directly from the memory stream
-            byte[] hashBytes = sha256.ComputeHash(stream.ToArray());
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
         }
     }
-}
 
     public string HashC(int depth){
         // Simple example: concatenate relevant properties
@@ -594,7 +594,142 @@ public string HashD()
         //Debug.Log("Player Check Update: "+otherPlayer.PlayerType +" is in check?: "+otherPlayer.InCheck + " "+ otherPlayer.DoubleCheck + " " +otherPlayer.IsInCheck + "by attackker at " + attacker);
     }
 
+    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    public string FEN(){
+        //1 piece placement
+        string piecePlaces = StringBoardToFENBoard(StringBoard());
+        //2 player to move
+        string toMove = currentIndex==0 ? "w":"b";
+        //3 castling rights
+        string castleRights = CastlingRights();
+        //4 enPassant
+        string enPassantSq = enPassantSquare();
+        //5 Half Moves
+        string plys = NoCaptureNoPawnMoveCount.ToString();
+        //6 Full Moves
+        string fullMoves = ((int)(MoveCount/2 + 1)).ToString();
+        return $"{piecePlaces} {toMove} {castleRights} {enPassantSq} {plys} {fullMoves}";
+    }
+
+    private string CastlingRights(){
+        bool wKingCan = PlayerStates[0].PieceBoards['K'].FirstMovers.Count>0,
+        wQueenRookCan = PlayerStates[0].PieceBoards['R'].FirstMovers.Contains(0),
+        wKingRookCan = PlayerStates[0].PieceBoards['R'].FirstMovers.Contains(7),
+            bKingCan = PlayerStates[1].PieceBoards['K'].FirstMovers.Count>0,
+        bQueenRookCan = PlayerStates[1].PieceBoards['R'].FirstMovers.Contains(56),
+        bKingRookCan = PlayerStates[1].PieceBoards['R'].FirstMovers.Contains(63);
+
+        if(!wKingCan && !bKingCan)
+            return "-";
+        
+        string wKKR = wKingCan && wKingRookCan ? "K":"",
+            wKQR = wKingCan && wQueenRookCan ? "Q":"",
+            bKKR = bKingCan && bKingRookCan ? "k":"",
+            bKQR = bKingCan && bKingRookCan ? "q":"";
+        
+        return $"{wKKR}{wKQR}{bKKR}{bKQR}";
+
+    }
+
+    public string BitIndexToPosition(int index)
+    {
+        // Convert index to file (a-h) and rank (1-8)
+        int file = index % 8; // File is the column (0 to 7)
+        //int rank = 7 - (index / 8); // Rank is the row (7 to 0)
+        int rank = index / 8; // Rank is the row (7 to 0)
+
+        // Convert the file index (0 to 7) to 'a' to 'h'
+        char fileChar = (char)('a' + file);
+
+        // Convert the rank index (0 to 7) to '1' to '8'
+        char rankChar = (char)('1' + rank);
+
+        return $"{fileChar}{rankChar}";
+    }
+
+    private string enPassantSquare(){
+        PawnBoard wPawnBoard = PlayerStates[0].PieceBoards['P'] as PawnBoard,
+                bPawnBoard = PlayerStates[1].PieceBoards['P'] as PawnBoard;
+        
+        if(wPawnBoard.enPassantablePawn!=-1)
+            return BitIndexToPosition(wPawnBoard.enPassantablePawn - 8);
+        if(bPawnBoard.enPassantablePawn!=-1)
+            return BitIndexToPosition(bPawnBoard.enPassantablePawn + 8);         
+        
+        return "-";
+    }
+
+    private char GetPieceAtIndex(int index){
+        foreach (var playerState in PlayerStates)
+            foreach (var pieceBoard in playerState.PieceBoards.Values)
+                if ((pieceBoard.Bitboard & (BitOps.a1 << index)) != 0)
+                    return pieceBoard.IsWhite ? pieceBoard.Type : Char.ToLower(pieceBoard.Type);
+        return '.'; // Return a dot for empty squares
+    }
+    public char[,] StringBoard(){
+        char[,] board = new char[8,8];
+        // Fill the board with '.' (empty squares)
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                board[i, j] = '.'; // Initialize all squares as empty
+        
+        for (int y = 0; y < 8; y++){ // From 1st rank to 8th rank
+            // string row = $"Row {y}: "; // Adjust for logging
+            for (int x = 0; x < 8; x++) {// From a-file to h-file
+                int index = BitOps.GetIndex(y, x); // Calculate the index
+                char pieceChar = GetPieceAtIndex(index);
+                //row += pieceChar + "" + index + " "; // Add the piece character to the row
+                board[y,x] = pieceChar; // Add the piece character to the row
+            }
+        }
+        return board;
+    }
+
+    public string StringBoardToFENBoard(char[,] board){
+        // Now we need to construct the FEN string from the board
+        StringBuilder fen = new StringBuilder();
+        for (int i = 7; i >= 0; i--){ // Iterate over rows
+            int emptyCount = 0;
+            for (int j = 0; j < 8; j++){ // Iterate over columns
+                if (board[i, j] == '.') { // Empty square
+                    emptyCount++;
+                }else{
+                    // If there were empty squares before this piece, add the number
+                    if (emptyCount > 0){
+                        fen.Append(emptyCount);
+                        emptyCount = 0;
+                    }
+                    // Append the piece symbol
+                    fen.Append(board[i, j]);
+                }
+            }
+
+            // If there are empty squares at the end of the row, append the number
+            if (emptyCount > 0)
+                fen.Append(emptyCount);
+    
+            // Add the '/' separator between ranks, except for the last row
+            if (i > 0)
+                fen.Append('/');
+        }
+        return fen.ToString();
+    }
+    public void LogBoard(char[,] chessboard){
+        //Log the chessboard as a 2D array
+        for (int row = 0; row < chessboard.GetLength(0); row++)
+        {
+            string rowOutput = "";
+            for (int col = 0; col < chessboard.GetLength(1); col++)
+                rowOutput += chessboard[row, col] + " "; // Add each piece with a space
+            Debug.Log(rowOutput); // Print each row
+        }
+    }
     private void UpdateGameState(){
+        //var chessboard = StringBoard();
+        //Debug.Log(StringBoardToFENBoard(chessboard));
+        //Debug.Log(FEN());
+        
+
         for(int i=0; i<64; i++){
             ulong currBitPos = (BitOps.a1<<i);
             

@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class Levi : Bot
 {
-
     // Add methods for player actions, like making a move, if needed
 }
 
@@ -211,8 +210,6 @@ public class LeviState : BotState
 
         return moves;
     }
-
-
 }
 
 
