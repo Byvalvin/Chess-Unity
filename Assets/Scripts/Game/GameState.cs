@@ -594,7 +594,7 @@ public class GameState
         //Debug.Log("Player Check Update: "+otherPlayer.PlayerType +" is in check?: "+otherPlayer.InCheck + " "+ otherPlayer.DoubleCheck + " " +otherPlayer.IsInCheck + "by attackker at " + attacker);
     }
 
-    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1, https://www.chess.com/terms/fen-chess, https://lczero.org/play/download/
     public string FEN(){
         //1 piece placement
         string piecePlaces = StringBoardToFENBoard(StringBoard());
