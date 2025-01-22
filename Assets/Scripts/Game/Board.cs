@@ -6,6 +6,7 @@ public class Board : MonoBehaviour
 {
     private GameState gameState;
 
+    public bool Closed{get; private set;}
 
     public const int N = 8; // BOARDSIZE
     private GameObject[,] tiles = new GameObject[N, N]; // Array to hold tile references
@@ -72,6 +73,8 @@ public class Board : MonoBehaviour
 
     public void Initialize(GameState state){
         gameState = state;
+
+        Closed = false;
         
         WhitePieces = new List<GameObject>();
         BlackPieces = new List<GameObject>();
@@ -428,7 +431,14 @@ public class Board : MonoBehaviour
     }
     
     void HandleInput(){
-        if(gameState.Gameover) return; // dont handl user input
+        if(gameState.Gameover){
+            if(!Closed){
+                foreach(PlayerState playerState in gameState.PlayerStates)
+                    playerState.Close();
+                Closed=true;
+            }
+            return; // dont handl user input
+        }
 
         if(gameState.PlayerStates[gameState.currentIndex] is BotState bot){
             BotMove();

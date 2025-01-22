@@ -40,7 +40,7 @@ public class GameState
         Winner = -1; // no winner to start
 
         MoveCount=0;
-        lastThreeStates = new Queue<string>(); lastThreeStates.Enqueue(HashD());
+        lastThreeStates = new Queue<string>(); lastThreeStates.Enqueue(HashE());
         NoCaptureNoPawnMoveCount=0;
 
     }
@@ -80,6 +80,8 @@ public class GameState
         //hashBuilder.Append(MoveCount);
         return hashBuilder.ToString();
     }
+
+    public string HashE()=>FEN();
 
 
 
@@ -317,7 +319,7 @@ public class GameState
         MoveCount++;
 
         // Track the last three game state hashes
-        string currentHash = HashD();
+        string currentHash = HashE();
         if (lastThreeStates.Count == 3)
             lastThreeStates.Dequeue(); // Remove the oldest hash
         lastThreeStates.Enqueue(currentHash); // Add the current hash
@@ -884,7 +886,7 @@ public class GameState
     public bool CheckThreefoldRepetition() 
     {
         // Check for threefold repetition: same position occurs 3 times
-        string currentHash = HashD();
+        string currentHash = HashE();
         int count = 0;
         foreach (string hash in lastThreeStates)
         {

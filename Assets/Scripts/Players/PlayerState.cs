@@ -84,4 +84,6 @@ public class PlayerState
 
     public int GetKingIndex()=>(PieceBoards['K'] as KingBoard).MyIndex;
 
+    public virtual void Close(){}
+
 }

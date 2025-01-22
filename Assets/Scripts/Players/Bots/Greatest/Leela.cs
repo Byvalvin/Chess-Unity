@@ -59,8 +59,19 @@ public class LeelaState : BotState
         string bestMove = GetBestMove();
 
         UnityEngine.Debug.Log("Move To play: " + bestMove);
-        // Convert the best move (e.g., e2e4) to your internal format (e.g., 0, 16)
-        Vector2Int move = ConvertMoveToVector(bestMove);
+        
+
+        // bestMove = bestMove.Substring(0, 4); // Remove the promotion info (e.g., "e7e8q" -> "e7e8")
+        Vector2Int move = ConvertMoveToVector(bestMove); // Convert the best move (e.g., e2e4) to your internal format (e.g., 0, 16)
+
+        // Check if the move is a promotion
+        if (bestMove.Length == 5) // A promotion move will have 5 characters like "e7e8q"
+        {
+            // Handle promotion move, strip the promotion character
+            // set Leela's choice of promotion
+            PromoteTo = Char.ToUpper(bestMove[bestMove.Length-1]);
+            
+        }
         UnityEngine.Debug.Log("To vectore:");
         
         UnityEngine.Debug.Log(move);
@@ -73,8 +84,7 @@ public class LeelaState : BotState
         SendUciCommand($"position fen {fen}");
     }
 
-    private string GetBestMove()
-    {
+    private string GetBestMove(){
         // Send LCZero command to start calculating the best move with dynamic parameters
         SendUciCommand($"go movetime {timeLimitInMs} depth {maxDepth} nodes {maxNodes}");
 
@@ -87,12 +97,10 @@ public class LeelaState : BotState
         }
 
         // If we find a line that starts with "bestmove", extract the move
-        if (output != null && output.StartsWith("bestmove"))
-        {
+        if (output != null && output.StartsWith("bestmove")){
             // Extract the best move from the output (it should be the second word after "bestmove")
             string bestMove = output.Replace("bestmove ", "").Split(' ')[0].Trim();
 
-            // Return the best move (e.g., e2e4)
             return bestMove;
         }
 
@@ -152,13 +160,13 @@ public class LeelaState : BotState
 
         int fileIndex = file - 'a';  // Convert 'a'-'h' to 0-7
         int rankIndex = rank - '1';  // Convert '1'-'8' to 7-0
-        UnityEngine.Debug.Log(fileIndex);
-        UnityEngine.Debug.Log(rankIndex);
+        // UnityEngine.Debug.Log(fileIndex);
+        // UnityEngine.Debug.Log(rankIndex);
 
         return rankIndex * 8 + fileIndex;  // Convert to 0-63 index
     }
 
-    public void Close()
+    public override void Close()
     {
         SendUciCommand("quit");
         writer.Close();
@@ -167,177 +175,8 @@ public class LeelaState : BotState
     }
 }
 
-/*
 
 
-public class ChessBot
-{
-    private Process lcZeroProcess;
-    private StreamWriter writer;
-    private StreamReader reader;
 
-    public ChessBot()
-    {
-        lcZeroProcess = new Process();
-        lcZeroProcess.StartInfo.FileName = "path/to/lc0"; // Path to LCZero executable
-        lcZeroProcess.StartInfo.UseShellExecute = false;
-        lcZeroProcess.StartInfo.RedirectStandardInput = true;
-        lcZeroProcess.StartInfo.RedirectStandardOutput = true;
-        lcZeroProcess.StartInfo.CreateNoWindow = true;
 
-        lcZeroProcess.Start();
-        writer = lcZeroProcess.StandardInput;
-        reader = lcZeroProcess.StandardOutput;
-    }
 
-    public string SendUCICommand(string command)
-    {
-        writer.WriteLine(command);
-        writer.Flush();
-        return reader.ReadLine();
-    }
-
-    public string GetBestMove(string boardPosition)
-    {
-        // Set the position for the engine
-        SendUCICommand("position " + boardPosition);
-        SendUCICommand("go");
-
-        // Get the best move
-        string bestMove = reader.ReadLine();
-        return bestMove?.Replace("bestmove ", "");
-    }
-
-    public void Close()
-    {
-        writer.Close();
-        reader.Close();
-        lcZeroProcess.Kill();
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-using System.Diagnostics;
-using System.IO;
-
-public class LeelaChessEngine
-{
-    private Process engineProcess;
-    private StreamWriter inputWriter;
-    private StreamReader outputReader;
-
-    public void InitializeEngine(string enginePath)
-    {
-        engineProcess = new Process();
-        engineProcess.StartInfo.FileName = enginePath; // Path to LCZero executable
-        engineProcess.StartInfo.UseShellExecute = false;
-        engineProcess.StartInfo.RedirectStandardInput = true;
-        engineProcess.StartInfo.RedirectStandardOutput = true;
-        engineProcess.StartInfo.CreateNoWindow = true;
-        engineProcess.Start();
-
-        inputWriter = engineProcess.StandardInput;
-        outputReader = engineProcess.StandardOutput;
-    }
-
-    public void SendUciCommand(string command)
-    {
-        inputWriter.WriteLine(command);
-        inputWriter.Flush();
-    }
-
-    public string ReadUciOutput()
-    {
-        return outputReader.ReadLine();
-    }
-
-    public void SetPosition(string fen)
-    {
-        SendUciCommand("position fen " + fen);
-    }
-
-    public void GetBestMove()
-    {
-        SendUciCommand("go");
-        string bestMove = ReadUciOutput();
-        // Parse the output for the best move
-    }
-
-    public void QuitEngine()
-    {
-        SendUciCommand("quit");
-        engineProcess.Close();
-    }
-}
-
-*/

@@ -47,7 +47,7 @@ public class LeviState : BotState
 
 
     private float Minimax(GameState gameState, int depth, float alpha, float beta, bool maximizingPlayer){
-        string hashKey = gameState.HashD(); // Generate the hash for the current game state
+        string hashKey = gameState.HashE(); // Generate the hash for the current game state
    
         // Check if we have already evaluated this game state
         if (TT.TryGetValue(hashKey, out float cachedValue))
@@ -210,6 +210,7 @@ public class LeviState : BotState
 
         return moves;
     }
+
 }
 
 
