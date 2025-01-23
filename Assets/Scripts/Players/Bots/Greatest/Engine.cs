@@ -24,11 +24,13 @@ public abstract class EngineState : BotState
     // Constructor that takes the engine's executable path, player name, and color
     public EngineState(string enginePath, string playerName, bool isWhite) : base(playerName, isWhite)
     {
-        this.enginePath = enginePath;
+        this.enginePath = Path.Combine(Application.streamingAssetsPath, enginePath);
+        // // Replace backslashes with forward slashes
+        this.enginePath = this.enginePath.Replace("\\", "/");
 
         // Initialize the engine process
         engineProcess = new Process();
-        engineProcess.StartInfo.FileName = enginePath;
+        engineProcess.StartInfo.FileName = this.enginePath;
         engineProcess.StartInfo.UseShellExecute = false;
         engineProcess.StartInfo.RedirectStandardInput = true;
         engineProcess.StartInfo.RedirectStandardOutput = true;
